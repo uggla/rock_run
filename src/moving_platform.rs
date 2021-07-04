@@ -50,8 +50,8 @@ struct LeftRightData {
 #[derive(Debug, PartialEq, Clone, Copy)]
 struct UpDownData {
     direction: MovingPlatformDirection,
-    max_up: f32,
     max_down: f32,
+    max_up: f32,
 }
 
 #[allow(dead_code)]
@@ -98,6 +98,17 @@ fn setup_moving_platforms(
 
     let texture = asset_server.load("moving_platform.png");
     let mut level_moving_platforms: HashMap<u8, Vec<MovingPlatform>> = HashMap::new();
+    level_moving_platforms.insert(
+        1,
+        vec![MovingPlatform {
+            start_pos: level.map.tiled_to_bevy_coord(Vec2::new(2145.0, 550.0)),
+            movement: MovingPlatformMovement::UpDown(UpDownData {
+                direction: MovingPlatformDirection::Up,
+                max_down: level.map.tiled_to_bevy_coord(Vec2::new(2145.0, 575.0)).y,
+                max_up: level.map.tiled_to_bevy_coord(Vec2::new(2145.0, 335.0)).y,
+            }),
+        }],
+    );
     level_moving_platforms.insert(
         2,
         vec![
@@ -201,7 +212,7 @@ fn move_moving_platform(
             MovingPlatformMovement::UpDown(ref mut up_down_data) => match up_down_data.direction {
                 MovingPlatformDirection::Up => {
                     let moving_platform_speed = -MOVING_PLATFORM_SPEED * 100.0;
-                    if moving_platform_pos.translation.y > up_down_data.max_up {
+                    if moving_platform_pos.translation.y > up_down_data.max_down {
                         (0.0, moving_platform_speed * time.delta_seconds())
                     } else {
                         up_down_data.direction = MovingPlatformDirection::Down;
@@ -210,7 +221,7 @@ fn move_moving_platform(
                 }
                 MovingPlatformDirection::Down => {
                     let moving_platform_speed = MOVING_PLATFORM_SPEED * 100.0;
-                    if moving_platform_pos.translation.y < up_down_data.max_down {
+                    if moving_platform_pos.translation.y < up_down_data.max_up {
                         (0.0, moving_platform_speed * time.delta_seconds())
                     } else {
                         up_down_data.direction = MovingPlatformDirection::Up;

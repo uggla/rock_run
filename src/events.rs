@@ -26,8 +26,6 @@ pub struct Restart;
 #[derive(Event)]
 pub struct NextLevel;
 
-// TODO: remove dead code
-#[allow(dead_code)]
 #[derive(Event)]
 pub enum LifeEvent {
     Win,
@@ -77,4 +75,9 @@ pub struct SelectionChanged {
 pub enum EnigmaResult {
     Correct(String),
     Incorrect(String),
+}
+
+#[derive(Event)]
+pub struct ExtraLifeCollision {
+    pub entity: Entity,
 }

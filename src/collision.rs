@@ -14,10 +14,11 @@ use crate::{
     },
     enigma::{EnigmaKind, Enigmas},
     events::{
-        Hit, LadderCollisionStart, LadderCollisionStop, MovingPlatformCollision,
-        PositionSensorCollisionStart, PositionSensorCollisionStop, StoryMessages,
-        TriceratopsCollision,
+        ExtraLifeCollision, Hit, LadderCollisionStart, LadderCollisionStop,
+        MovingPlatformCollision, PositionSensorCollisionStart, PositionSensorCollisionStop,
+        StoryMessages, TriceratopsCollision,
     },
+    life::ExtraLife,
     moving_platform::MovingPlatform,
     player::{self, Player, PlayerState, PLAYER_HEIGHT},
     rock::Rock,
@@ -41,6 +42,7 @@ impl Plugin for CollisionPlugin {
                 display_story,
                 position_sensor_collision,
                 ladder_collision,
+                extra_life_collision,
             )
                 .in_set(CollisionSet)
                 .run_if(in_state(AppState::GameRunning)),
@@ -52,7 +54,8 @@ impl Plugin for CollisionPlugin {
         .add_event::<PositionSensorCollisionStop>()
         .add_event::<LadderCollisionStart>()
         .add_event::<LadderCollisionStop>()
-        .add_event::<MovingPlatformCollision>();
+        .add_event::<MovingPlatformCollision>()
+        .add_event::<ExtraLifeCollision>();
     }
 }
 
@@ -467,6 +470,43 @@ fn position_sensor_collision(
                         sensor_name: collider_name.0.clone(),
                     });
                 };
+            }
+        }
+    }
+}
+
+fn extra_life_collision(
+    extralifes: Query<(Entity, &ColliderName), With<ExtraLife>>,
+    mut collision_events: EventReader<CollisionEvent>,
+    mut extralife_collision: EventWriter<ExtraLifeCollision>,
+) {
+    for collision_event in collision_events.read() {
+        match collision_event {
+            CollisionEvent::Started(e1, e2, _cf) => {
+                // Warning, e1 and e2 can be swapped.
+                if let Some((entity, collider_name)) = extralifes
+                    .iter()
+                    .find(|(entity, _collider_name)| entity == e1 || entity == e2)
+                {
+                    debug!(
+                        "Received collision event: {:?}, collider name: {:?}",
+                        collision_event, collider_name
+                    );
+
+                    extralife_collision.send(ExtraLifeCollision { entity });
+                };
+            }
+            CollisionEvent::Stopped(e1, e2, _cf) => {
+                // Warning, e1 and e2 can be swapped.
+                if let Some((_entity, collider_name)) = extralifes
+                    .iter()
+                    .find(|(entity, _collider_name)| entity == e1 || entity == e2)
+                {
+                    debug!(
+                        "Received collision event: {:?}, collider name: {:?}",
+                        collision_event, collider_name
+                    );
+                }
             }
         }
     }

@@ -1,12 +1,20 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, utils::HashMap};
+use bevy_rapier2d::geometry::{ActiveCollisionTypes, ActiveEvents, Collider, Sensor};
 
 use crate::{
-    coregame::{camera::CameraSet, state::AppState},
-    events::LifeEvent,
+    colliders::ColliderName,
+    coregame::{
+        camera::CameraSet,
+        level::{CurrentLevel, Level},
+        state::AppState,
+    },
+    events::{ExtraLifeCollision, LifeEvent},
     WINDOW_HEIGHT, WINDOW_WIDTH,
 };
 
 const LIFE_SCALE_FACTOR: f32 = 2.0;
+const LIFE_WIDTH: f32 = 16.0;
+const LIFE_HEIGHT: f32 = 16.0;
 
 #[derive(Resource, Default)]
 pub struct Life {
@@ -16,17 +24,25 @@ pub struct Life {
 #[derive(Component)]
 pub struct LifeUI;
 
+#[derive(Component)]
+pub struct ExtraLife;
+
 pub struct LifePlugin;
 
 impl Plugin for LifePlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(AppState::GameCreate), setup_life)
-            .add_systems(OnEnter(AppState::StartMenu), despawn_life)
+        app.add_systems(OnEnter(AppState::GameCreate), (setup_life, setup_extralife))
+            .add_systems(OnEnter(AppState::NextLevel), setup_extralife)
+            .add_systems(
+                OnEnter(AppState::StartMenu),
+                (despawn_life, despawn_extralife),
+            )
+            .add_systems(OnEnter(AppState::FinishLevel), despawn_life)
             .add_systems(Update, life_management)
             .insert_resource(Life::default())
             .add_systems(
                 Update,
-                show_life
+                (show_life, check_get_extralife)
                     .after(CameraSet)
                     .run_if(in_state(AppState::GameRunning)),
             )
@@ -133,5 +149,69 @@ fn despawn_life(
     if let Ok(life_ui) = life_ui.get_single() {
         commands.entity(life_ui).despawn_recursive();
         life.entities.clear();
+    }
+}
+
+fn setup_extralife(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    levels: Query<&Level, With<Level>>,
+    current_level: Res<CurrentLevel>,
+) {
+    info!("setup_extralife");
+
+    let level = levels
+        .iter()
+        .find(|level| level.id == current_level.id)
+        .unwrap();
+
+    let texture = asset_server.load("life.png");
+    let mut extra_life_pos: HashMap<u8, Vec<Vec2>> = HashMap::new();
+    extra_life_pos.insert(
+        1,
+        vec![level.map.tiled_to_bevy_coord(Vec2::new(1056.0, 304.0))],
+    );
+
+    let start_positions = match extra_life_pos.get(&current_level.id) {
+        Some(positions) => positions,
+        None => return,
+    };
+
+    for start_pos in start_positions {
+        commands.spawn((
+            SpriteBundle {
+                texture: texture.clone(),
+                sprite: Sprite { ..default() },
+                transform: Transform {
+                    scale: Vec3::splat(LIFE_SCALE_FACTOR),
+                    translation: start_pos.extend(20.0),
+                    ..default()
+                },
+                ..default()
+            },
+            Collider::cuboid(LIFE_WIDTH / 2.0, LIFE_HEIGHT / 2.0),
+            Sensor,
+            ActiveEvents::COLLISION_EVENTS,
+            ActiveCollisionTypes::KINEMATIC_STATIC,
+            ExtraLife,
+            ColliderName("extralife01".to_string()),
+        ));
+    }
+}
+
+fn check_get_extralife(
+    mut commands: Commands,
+    mut life_event: EventWriter<LifeEvent>,
+    mut extralive_collision: EventReader<ExtraLifeCollision>,
+) {
+    for ev in extralive_collision.read() {
+        commands.entity(ev.entity).despawn_recursive();
+        life_event.send(LifeEvent::Win);
+    }
+}
+
+fn despawn_extralife(mut commands: Commands, entities: Query<Entity, With<ExtraLife>>) {
+    for entity in entities.iter() {
+        commands.entity(entity).despawn_recursive();
     }
 }
