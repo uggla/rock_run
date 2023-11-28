@@ -61,7 +61,7 @@ fn setup(
                 custom_size: Some(Vec2::new(100.0, 10.0)),
                 ..default()
             },
-            transform: Transform::from_xyz(0.0, 0.0, 0.0),
+            transform: Transform::from_xyz(0.0, -100.0, 0.0),
             ..default()
         },
         Ground,
@@ -70,6 +70,8 @@ fn setup(
 
 const PLAYER_SPEED: f32 = 500.0;
 
+// Player movement is used to define current movement requested by the player and a state in order
+// to know if the player is in a jumping phase or not.
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States)]
 enum PlayerMovement {
     #[default]
@@ -100,49 +102,60 @@ fn move_player(
     let mut jump_timer = jump_timer.single_mut();
     let mut direction_x = 0.0;
     // let mut direction_y = 0.0;
-    let mut anim = |movement: PlayerMovement, direction: PlayerDirection| match movement {
-        PlayerMovement::Run => {
-            for (indices, mut timer, mut sprite) in &mut animation_query {
-                timer.tick(time.delta());
-                if timer.just_finished() {
-                    match direction {
-                        PlayerDirection::Left => sprite.flip_x = true,
-                        PlayerDirection::Right => sprite.flip_x = false,
+    let mut anim =
+        |current_movement: PlayerMovement, direction: PlayerDirection| match current_movement {
+            PlayerMovement::Run => {
+                for (indices, mut timer, mut sprite) in &mut animation_query {
+                    timer.tick(time.delta());
+                    if timer.just_finished() {
+                        match direction {
+                            PlayerDirection::Left => sprite.flip_x = true,
+                            PlayerDirection::Right => sprite.flip_x = false,
+                        }
+                        match state.get() {
+                            PlayerMovement::Jump => {}
+                            _ => {
+                                sprite.index = if sprite.index == indices.last {
+                                    indices.first
+                                } else {
+                                    sprite.index + 1
+                                };
+                            }
+                        }
                     }
-                    sprite.index = if sprite.index == indices.last {
-                        indices.first
-                    } else {
-                        sprite.index + 1
-                    };
                 }
             }
-        }
-        PlayerMovement::Idle => {
-            let (_, _, mut sprite) = animation_query.single_mut();
-            sprite.index = 0;
-        }
-        PlayerMovement::Jump => {
-            let (_, _, mut sprite) = animation_query.single_mut();
-            sprite.index = 3;
-        }
-    };
+            PlayerMovement::Idle => {
+                let (_, _, mut sprite) = animation_query.single_mut();
+                match state.get() {
+                    PlayerMovement::Jump => {}
+                    _ => {
+                        sprite.index = 0;
+                    }
+                }
+            }
+            PlayerMovement::Jump => {
+                let (_, _, mut sprite) = animation_query.single_mut();
+                sprite.index = 3;
+            }
+        };
 
     let mut current_movement: PlayerMovement = PlayerMovement::Idle;
     if keyboard_input.pressed(KeyCode::Left) {
         direction_x -= 1.0;
-        anim(PlayerMovement::Run, PlayerDirection::Left);
         current_movement = PlayerMovement::Run;
+        anim(current_movement, PlayerDirection::Left);
     }
     if keyboard_input.pressed(KeyCode::Right) {
         direction_x += 1.0;
-        anim(PlayerMovement::Run, PlayerDirection::Right);
         current_movement = PlayerMovement::Run;
+        anim(current_movement, PlayerDirection::Right);
     }
     if keyboard_input.pressed(KeyCode::Up) && state.get() != &PlayerMovement::Jump {
         next_state.set(PlayerMovement::Jump);
         jump_timer.reset();
-        anim(PlayerMovement::Jump, PlayerDirection::Right);
         current_movement = PlayerMovement::Jump;
+        anim(current_movement, PlayerDirection::Right);
     }
 
     if current_movement == PlayerMovement::Idle {
