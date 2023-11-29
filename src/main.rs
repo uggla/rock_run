@@ -29,7 +29,7 @@ fn main() {
         )
         .add_state::<PlayerMovement>()
         .add_event::<CollisionEvent>()
-        .add_systems(Startup, setup)
+        .add_systems(Startup, (setup, setup_player))
         .add_systems(
             Update,
             (
@@ -50,13 +50,8 @@ struct Collider;
 
 const GROUND_SIZE: Vec2 = Vec2::new(200.0, 10.0);
 
-fn setup(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-    texture_atlases: ResMut<Assets<TextureAtlas>>,
-) {
+fn setup(mut commands: Commands) {
     commands.spawn(Camera2dBundle::default());
-    setup_player(&mut commands, asset_server, texture_atlases);
     commands.spawn((
         SpriteBundle {
             sprite: Sprite {

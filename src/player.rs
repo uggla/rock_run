@@ -39,7 +39,7 @@ enum PlayerDirection {
 }
 
 pub fn setup_player(
-    commands: &mut Commands,
+    mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
 ) {
