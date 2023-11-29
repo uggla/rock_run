@@ -1,6 +1,11 @@
 use bevy::prelude::*;
 
-const PLAYER_SPEED: f32 = 500.0;
+pub const PLAYER_SPEED: f32 = 500.0;
+pub const PLAYER_SCALE_FACTOR: f32 = 3.0;
+pub const PLAYER_WIDTH: f32 = 24.0;
+pub const PLAYER_HEIGHT: f32 = 24.0;
+pub const PLAYER_HITBOX_WIDTH: f32 = 14.0;
+pub const PLAYER_HITBOX_HEIGHT: f32 = 24.0;
 
 #[derive(Component)]
 pub struct AnimationIndices {
@@ -17,9 +22,6 @@ pub struct AnimationTimer(Timer);
 
 #[derive(Component, Deref, DerefMut)]
 pub struct JumpTimer(Timer);
-
-#[derive(Component)]
-pub struct Collider;
 
 // Player movement is used to define current movement requested by the player and a state in order
 // to know if the player is in a jumping phase or not.
@@ -42,8 +44,14 @@ pub fn setup_player(
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
 ) {
     let texture_handle = asset_server.load("gabe-idle-run.png");
-    let texture_atlas =
-        TextureAtlas::from_grid(texture_handle, Vec2::new(24.0, 24.0), 7, 1, None, None);
+    let texture_atlas = TextureAtlas::from_grid(
+        texture_handle,
+        Vec2::new(PLAYER_WIDTH, PLAYER_HEIGHT),
+        7,
+        1,
+        None,
+        None,
+    );
     let texture_atlas_handle = texture_atlases.add(texture_atlas);
     // Use only the subset of sprites in the sheet that make up the run animation
     let animation_indices = AnimationIndices { first: 1, last: 6 };
@@ -51,14 +59,17 @@ pub fn setup_player(
         SpriteSheetBundle {
             texture_atlas: texture_atlas_handle,
             sprite: TextureAtlasSprite::new(animation_indices.first),
-            transform: Transform::from_scale(Vec3::splat(3.0)),
+            transform: Transform {
+                scale: Vec3::splat(PLAYER_SCALE_FACTOR),
+                translation: Vec3::new(0.0, 200.0, 1.0),
+                ..default()
+            },
             ..default()
         },
         animation_indices,
         AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
         JumpTimer(Timer::from_seconds(0.5, TimerMode::Once)),
         Player,
-        Collider,
     ));
 }
 
@@ -78,7 +89,6 @@ pub fn move_player(
     let mut player_transform = player_query.single_mut();
     let mut jump_timer = jump_timer.single_mut();
     let mut direction_x = 0.0;
-    // let mut direction_y = 0.0;
     let mut anim =
         |current_movement: PlayerMovement, direction: PlayerDirection| match current_movement {
             PlayerMovement::Run => {
