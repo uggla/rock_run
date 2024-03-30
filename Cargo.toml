@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 bevy = { version = "0.12", features = ["wayland"] }
+bevy_rapier2d = "0.23.0"
 
 # Enable a small amount of optimization in debug mode
 [profile.dev]

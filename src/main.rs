@@ -8,13 +8,15 @@ use player::{
     PLAYER_SCALE_FACTOR, PLAYER_SPEED,
 };
 
+use bevy_rapier2d::prelude::*;
+
 // 2/3 of 1080p
 pub const WINDOW_WIDTH: f32 = 1280.0;
 pub const WINDOW_HEIGHT: f32 = 920.0;
 
 fn main() {
     App::new()
-        .add_plugins(
+        .add_plugins((
             DefaultPlugins
                 .set(WindowPlugin {
                     primary_window: Some(Window {
@@ -26,16 +28,21 @@ fn main() {
                 })
                 // prevents blurry sprites
                 .set(ImagePlugin::default_nearest()),
-        )
+            RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0),
+            RapierDebugRenderPlugin::default(),
+        ))
+        // .add_plugin(RapierDebugRenderPlugin::default())
         .add_state::<PlayerMovement>()
         .add_event::<CollisionEvent>()
-        .add_systems(Startup, (setup, setup_player))
+        .add_systems(Startup, (setup_ground, setup_player, setup_physics))
         .add_systems(
             Update,
             (
                 move_player,
                 check_for_collisions,
                 gravity.after(check_for_collisions),
+                apply_forces,
+                print_ball_altitude,
                 bevy::window::close_on_esc,
             ),
         )
@@ -46,11 +53,11 @@ fn main() {
 struct Ground;
 
 #[derive(Component)]
-struct Collider;
+struct MyCollider;
 
-const GROUND_SIZE: Vec2 = Vec2::new(200.0, 10.0);
+const GROUND_SIZE: Vec2 = Vec2::new(200.0, 60.0);
 
-fn setup(mut commands: Commands) {
+fn setup_ground(mut commands: Commands) {
     commands.spawn(Camera2dBundle::default());
     commands.spawn((
         SpriteBundle {
@@ -63,7 +70,20 @@ fn setup(mut commands: Commands) {
             ..default()
         },
         Ground,
-        Collider,
+        MyCollider,
+    ));
+    commands.spawn((
+        SpriteBundle {
+            sprite: Sprite {
+                color: Color::RED,
+                custom_size: Some(GROUND_SIZE),
+                ..default()
+            },
+            transform: Transform::from_xyz(290.0, -260.0, 0.0),
+            ..default()
+        },
+        Ground,
+        MyCollider,
     ));
 }
 
@@ -77,7 +97,7 @@ struct CollisionEvent {
 fn check_for_collisions(
     player_query: Query<&Transform, With<Player>>,
 
-    collider_query: Query<(Entity, &Transform), With<Collider>>,
+    collider_query: Query<(Entity, &Transform), With<MyCollider>>,
     mut collision_events: EventWriter<CollisionEvent>,
 ) {
     let player_transform = player_query.single();
@@ -90,7 +110,7 @@ fn check_for_collisions(
             player_transform.translation,
             player_size,
             transform.translation,
-            Vec2::new(200.0, 10.0),
+            GROUND_SIZE,
         );
         if let Some(collision) = collision {
             // Sends a collision event so that other systems can react to the collision
@@ -99,13 +119,13 @@ fn check_for_collisions(
                 y: transform.translation.y,
             });
 
-            match collision {
-                Collision::Left => println!("Left collision"),
-                Collision::Right => println!("Right collision"),
-                Collision::Top => println!("Top collision"),
-                Collision::Bottom => println!("Bottom collision"),
-                Collision::Inside => println!("Inside collision"),
-            }
+            // match collision {
+            //     Collision::Left => println!("Left collision"),
+            //     Collision::Right => println!("Right collision"),
+            //     Collision::Top => println!("Top collision"),
+            //     Collision::Bottom => println!("Bottom collision"),
+            //     Collision::Inside => println!("Inside collision"),
+            // }
         }
     }
 }
@@ -131,6 +151,58 @@ fn gravity(
             } else {
                 player_transform.translation.y -= PLAYER_SPEED * time.delta_seconds();
             }
+        }
+    }
+}
+
+fn setup_physics(mut commands: Commands) {
+    /* Create the ground. */
+    commands
+        .spawn(Collider::cuboid(500.0, 50.0))
+        .insert(TransformBundle::from(Transform::from_xyz(0.0, -100.0, 0.0)));
+
+    /* Create the bouncing ball. */
+    commands
+        .spawn(RigidBody::Dynamic)
+        .insert(GravityScale(20.0))
+        .insert(Collider::ball(50.0))
+        .insert(Restitution::coefficient(0.0))
+        .insert(ExternalImpulse {
+            // impulse: Vec2::new(100.0, 200.0),
+            // torque_impulse: 14.0,
+            ..default()
+        })
+        // .insert(Damping {
+        //     linear_damping: 100.0,
+        //     angular_damping: 0.0,
+        // })
+        .insert(TransformBundle::from(Transform::from_xyz(0.0, 400.0, 0.0)));
+}
+
+fn print_ball_altitude(positions: Query<&Transform, With<RigidBody>>) {
+    for transform in positions.iter() {
+        println!("Ball altitude: {}", transform.translation.y);
+    }
+}
+
+/* Apply forces and impulses inside of a system. */
+fn apply_forces(
+    mut ext_impulses: Query<&mut ExternalImpulse>,
+    keyboard_input: Res<Input<KeyCode>>,
+    state: ResMut<State<PlayerMovement>>,
+) {
+    // Apply impulses.
+    if keyboard_input.pressed(KeyCode::Up) && state.get() != &PlayerMovement::Jump {
+        for mut ext_impulse in ext_impulses.iter_mut() {
+            ext_impulse.impulse = Vec2::new(0.0, 500.0);
+            // ext_impulse.torque_impulse = 0.4;
+        }
+    }
+
+    if keyboard_input.pressed(KeyCode::Right) {
+        for mut ext_impulse in ext_impulses.iter_mut() {
+            ext_impulse.impulse = Vec2::new(20.0, 0.0);
+            // ext_impulse.torque_impulse = 0.4;
         }
     }
 }
