@@ -42,24 +42,22 @@ pub enum PlayerDirection {
 pub fn setup_player(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    mut texture_atlases: ResMut<Assets<TextureAtlas>>,
+    mut texture_atlases: ResMut<Assets<TextureAtlasLayout>>,
 ) {
-    let texture_handle = asset_server.load("gabe-idle-run.png");
-    let texture_atlas = TextureAtlas::from_grid(
-        texture_handle,
-        Vec2::new(PLAYER_WIDTH, PLAYER_HEIGHT),
-        7,
-        1,
-        None,
-        None,
-    );
-    let texture_atlas_handle = texture_atlases.add(texture_atlas);
+    let texture = asset_server.load("gabe-idle-run.png");
+    let layout =
+        TextureAtlasLayout::from_grid(Vec2::new(PLAYER_WIDTH, PLAYER_HEIGHT), 7, 1, None, None);
+    let texture_atlas_layout = texture_atlases.add(layout);
     // Use only the subset of sprites in the sheet that make up the run animation
     let animation_indices = AnimationIndices { first: 1, last: 6 };
     commands.spawn((
         SpriteSheetBundle {
-            texture_atlas: texture_atlas_handle,
-            sprite: TextureAtlasSprite::new(animation_indices.first),
+            texture,
+            sprite: Sprite { ..default() },
+            atlas: TextureAtlas {
+                layout: texture_atlas_layout,
+                index: animation_indices.first,
+            },
             transform: Transform {
                 scale: Vec3::splat(PLAYER_SCALE_FACTOR),
                 translation: Vec3::new(0.0, 200.0, 1.0),
@@ -76,12 +74,13 @@ pub fn setup_player(
 
 pub fn move_player(
     time: Res<Time>,
-    keyboard_input: Res<Input<KeyCode>>,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
     mut player_query: Query<&mut Transform, With<Player>>,
     mut animation_query: Query<(
         &AnimationIndices,
         &mut AnimationTimer,
-        &mut TextureAtlasSprite,
+        &mut TextureAtlas,
+        &mut Sprite,
     )>,
     state: ResMut<State<PlayerMovement>>,
     mut next_state: ResMut<NextState<PlayerMovement>>,
@@ -92,7 +91,7 @@ pub fn move_player(
     let mut direction_x = 0.0;
     let mut anim = |current_movement: PlayerMovement| match current_movement {
         PlayerMovement::Run(direction) => {
-            for (indices, mut timer, mut sprite) in &mut animation_query {
+            for (indices, mut timer, mut texture, mut sprite) in &mut animation_query {
                 timer.tick(time.delta());
                 if timer.just_finished() {
                     match direction {
@@ -102,10 +101,10 @@ pub fn move_player(
                     match state.get() {
                         PlayerMovement::Jump => {}
                         _ => {
-                            sprite.index = if sprite.index == indices.last {
+                            texture.index = if texture.index == indices.last {
                                 indices.first
                             } else {
-                                sprite.index + 1
+                                texture.index + 1
                             };
                         }
                     }
@@ -113,32 +112,32 @@ pub fn move_player(
             }
         }
         PlayerMovement::Idle => {
-            let (_, _, mut sprite) = animation_query.single_mut();
+            let (_, _, mut texture, _) = animation_query.single_mut();
             match state.get() {
                 PlayerMovement::Jump => {}
                 _ => {
-                    sprite.index = 0;
+                    texture.index = 0;
                 }
             }
         }
         PlayerMovement::Jump => {
-            let (_, _, mut sprite) = animation_query.single_mut();
-            sprite.index = 3;
+            let (_, _, mut texture, _) = animation_query.single_mut();
+            texture.index = 3;
         }
     };
 
     let mut current_movement: PlayerMovement = PlayerMovement::Idle;
-    if keyboard_input.pressed(KeyCode::Left) {
+    if keyboard_input.pressed(KeyCode::ArrowLeft) {
         direction_x -= 1.0;
         current_movement = PlayerMovement::Run(PlayerDirection::Left);
         anim(current_movement);
     }
-    if keyboard_input.pressed(KeyCode::Right) {
+    if keyboard_input.pressed(KeyCode::ArrowRight) {
         direction_x += 1.0;
         current_movement = PlayerMovement::Run(PlayerDirection::Right);
         anim(current_movement);
     }
-    if keyboard_input.pressed(KeyCode::Up) && state.get() != &PlayerMovement::Jump {
+    if keyboard_input.pressed(KeyCode::ArrowUp) && state.get() != &PlayerMovement::Jump {
         next_state.set(PlayerMovement::Jump);
         jump_timer.reset();
         current_movement = PlayerMovement::Jump;
@@ -154,7 +153,7 @@ pub fn move_player(
     player_transform.translation.x += direction_x * PLAYER_SPEED * time.delta_seconds();
 
     if state.get() == &PlayerMovement::Jump {
-        if jump_timer.percent() > 0.5 {
+        if jump_timer.fraction() > 0.5 {
             player_transform.translation.y -= PLAYER_SPEED * time.delta_seconds();
         } else {
             player_transform.translation.y += PLAYER_SPEED * time.delta_seconds();
@@ -166,11 +165,4 @@ pub fn move_player(
         next_state.set(PlayerMovement::Idle);
         player_transform.translation.y -= PLAYER_SPEED * time.delta_seconds();
     }
-
-    // Update the player position,
-    // making sure it doesn't cause the player to leave the arena
-    // let left_bound = LEFT_WALL + WALL_THICKNESS / 2.0 + player_SIZE.x / 2.0 + PADDLE_PADDING;
-    // let right_bound = RIGHT_WALL - WALL_THICKNESS / 2.0 - player_SIZE.x / 2.0 - PADDLE_PADDING;
-
-    // player_transform.translation.x = new_paddle_position.clamp(left_bound, right_bound);
 }

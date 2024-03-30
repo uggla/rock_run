@@ -1,7 +1,7 @@
 mod player;
 
+use bevy::math::bounding::{Aabb2d, IntersectsVolume};
 use bevy::prelude::*;
-use bevy::sprite::collide_aabb::{collide, Collision};
 use bevy::window::WindowResolution;
 use player::{
     move_player, setup_player, Player, PlayerMovement, PLAYER_HITBOX_HEIGHT, PLAYER_HITBOX_WIDTH,
@@ -31,8 +31,7 @@ fn main() {
             RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0),
             RapierDebugRenderPlugin::default(),
         ))
-        // .add_plugin(RapierDebugRenderPlugin::default())
-        .add_state::<PlayerMovement>()
+        .init_state::<PlayerMovement>()
         .add_event::<CollisionEvent>()
         .add_systems(Startup, (setup_ground, setup_player, setup_physics))
         .add_systems(
@@ -105,18 +104,15 @@ fn check_for_collisions(
         PLAYER_HITBOX_WIDTH * PLAYER_SCALE_FACTOR,
         PLAYER_HITBOX_HEIGHT * PLAYER_SCALE_FACTOR,
     );
-    for (_collider_entity, transform) in &collider_query {
-        let collision = collide(
-            player_transform.translation,
-            player_size,
-            transform.translation,
-            GROUND_SIZE,
-        );
-        if let Some(collision) = collision {
+    for (_collider_entity, collider_transform) in &collider_query {
+        let player = Aabb2d::new(player_transform.translation.truncate(), player_size);
+        let ground = Aabb2d::new(collider_transform.translation.truncate(), GROUND_SIZE);
+        let collision = player.intersects(&ground);
+        if collision {
             // Sends a collision event so that other systems can react to the collision
             collision_events.send(CollisionEvent {
-                x: transform.translation.x,
-                y: transform.translation.y,
+                x: collider_transform.translation.x,
+                y: collider_transform.translation.y,
             });
 
             // match collision {
@@ -188,18 +184,18 @@ fn print_ball_altitude(positions: Query<&Transform, With<RigidBody>>) {
 /* Apply forces and impulses inside of a system. */
 fn apply_forces(
     mut ext_impulses: Query<&mut ExternalImpulse>,
-    keyboard_input: Res<Input<KeyCode>>,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
     state: ResMut<State<PlayerMovement>>,
 ) {
     // Apply impulses.
-    if keyboard_input.pressed(KeyCode::Up) && state.get() != &PlayerMovement::Jump {
+    if keyboard_input.pressed(KeyCode::ArrowUp) && state.get() != &PlayerMovement::Jump {
         for mut ext_impulse in ext_impulses.iter_mut() {
             ext_impulse.impulse = Vec2::new(0.0, 500.0);
             // ext_impulse.torque_impulse = 0.4;
         }
     }
 
-    if keyboard_input.pressed(KeyCode::Right) {
+    if keyboard_input.pressed(KeyCode::ArrowRight) {
         for mut ext_impulse in ext_impulses.iter_mut() {
             ext_impulse.impulse = Vec2::new(20.0, 0.0);
             // ext_impulse.torque_impulse = 0.4;
