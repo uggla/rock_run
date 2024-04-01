@@ -29,8 +29,9 @@ fn main() {
                 })
                 // prevents blurry sprites
                 .set(ImagePlugin::default_nearest()),
-            RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0),
+            RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(40.0),
             RapierDebugRenderPlugin::default(),
+            TextSyllablePlugin,
         ))
         .init_state::<PlayerMovement>()
         .add_event::<CollisionEvent>()
@@ -162,8 +163,9 @@ fn setup_physics(mut commands: Commands) {
     commands
         .spawn(RigidBody::Dynamic)
         .insert(GravityScale(20.0))
-        .insert(Collider::ball(50.0))
+        .insert(Collider::ball(20.0))
         .insert(Restitution::coefficient(0.0))
+        // .insert(ColliderMassProperties::Density(20.0))
         .insert(ExternalImpulse {
             // impulse: Vec2::new(100.0, 200.0),
             // torque_impulse: 14.0,
