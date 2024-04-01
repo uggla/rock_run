@@ -9,10 +9,11 @@ use player::{
 };
 
 use bevy_rapier2d::prelude::*;
+use text_syllable::TextSyllablePlugin;
 
-// 2/3 of 1080p
+// 16/9 1280x720
 pub const WINDOW_WIDTH: f32 = 1280.0;
-pub const WINDOW_HEIGHT: f32 = 920.0;
+pub const WINDOW_HEIGHT: f32 = 720.0;
 
 fn main() {
     App::new()
