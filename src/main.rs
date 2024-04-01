@@ -1,4 +1,5 @@
 mod player;
+mod text_syllable;
 
 use bevy::math::bounding::{Aabb2d, IntersectsVolume};
 use bevy::prelude::*;
@@ -31,7 +32,7 @@ fn main() {
                 .set(ImagePlugin::default_nearest()),
             RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(60.0),
             RapierDebugRenderPlugin::default(),
-            TextSyllablePlugin,
+            TextSyllablePlugin::default(),
         ))
         .init_state::<PlayerMovement>()
         .add_event::<CollisionEvent>()

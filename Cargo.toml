@@ -9,6 +9,7 @@ edition = "2021"
 [dependencies]
 bevy = { version = "0.13.1", features = ["wayland"] }
 bevy_rapier2d = "0.25.0"
+raqote = { version = "0.8.3", default-features = false, features = ["pathfinder_geometry"] }
 
 # Enable a small amount of optimization in debug mode
 [profile.dev]
@@ -17,4 +18,7 @@ opt-level = 1
 # Enable high optimizations for dependencies (incl. Bevy), but not for our code:
 [profile.dev.package."*"]
 opt-level = 3
+
+[dev-dependencies]
+pretty_assertions = "1.4.0"
 
