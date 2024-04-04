@@ -21,7 +21,7 @@ fn main() {
             DefaultPlugins
                 .set(WindowPlugin {
                     primary_window: Some(Window {
-                        title: "Bevy".to_string(),
+                        title: "RockRun: Rose's Odyssey".to_string(),
                         resolution: WindowResolution::new(WINDOW_WIDTH, WINDOW_HEIGHT),
                         ..default()
                     }),

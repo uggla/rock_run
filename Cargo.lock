@@ -2404,14 +2404,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "my_bevy_game"
-version = "0.1.0"
-dependencies = [
- "bevy",
- "bevy_rapier2d",
-]
-
-[[package]]
 name = "naga"
 version = "0.19.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3139,6 +3131,14 @@ name = "robust"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cbf4a6aa5f6d6888f39e980649f3ad6b666acdce1d78e95b8a2cb076e687ae30"
+
+[[package]]
+name = "rock_run"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "bevy_rapier2d",
+]
 
 [[package]]
 name = "rodio"
