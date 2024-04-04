@@ -29,7 +29,7 @@ fn main() {
                 })
                 // prevents blurry sprites
                 .set(ImagePlugin::default_nearest()),
-            RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(40.0),
+            RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(60.0),
             RapierDebugRenderPlugin::default(),
             TextSyllablePlugin,
         ))
@@ -193,7 +193,7 @@ fn apply_forces(
     // Apply impulses.
     if keyboard_input.pressed(KeyCode::ArrowUp) && state.get() != &PlayerMovement::Jump {
         for mut ext_impulse in ext_impulses.iter_mut() {
-            ext_impulse.impulse = Vec2::new(0.0, 500.0);
+            ext_impulse.impulse = Vec2::new(0.0, 250.0);
             // ext_impulse.torque_impulse = 0.4;
         }
     }
