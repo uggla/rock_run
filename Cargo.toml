@@ -17,6 +17,7 @@ thiserror = "1.0.58"
 tiled = { version = "0.11.2", default-features = false }
 
 [target.x86_64-unknown-linux-gnu.dependencies.bevy]
+version = "0.13.2"
 features = ["wayland", "dynamic_linking"]
 # dynamic linking must be removed for release builds
 # features = ["wayland"]
@@ -31,9 +32,3 @@ opt-level = 3
 
 [dev-dependencies]
 pretty_assertions = "1.4.0"
-
-[target.wasm32-unknown-unknown]
-# export CARGO_TARGET_WASM32_UNKNOWN_UNKNOWN_RUNNER=wasm-server-runner
-# cargo run --target wasm32-unknown-unknown
-# above lines work, however below directive does not work
-runner = "wasm-server-runner"
