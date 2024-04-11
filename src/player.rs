@@ -14,7 +14,6 @@ pub struct AnimationIndices {
 }
 
 #[derive(Component)]
-
 pub struct Player;
 
 #[derive(Component, Deref, DerefMut)]

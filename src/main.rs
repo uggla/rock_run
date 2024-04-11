@@ -14,6 +14,8 @@ use bevy_ecs_tilemap::prelude::*;
 use bevy_rapier2d::prelude::*;
 use text_syllable::TextSyllablePlugin;
 
+use crate::text_syllable::TextSyllableValues;
+
 // 16/9 1280x720
 pub const WINDOW_WIDTH: f32 = 1280.0;
 pub const WINDOW_HEIGHT: f32 = 720.0;
@@ -54,6 +56,7 @@ fn main() {
                 print_ball_altitude,
                 bevy::window::close_on_esc,
                 helpers::camera::movement,
+                update_text,
             ),
         )
         .run();
@@ -198,7 +201,7 @@ fn setup_physics(mut commands: Commands) {
 
 fn print_ball_altitude(positions: Query<&Transform, With<RigidBody>>) {
     for transform in positions.iter() {
-        println!("Ball altitude: {}", transform.translation.y);
+        info!("Ball altitude: {}", transform.translation.y);
     }
 }
 
@@ -221,5 +224,11 @@ fn apply_forces(
             ext_impulse.impulse = Vec2::new(20.0, 0.0);
             // ext_impulse.torque_impulse = 0.4;
         }
+    }
+}
+
+fn update_text(mut params: ResMut<TextSyllableValues>, keyboard_input: Res<ButtonInput<KeyCode>>) {
+    if keyboard_input.pressed(KeyCode::Space) {
+        params.text = "bi-du-le".into();
     }
 }

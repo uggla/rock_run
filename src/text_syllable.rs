@@ -12,6 +12,8 @@ use bevy::{
 
 use raqote::{DrawOptions, DrawTarget, Gradient, GradientStop, PathBuilder, Point, Source, Spread};
 
+const Z_VALUE: f32 = 10.0;
+
 #[derive(Clone, Debug)]
 pub struct SyllableStyle {
     pub font_size: f32,
@@ -26,17 +28,27 @@ pub struct TextSyllablePlugin {
     pub box_filling: Source<'static>,
     pub style_a: SyllableStyle,
     pub style_b: SyllableStyle,
+    pub text: String,
 }
 
+#[derive(Component)]
+struct TextSyllableBox;
+
+#[derive(Component)]
+struct TextSyllable;
+
 #[derive(Resource)]
-struct TextSyllable {
+pub struct TextSyllableValues {
     font: AssetPath<'static>,
     radius: f32,
     box_position: Vec2,
     box_size: Vec2,
-    pub box_filling: Source<'static>,
-    pub style_a: SyllableStyle,
-    pub style_b: SyllableStyle,
+    box_filling: Source<'static>,
+    def_style_a: SyllableStyle,
+    def_style_b: SyllableStyle,
+    pub text: String,
+    style_a: TextStyle,
+    style_b: TextStyle,
 }
 
 impl Default for TextSyllablePlugin {
@@ -46,7 +58,7 @@ impl Default for TextSyllablePlugin {
         Self {
             font: "fonts/FiraSans-Bold.ttf".into(),
             radius: 20.0,
-            box_position: Vec2::new(-300.0, -237.0),
+            box_position: Vec2::new(0.0, 0.0),
             box_size,
             box_filling: Source::new_linear_gradient(
                 Gradient {
@@ -84,23 +96,28 @@ impl Default for TextSyllablePlugin {
                 font_size: 42.0,
                 color: Color::DARK_GREEN,
             },
+            text: "Hel-lo I am Rose, help me re-turn home.".into(),
         }
     }
 }
 
 impl Plugin for TextSyllablePlugin {
     fn build(&self, app: &mut App) {
-        let text_params = TextSyllable {
+        let text_params = TextSyllableValues {
             font: self.font.clone(),
             radius: self.radius,
             box_position: self.box_position,
             box_size: self.box_size,
             box_filling: self.box_filling.clone(),
-            style_a: self.style_a.clone(),
-            style_b: self.style_b.clone(),
+            def_style_a: self.style_a.clone(),
+            def_style_b: self.style_b.clone(),
+            text: self.text.clone(),
+            style_a: TextStyle::default(),
+            style_b: TextStyle::default(),
         };
         app.insert_resource(text_params);
         app.add_systems(Startup, setup);
+        app.add_systems(Update, toggle_visibility);
     }
 }
 
@@ -108,7 +125,7 @@ fn setup(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut assets: ResMut<Assets<Image>>,
-    params: Res<TextSyllable>,
+    mut params: ResMut<TextSyllableValues>,
 ) {
     let font = asset_server.load(params.font.clone());
 
@@ -129,51 +146,57 @@ fn setup(
     let image_handle = assets.add(image);
 
     // Define styles
-    let style_a = TextStyle {
+    params.style_a = TextStyle {
         font: font.clone(),
-        font_size: params.style_a.font_size,
-        color: params.style_a.color,
+        font_size: params.def_style_a.font_size,
+        color: params.def_style_a.color,
     };
-    let style_b = TextStyle {
+    params.style_b = TextStyle {
         font: font.clone(),
-        font_size: params.style_b.font_size,
-        color: params.style_b.color,
+        font_size: params.def_style_b.font_size,
+        color: params.def_style_b.color,
     };
     commands
-        .spawn(SpriteBundle {
-            sprite: Sprite {
-                // color: Color::rgb(0.25, 0.25, 0.75),
-                // custom_size: Some(Vec2::new(box_size.x, box_size.y)),
+        .spawn((
+            SpriteBundle {
+                sprite: Sprite {
+                    // color: Color::rgb(0.25, 0.25, 0.75),
+                    // custom_size: Some(Vec2::new(box_size.x, box_size.y)),
+                    ..default()
+                },
+                visibility: Visibility::Hidden,
+                texture: image_handle,
+                transform: Transform::from_translation(params.box_position.extend(Z_VALUE)),
                 ..default()
             },
-            // visibility: Visibility::Hidden,
-            texture: image_handle,
-            transform: Transform::from_translation(params.box_position.extend(10.0)),
-            ..default()
-        })
+            TextSyllableBox,
+        ))
         .with_children(|builder| {
-            builder.spawn(Text2dBundle {
-                text: Text {
-                    sections: build_text_sections_according_to_syllables(
-                        "Hel-lo I am Rose, help me re-turn home.",
-                        style_a,
-                        style_b,
-                    ),
-                    justify: JustifyText::Left,
-                    linebreak_behavior: BreakLineOn::WordBoundary,
+            builder.spawn((
+                Text2dBundle {
+                    text: Text {
+                        sections: build_text_sections_according_to_syllables(
+                            &params.text,
+                            params.style_a.clone(),
+                            params.style_b.clone(),
+                        ),
+                        justify: JustifyText::Left,
+                        linebreak_behavior: BreakLineOn::WordBoundary,
+                    },
+                    text_2d_bounds: Text2dBounds {
+                        // Wrap text in the rectangle
+                        size: Vec2::new(params.box_size.x, params.box_size.y),
+                    },
+                    // ensure the text is drawn on top of the box
+                    transform: Transform::from_translation(Vec3::Z),
+                    ..default()
                 },
-                text_2d_bounds: Text2dBounds {
-                    // Wrap text in the rectangle
-                    size: Vec2::new(params.box_size.x, params.box_size.y),
-                },
-                // ensure the text is drawn on top of the box
-                transform: Transform::from_translation(Vec3::Z),
-                ..default()
-            });
+                TextSyllable,
+            ));
         });
 }
 
-fn draw_rounded_rectangle(params: &Res<TextSyllable>) -> DrawTarget {
+fn draw_rounded_rectangle(params: &ResMut<TextSyllableValues>) -> DrawTarget {
     let mut dt = DrawTarget::new(params.box_size.x as i32, params.box_size.y as i32);
 
     let path = shape_rounded_rectangle(params.radius, params.box_size);
@@ -184,10 +207,10 @@ fn draw_rounded_rectangle(params: &Res<TextSyllable>) -> DrawTarget {
 
 fn shape_rounded_rectangle(radius: f32, box_size: Vec2) -> raqote::Path {
     let mut pb = PathBuilder::new();
-    pb.move_to(radius, 0.0);
-
-    pb.line_to(box_size.x - radius, 0.);
+    //
     // Top right corner
+    pb.move_to(radius, 0.0);
+    pb.line_to(box_size.x - radius, 0.);
     pb.arc(
         box_size.x - radius,
         radius,
@@ -207,7 +230,6 @@ fn shape_rounded_rectangle(radius: f32, box_size: Vec2) -> raqote::Path {
     pb.arc(radius, box_size.y - radius, radius, PI / 2.0, PI / 2.0);
     pb.line_to(0.0, radius);
     pb.arc(radius, radius, radius, PI, PI / 2.0);
-
     pb.close();
     pb.finish()
 }
@@ -267,6 +289,29 @@ fn build_text_sections_according_to_syllables(
         .collect();
 
     text_sections
+}
+
+fn toggle_visibility(
+    camera: Query<&Transform, (With<Camera>, Without<TextSyllableBox>)>,
+    mut text_syllable_box: Query<(&mut Transform, &mut Visibility), With<TextSyllableBox>>,
+    mut text_syllable: Query<&mut Text, With<TextSyllable>>,
+    params: Res<TextSyllableValues>,
+) {
+    if let Ok(camera_pos) = camera.get_single() {
+        if let Ok((mut transform, mut visibility)) = text_syllable_box.get_single_mut() {
+            *visibility = Visibility::Visible;
+            transform.translation =
+                Vec3::new(camera_pos.translation.x, camera_pos.translation.y, Z_VALUE);
+
+            if let Ok(mut text) = text_syllable.get_single_mut() {
+                text.sections = build_text_sections_according_to_syllables(
+                    params.text.as_str(),
+                    params.style_a.clone(),
+                    params.style_b.clone(),
+                )
+            }
+        }
+    }
 }
 
 #[cfg(test)]
