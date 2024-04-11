@@ -33,7 +33,7 @@
             "scaleInDock": 1
         }
     },
-    "last.imagePath": "/home/uggla/workspace/rust/my_bevy_game/assets",
+    "last.imagePath": "/home/rribaud/workspace/rust/my_bevy_game/assets",
     "map.height": 45,
     "map.lastUsedFormat": "tmx",
     "map.tileHeight": 16,
@@ -51,5 +51,5 @@
         "height": 16,
         "width": 16
     },
-    "tileset.type": 1
+    "tileset.type": 0
 }
