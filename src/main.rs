@@ -1,3 +1,4 @@
+mod helpers;
 mod player;
 mod text_syllable;
 
@@ -9,6 +10,7 @@ use player::{
     PLAYER_SCALE_FACTOR, PLAYER_SPEED,
 };
 
+use bevy_ecs_tilemap::prelude::*;
 use bevy_rapier2d::prelude::*;
 use text_syllable::TextSyllablePlugin;
 
@@ -30,13 +32,18 @@ fn main() {
                 })
                 // prevents blurry sprites
                 .set(ImagePlugin::default_nearest()),
+            TilemapPlugin,
+            helpers::tiled::TiledMapPlugin,
             RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(60.0),
             RapierDebugRenderPlugin::default(),
             TextSyllablePlugin::default(),
         ))
         .init_state::<PlayerMovement>()
         .add_event::<CollisionEvent>()
-        .add_systems(Startup, (setup_ground, setup_player, setup_physics))
+        .add_systems(
+            Startup,
+            (setup_background, setup_ground, setup_player, setup_physics),
+        )
         .add_systems(
             Update,
             (
@@ -46,6 +53,7 @@ fn main() {
                 apply_forces,
                 print_ball_altitude,
                 bevy::window::close_on_esc,
+                helpers::camera::movement,
             ),
         )
         .run();
@@ -60,33 +68,42 @@ struct MyCollider;
 const GROUND_SIZE: Vec2 = Vec2::new(200.0, 60.0);
 
 fn setup_ground(mut commands: Commands) {
+    commands.spawn((
+        SpriteBundle {
+            sprite: Sprite {
+                color: Color::RED,
+                custom_size: Some(GROUND_SIZE),
+                ..default()
+            },
+            transform: Transform::from_xyz(0.0, -300.0, 1.0),
+            ..default()
+        },
+        Ground,
+        MyCollider,
+    ));
+    commands.spawn((
+        SpriteBundle {
+            sprite: Sprite {
+                color: Color::RED,
+                custom_size: Some(GROUND_SIZE),
+                ..default()
+            },
+            transform: Transform::from_xyz(290.0, -260.0, 1.0),
+            ..default()
+        },
+        Ground,
+        MyCollider,
+    ));
+}
+
+fn setup_background(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(Camera2dBundle::default());
-    commands.spawn((
-        SpriteBundle {
-            sprite: Sprite {
-                color: Color::RED,
-                custom_size: Some(GROUND_SIZE),
-                ..default()
-            },
-            transform: Transform::from_xyz(0.0, -300.0, 0.0),
-            ..default()
-        },
-        Ground,
-        MyCollider,
-    ));
-    commands.spawn((
-        SpriteBundle {
-            sprite: Sprite {
-                color: Color::RED,
-                custom_size: Some(GROUND_SIZE),
-                ..default()
-            },
-            transform: Transform::from_xyz(290.0, -260.0, 0.0),
-            ..default()
-        },
-        Ground,
-        MyCollider,
-    ));
+    let map_handle: Handle<helpers::tiled::TiledMap> = asset_server.load("level01.tmx");
+
+    commands.spawn(helpers::tiled::TiledMapBundle {
+        tiled_map: map_handle,
+        ..Default::default()
+    });
 }
 
 #[derive(Event, Default)]

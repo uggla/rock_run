@@ -8,8 +8,13 @@ edition = "2021"
 
 [dependencies]
 bevy = { version = "0.13.1", features = ["wayland"] }
+bevy_ecs_tilemap = { path = "/home/uggla/workspace/rust/bevy_ecs_tilemap" }
 bevy_rapier2d = "0.25.0"
-raqote = { version = "0.8.3", default-features = false, features = ["pathfinder_geometry"] }
+raqote = { version = "0.8.3", default-features = false, features = [
+  "pathfinder_geometry",
+] }
+thiserror = "1.0.58"
+tiled = { version = "0.11.2", default-features = false }
 
 # Enable a small amount of optimization in debug mode
 [profile.dev]
@@ -21,4 +26,3 @@ opt-level = 3
 
 [dev-dependencies]
 pretty_assertions = "1.4.0"
-
