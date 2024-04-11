@@ -60,7 +60,7 @@ pub fn setup_player(
             },
             transform: Transform {
                 scale: Vec3::splat(PLAYER_SCALE_FACTOR),
-                translation: Vec3::new(0.0, 200.0, 1.0),
+                translation: Vec3::new(0.0, 200.0, 10.0),
                 ..default()
             },
             ..default()

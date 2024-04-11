@@ -10,7 +10,7 @@ edition = "2021"
 bevy = { version = "0.13.2", features = [
   "wayland",
   "dynamic_linking",
-] } # dynamic linking must be removed not in dev
+] } # dynamic linking must be removed for prod or wasm
 bevy_ecs_tilemap = { path = "../bevy_ecs_tilemap" }
 bevy_rapier2d = "0.25.0"
 raqote = { version = "0.8.3", default-features = false, features = [
@@ -29,3 +29,4 @@ opt-level = 3
 
 [dev-dependencies]
 pretty_assertions = "1.4.0"
+

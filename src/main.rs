@@ -75,7 +75,7 @@ fn setup_ground(mut commands: Commands) {
                 custom_size: Some(GROUND_SIZE),
                 ..default()
             },
-            transform: Transform::from_xyz(0.0, -300.0, 1.0),
+            transform: Transform::from_xyz(0.0, -300.0, 10.0),
             ..default()
         },
         Ground,
@@ -88,7 +88,7 @@ fn setup_ground(mut commands: Commands) {
                 custom_size: Some(GROUND_SIZE),
                 ..default()
             },
-            transform: Transform::from_xyz(290.0, -260.0, 1.0),
+            transform: Transform::from_xyz(290.0, -260.0, 10.0),
             ..default()
         },
         Ground,
