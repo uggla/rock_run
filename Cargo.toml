@@ -11,7 +11,7 @@ bevy = { version = "0.13.2", features = [
   "wayland",
   "dynamic_linking",
 ] } # dynamic linking must be removed not in dev
-bevy_ecs_tilemap = { path = "/home/uggla/workspace/rust/bevy_ecs_tilemap" }
+bevy_ecs_tilemap = { path = "../bevy_ecs_tilemap" }
 bevy_rapier2d = "0.25.0"
 raqote = { version = "0.8.3", default-features = false, features = [
   "pathfinder_geometry",
