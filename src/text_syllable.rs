@@ -10,16 +10,22 @@ use bevy::{
     text::{BreakLineOn, Text2dBounds},
 };
 
-use raqote::{
-    DrawOptions, DrawTarget, Gradient, GradientStop, PathBuilder, Point, SolidSource, Source,
-    Spread,
-};
+use raqote::{DrawOptions, DrawTarget, Gradient, GradientStop, PathBuilder, Point, Source, Spread};
+
+#[derive(Clone, Debug)]
+pub struct SyllableStyle {
+    pub font_size: f32,
+    pub color: Color,
+}
 
 pub struct TextSyllablePlugin {
-    pub(crate) font: AssetPath<'static>,
-    pub(crate) radius: f32,
-    pub(crate) box_position: Vec2,
-    pub(crate) box_size: Vec2,
+    pub font: AssetPath<'static>,
+    pub radius: f32,
+    pub box_position: Vec2,
+    pub box_size: Vec2,
+    pub box_filling: Source<'static>,
+    pub style_a: SyllableStyle,
+    pub style_b: SyllableStyle,
 }
 
 #[derive(Resource)]
@@ -28,15 +34,56 @@ struct TextSyllable {
     radius: f32,
     box_position: Vec2,
     box_size: Vec2,
+    pub box_filling: Source<'static>,
+    pub style_a: SyllableStyle,
+    pub style_b: SyllableStyle,
 }
 
 impl Default for TextSyllablePlugin {
     fn default() -> Self {
+        let box_size = Vec2::new(500.0, 200.0);
+
         Self {
             font: "fonts/FiraSans-Bold.ttf".into(),
             radius: 20.0,
             box_position: Vec2::new(-300.0, -237.0),
-            box_size: Vec2::new(500.0, 200.0),
+            box_size,
+            box_filling: Source::new_linear_gradient(
+                Gradient {
+                    stops: vec![
+                        GradientStop {
+                            position: 0.0,
+                            color: raqote::Color::new(0xff, 0xff, 0xff, 0xff),
+                        },
+                        // GradientStop {
+                        //     position: 0.9999,
+                        //     color: Color::new(0xff, 0x0, 0x0, 0x0),
+                        // },
+                        GradientStop {
+                            position: 1.0,
+                            color: raqote::Color::new(0xff, 0xa4, 0xa4, 0xa4),
+                        },
+                    ],
+                },
+                Point::new(0., 0.),
+                Point::new(0., box_size.y),
+                Spread::Pad,
+            ),
+            // Define the color and fill style
+            // box_filling: Source::Solid(SolidSource {
+            //     r: 255,
+            //     g: 0,
+            //     b: 0,
+            //     a: 255,
+            // }),
+            style_a: SyllableStyle {
+                font_size: 42.0,
+                color: Color::BLUE,
+            },
+            style_b: SyllableStyle {
+                font_size: 42.0,
+                color: Color::DARK_GREEN,
+            },
         }
     }
 }
@@ -48,6 +95,9 @@ impl Plugin for TextSyllablePlugin {
             radius: self.radius,
             box_position: self.box_position,
             box_size: self.box_size,
+            box_filling: self.box_filling.clone(),
+            style_a: self.style_a.clone(),
+            style_b: self.style_b.clone(),
         };
         app.insert_resource(text_params);
         app.add_systems(Startup, setup);
@@ -61,51 +111,13 @@ fn setup(
     params: Res<TextSyllable>,
 ) {
     let font = asset_server.load(params.font.clone());
-    let radius = 20.0;
-    let box_position = Vec2::new(-300.0, -237.0);
-    let box_size = Vec2::new(500.0, 200.0);
 
-    let mut dt = DrawTarget::new(box_size.x as i32, box_size.y as i32);
-
-    let path = shape_rounded_rectangle(radius, box_size);
-
-    // Define the color and fill style
-    let red = Source::Solid(SolidSource {
-        r: 255,
-        g: 0,
-        b: 0,
-        a: 255,
-    });
-
-    let gradient = Source::new_linear_gradient(
-        Gradient {
-            stops: vec![
-                GradientStop {
-                    position: 0.0,
-                    color: raqote::Color::new(0xff, 0xff, 0xff, 0xff),
-                },
-                // GradientStop {
-                //     position: 0.9999,
-                //     color: Color::new(0xff, 0x0, 0x0, 0x0),
-                // },
-                GradientStop {
-                    position: 1.0,
-                    color: raqote::Color::new(0xff, 0xa4, 0xa4, 0xa4),
-                },
-            ],
-        },
-        Point::new(0., 0.),
-        Point::new(0., box_size.y),
-        Spread::Pad,
-    );
-
-    // Draw the path
-    dt.fill(&path, &gradient, &DrawOptions::new());
+    let dt = draw_rounded_rectangle(&params);
 
     let image = Image::new(
         Extent3d {
-            width: box_size.x as u32,
-            height: box_size.y as u32,
+            width: params.box_size.x as u32,
+            height: params.box_size.y as u32,
             depth_or_array_layers: 1,
         },
         TextureDimension::D2,
@@ -116,16 +128,16 @@ fn setup(
 
     let image_handle = assets.add(image);
 
-    // Demonstrate text wrapping
-    let slightly_smaller_text_style_blue = TextStyle {
+    // Define styles
+    let style_a = TextStyle {
         font: font.clone(),
-        font_size: 42.0,
-        color: Color::BLUE,
+        font_size: params.style_a.font_size,
+        color: params.style_a.color,
     };
-    let slightly_smaller_text_style_green = TextStyle {
+    let style_b = TextStyle {
         font: font.clone(),
-        font_size: 42.0,
-        color: Color::DARK_GREEN,
+        font_size: params.style_b.font_size,
+        color: params.style_b.color,
     };
     commands
         .spawn(SpriteBundle {
@@ -136,7 +148,7 @@ fn setup(
             },
             // visibility: Visibility::Hidden,
             texture: image_handle,
-            transform: Transform::from_translation(box_position.extend(10.0)),
+            transform: Transform::from_translation(params.box_position.extend(10.0)),
             ..default()
         })
         .with_children(|builder| {
@@ -144,21 +156,30 @@ fn setup(
                 text: Text {
                     sections: build_text_sections_according_to_syllables(
                         "Hel-lo I am Rose, help me re-turn home.",
-                        slightly_smaller_text_style_blue,
-                        slightly_smaller_text_style_green,
+                        style_a,
+                        style_b,
                     ),
                     justify: JustifyText::Left,
                     linebreak_behavior: BreakLineOn::WordBoundary,
                 },
                 text_2d_bounds: Text2dBounds {
                     // Wrap text in the rectangle
-                    size: Vec2::new(box_size.x, box_size.y),
+                    size: Vec2::new(params.box_size.x, params.box_size.y),
                 },
                 // ensure the text is drawn on top of the box
                 transform: Transform::from_translation(Vec3::Z),
                 ..default()
             });
         });
+}
+
+fn draw_rounded_rectangle(params: &Res<TextSyllable>) -> DrawTarget {
+    let mut dt = DrawTarget::new(params.box_size.x as i32, params.box_size.y as i32);
+
+    let path = shape_rounded_rectangle(params.radius, params.box_size);
+
+    dt.fill(&path, &params.box_filling, &DrawOptions::new());
+    dt
 }
 
 fn shape_rounded_rectangle(radius: f32, box_size: Vec2) -> raqote::Path {
@@ -188,8 +209,7 @@ fn shape_rounded_rectangle(radius: f32, box_size: Vec2) -> raqote::Path {
     pb.arc(radius, radius, radius, PI, PI / 2.0);
 
     pb.close();
-    let path = pb.finish();
-    path
+    pb.finish()
 }
 
 fn argb_to_rgba(argb_slice: &[u32]) -> Vec<u8> {
