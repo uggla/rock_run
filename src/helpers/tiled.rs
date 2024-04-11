@@ -129,6 +129,12 @@ impl AssetLoader for TiledLoader {
             for (tileset_index, tileset) in map.tilesets().iter().enumerate() {
                 let tilemap_texture = match &tileset.image {
                     None => {
+                        #[cfg(feature = "atlas")]
+                        {
+                            log::info!("Skipping image collection tileset '{}' which is incompatible with atlas feature", tileset.name);
+                            continue;
+                        }
+
                         #[cfg(not(feature = "atlas"))]
                         {
                             let mut tile_images: Vec<Handle<Image>> = Vec::new();
