@@ -14,7 +14,7 @@ use bevy_ecs_tilemap::prelude::*;
 use bevy_rapier2d::prelude::*;
 use text_syllable::TextSyllablePlugin;
 
-use crate::text_syllable::TextSyllableValues;
+use crate::text_syllable::{TextSyllableState, TextSyllableValues};
 
 // 16/9 1280x720
 pub const WINDOW_WIDTH: f32 = 1280.0;
@@ -227,8 +227,22 @@ fn apply_forces(
     }
 }
 
-fn update_text(mut params: ResMut<TextSyllableValues>, keyboard_input: Res<ButtonInput<KeyCode>>) {
-    if keyboard_input.pressed(KeyCode::Space) {
+fn update_text(
+    mut params: ResMut<TextSyllableValues>,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    state: Res<State<TextSyllableState>>,
+    mut next_state: ResMut<NextState<TextSyllableState>>,
+    time: Res<Time>,
+) {
+    time.delta_seconds();
+    if state.get() == &TextSyllableState::Hidden && keyboard_input.pressed(KeyCode::Space) {
+        next_state.set(TextSyllableState::Visible);
+    }
+
+    if state.get() == &TextSyllableState::Visible && keyboard_input.pressed(KeyCode::Enter) {
         params.text = "bi-du-le".into();
+    }
+    if state.get() == &TextSyllableState::Visible && keyboard_input.pressed(KeyCode::Backspace) {
+        next_state.set(TextSyllableState::Hidden);
     }
 }

@@ -14,6 +14,13 @@ use raqote::{DrawOptions, DrawTarget, Gradient, GradientStop, PathBuilder, Point
 
 const Z_VALUE: f32 = 10.0;
 
+#[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States)]
+pub enum TextSyllableState {
+    #[default]
+    Hidden,
+    Visible,
+}
+
 #[derive(Clone, Debug)]
 pub struct SyllableStyle {
     pub font_size: f32,
@@ -23,7 +30,7 @@ pub struct SyllableStyle {
 pub struct TextSyllablePlugin {
     pub font: AssetPath<'static>,
     pub radius: f32,
-    pub box_position: Vec2,
+    pub box_position: Vec3,
     pub box_size: Vec2,
     pub box_filling: Source<'static>,
     pub style_a: SyllableStyle,
@@ -41,7 +48,7 @@ struct TextSyllable;
 pub struct TextSyllableValues {
     font: AssetPath<'static>,
     radius: f32,
-    box_position: Vec2,
+    box_position: Vec3,
     box_size: Vec2,
     box_filling: Source<'static>,
     def_style_a: SyllableStyle,
@@ -58,7 +65,7 @@ impl Default for TextSyllablePlugin {
         Self {
             font: "fonts/FiraSans-Bold.ttf".into(),
             radius: 20.0,
-            box_position: Vec2::new(0.0, 0.0),
+            box_position: Vec3::new(0.0, 0.0, Z_VALUE),
             box_size,
             box_filling: Source::new_linear_gradient(
                 Gradient {
@@ -115,9 +122,10 @@ impl Plugin for TextSyllablePlugin {
             style_a: TextStyle::default(),
             style_b: TextStyle::default(),
         };
-        app.insert_resource(text_params);
-        app.add_systems(Startup, setup);
-        app.add_systems(Update, toggle_visibility);
+        app.init_state::<TextSyllableState>()
+            .insert_resource(text_params)
+            .add_systems(Startup, setup)
+            .add_systems(Update, toggle_visibility);
     }
 }
 
@@ -166,7 +174,7 @@ fn setup(
                 },
                 visibility: Visibility::Hidden,
                 texture: image_handle,
-                transform: Transform::from_translation(params.box_position.extend(Z_VALUE)),
+                transform: Transform::from_translation(params.box_position),
                 ..default()
             },
             TextSyllableBox,
@@ -296,21 +304,27 @@ fn toggle_visibility(
     mut text_syllable_box: Query<(&mut Transform, &mut Visibility), With<TextSyllableBox>>,
     mut text_syllable: Query<&mut Text, With<TextSyllable>>,
     params: Res<TextSyllableValues>,
+    visible_state: Res<State<TextSyllableState>>,
 ) {
-    if let Ok(camera_pos) = camera.get_single() {
-        if let Ok((mut transform, mut visibility)) = text_syllable_box.get_single_mut() {
-            *visibility = Visibility::Visible;
-            transform.translation =
-                Vec3::new(camera_pos.translation.x, camera_pos.translation.y, Z_VALUE);
+    if visible_state.get() == &TextSyllableState::Visible {
+        if let Ok(camera_pos) = camera.get_single() {
+            if let Ok((mut transform, mut visibility)) = text_syllable_box.get_single_mut() {
+                *visibility = Visibility::Visible;
+                transform.translation =
+                    Vec3::new(camera_pos.translation.x, camera_pos.translation.y, 0.0)
+                        + params.box_position;
 
-            if let Ok(mut text) = text_syllable.get_single_mut() {
-                text.sections = build_text_sections_according_to_syllables(
-                    params.text.as_str(),
-                    params.style_a.clone(),
-                    params.style_b.clone(),
-                )
+                if let Ok(mut text) = text_syllable.get_single_mut() {
+                    text.sections = build_text_sections_according_to_syllables(
+                        params.text.as_str(),
+                        params.style_a.clone(),
+                        params.style_b.clone(),
+                    )
+                }
             }
         }
+    } else if let Ok((_, mut visibility)) = text_syllable_box.get_single_mut() {
+        *visibility = Visibility::Hidden;
     }
 }
 
