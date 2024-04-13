@@ -201,7 +201,7 @@ fn setup_physics(mut commands: Commands) {
 
 fn print_ball_altitude(positions: Query<&Transform, With<RigidBody>>) {
     for transform in positions.iter() {
-        info!("Ball altitude: {}", transform.translation.y);
+        debug!("Ball altitude: {}", transform.translation.y);
     }
 }
 
