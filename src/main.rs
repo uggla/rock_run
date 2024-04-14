@@ -50,8 +50,9 @@ fn main() {
             Update,
             (
                 move_player,
-                check_for_collisions,
-                gravity.after(check_for_collisions),
+                // check_for_collisions,
+                // gravity.after(check_for_collisions),
+                gravity,
                 apply_forces,
                 print_ball_altitude,
                 bevy::window::close_on_esc,
@@ -109,76 +110,90 @@ fn setup_background(mut commands: Commands, asset_server: Res<AssetServer>) {
     });
 }
 
-#[derive(Event, Default)]
-#[allow(dead_code)]
-struct CollisionEvent {
-    x: f32,
-    y: f32,
-}
+// #[derive(Event, Default)]
+// #[allow(dead_code)]
+// struct CollisionEvent {
+//     x: f32,
+//     y: f32,
+// }
+//
+// fn check_for_collisions(
+//     player_query: Query<&Transform, With<Player>>,
+//
+//     collider_query: Query<(Entity, &Transform), With<MyCollider>>,
+//     mut collision_events: EventWriter<CollisionEvent>,
+// ) {
+//     let player_transform = player_query.single();
+//     let player_size = Vec2::new(
+//         PLAYER_HITBOX_WIDTH * PLAYER_SCALE_FACTOR,
+//         PLAYER_HITBOX_HEIGHT * PLAYER_SCALE_FACTOR,
+//     );
+//     for (_collider_entity, collider_transform) in &collider_query {
+//         let player = Aabb2d::new(player_transform.translation.truncate(), player_size);
+//         let ground = Aabb2d::new(collider_transform.translation.truncate(), GROUND_SIZE);
+//         let collision = player.intersects(&ground);
+//         if collision {
+//             // Sends a collision event so that other systems can react to the collision
+//             collision_events.send(CollisionEvent {
+//                 x: collider_transform.translation.x,
+//                 y: collider_transform.translation.y,
+//             });
+//
+//             // match collision {
+//             //     Collision::Left => println!("Left collision"),
+//             //     Collision::Right => println!("Right collision"),
+//             //     Collision::Top => println!("Top collision"),
+//             //     Collision::Bottom => println!("Bottom collision"),
+//             //     Collision::Inside => println!("Inside collision"),
+//             // }
+//         }
+//     }
+// }
 
-fn check_for_collisions(
-    player_query: Query<&Transform, With<Player>>,
-
-    collider_query: Query<(Entity, &Transform), With<MyCollider>>,
-    mut collision_events: EventWriter<CollisionEvent>,
+fn gravity(
+    time: Res<Time>,
+    mut player_query: Query<&mut KinematicCharacterController>,
+    // mut collision_events: EventReader<CollisionEvent>,
+    state: ResMut<State<PlayerMovement>>,
 ) {
-    let player_transform = player_query.single();
-    let player_size = Vec2::new(
-        PLAYER_HITBOX_WIDTH * PLAYER_SCALE_FACTOR,
-        PLAYER_HITBOX_HEIGHT * PLAYER_SCALE_FACTOR,
-    );
-    for (_collider_entity, collider_transform) in &collider_query {
-        let player = Aabb2d::new(player_transform.translation.truncate(), player_size);
-        let ground = Aabb2d::new(collider_transform.translation.truncate(), GROUND_SIZE);
-        let collision = player.intersects(&ground);
-        if collision {
-            // Sends a collision event so that other systems can react to the collision
-            collision_events.send(CollisionEvent {
-                x: collider_transform.translation.x,
-                y: collider_transform.translation.y,
-            });
-
-            // match collision {
-            //     Collision::Left => println!("Left collision"),
-            //     Collision::Right => println!("Right collision"),
-            //     Collision::Top => println!("Top collision"),
-            //     Collision::Bottom => println!("Bottom collision"),
-            //     Collision::Inside => println!("Inside collision"),
+    let mut player_controller = player_query.single_mut();
+    match state.get() {
+        PlayerMovement::Jump => {}
+        _ => {
+            // if !collision_events.is_empty() {
+            //     for collision_event in collision_events.read() {
+            //         player_transform.translation.y = collision_event.y
+            //             + PLAYER_HITBOX_HEIGHT * PLAYER_SCALE_FACTOR / 2.0
+            //             + GROUND_SIZE.y / 2.0
+            //             - 1.0; // make the collision
+            //     }
+            //     collision_events.clear();
+            // } else {
+            player_controller.translation =
+                Some(Vec2::new(0.0, -PLAYER_SPEED * time.delta_seconds()));
             // }
         }
     }
 }
 
-fn gravity(
-    time: Res<Time>,
-    mut player_query: Query<&mut Transform, With<Player>>,
-    mut collision_events: EventReader<CollisionEvent>,
-    state: ResMut<State<PlayerMovement>>,
-) {
-    let mut player_transform = player_query.single_mut();
-    match state.get() {
-        PlayerMovement::Jump => {}
-        _ => {
-            if !collision_events.is_empty() {
-                for collision_event in collision_events.read() {
-                    player_transform.translation.y = collision_event.y
-                        + PLAYER_HITBOX_HEIGHT * PLAYER_SCALE_FACTOR / 2.0
-                        + GROUND_SIZE.y / 2.0
-                        - 1.0; // make the collision
-                }
-                collision_events.clear();
-            } else {
-                player_transform.translation.y -= PLAYER_SPEED * time.delta_seconds();
-            }
-        }
+fn read_result_system(controllers: Query<(Entity, &KinematicCharacterControllerOutput)>) {
+    for (entity, output) in controllers.iter() {
+        println!(
+            "Entity {:?} moved by {:?} and touches the ground: {:?}",
+            entity, output.effective_translation, output.grounded
+        );
     }
 }
 
 fn setup_physics(mut commands: Commands) {
     /* Create the ground. */
+    let points = vec![Vec2::new(-250.0, -100.0), Vec2::new(250.0, -100.0)];
+
     commands
-        .spawn(Collider::cuboid(500.0, 50.0))
-        .insert(TransformBundle::from(Transform::from_xyz(0.0, -100.0, 0.0)));
+        .spawn(Collider::polyline(points, None))
+        // .spawn(Collider::cuboid(500.0, 50.0))
+        .insert(Ccd::enabled());
+    // .insert(TransformBundle::from(Transform::from_xyz(0.0, -100.0, 0.0)));
 
     /* Create the bouncing ball. */
     commands

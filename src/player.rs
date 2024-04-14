@@ -4,6 +4,11 @@ use std::{
 };
 
 use bevy::prelude::*;
+use bevy_rapier2d::{
+    control::KinematicCharacterController,
+    dynamics::{Ccd, RigidBody},
+    geometry::Collider,
+};
 
 pub const PLAYER_SPEED: f32 = 500.0;
 pub const PLAYER_SCALE_FACTOR: f32 = 1.0;
@@ -57,6 +62,7 @@ pub fn setup_player(
     let layout =
         TextureAtlasLayout::from_grid(Vec2::new(PLAYER_WIDTH, PLAYER_HEIGHT), 6, 7, None, None);
     let texture_atlas_layout = texture_atlases.add(layout);
+
     commands.spawn((
         SpriteSheetBundle {
             texture,
@@ -72,12 +78,18 @@ pub fn setup_player(
             },
             ..default()
         },
+        RigidBody::KinematicPositionBased,
         AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
         JumpTimer(Timer::from_seconds(0.5, TimerMode::Once)),
         Player,
+        // Collider::capsule_y(PLAYER_HEIGHT / 3.0, 30.0),
+        Collider::capsule(Vec2::new(-4.0, -9.0), Vec2::new(-4.0, 8.0), 22.0),
+        KinematicCharacterController::default(),
+        Ccd::enabled(),
     ));
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn move_player(
     time: Res<Time>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
