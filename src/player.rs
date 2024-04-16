@@ -93,14 +93,14 @@ pub fn setup_player(
 pub fn move_player(
     time: Res<Time>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut player_query: Query<&mut Transform, With<Player>>,
+    mut player_query: Query<(&mut Transform, &mut Collider), With<Player>>,
     mut animation_query: Query<(&mut AnimationTimer, &mut TextureAtlas, &mut Sprite)>,
     state: ResMut<State<PlayerMovement>>,
     mut next_state: ResMut<NextState<PlayerMovement>>,
     mut jump_timer: Query<&mut JumpTimer>,
     mut direction: Local<IndexDirection>,
 ) {
-    let mut player_transform = player_query.single_mut();
+    let (mut player_transform, mut player_collider) = player_query.single_mut();
     let mut jump_timer = jump_timer.single_mut();
     let mut direction_x = 0.0;
     let mut anim = |current_movement: PlayerMovement| match current_movement {
@@ -110,7 +110,11 @@ pub fn move_player(
             if timer.just_finished() {
                 match direction {
                     PlayerDirection::Left => sprite.flip_x = true,
-                    PlayerDirection::Right => sprite.flip_x = false,
+                    PlayerDirection::Right => {
+                        sprite.flip_x = false;
+                        *player_collider =
+                            Collider::capsule(Vec2::new(-4.0, -9.0), Vec2::new(-4.0, 8.0), 42.0);
+                    }
                 }
                 match state.get() {
                     PlayerMovement::Jump => {}
@@ -181,7 +185,7 @@ pub fn move_player(
 }
 
 fn cycle_texture(texture: &mut TextureAtlas, texture_index_range: Range<usize>) {
-    info!("index: {}", texture.index);
+    trace!("tindex: {}", texture.index);
     if !texture_index_range.contains(&texture.index) {
         texture.index = texture_index_range.start;
     }
@@ -209,8 +213,8 @@ fn swing_texture(
         **direction = IndexDirection::Up;
     }
 
-    info!("direction: {:?}", direction);
-    info!("index: {}", texture.index);
+    trace!("tdirection: {:?}", direction);
+    trace!("tindex: {}", texture.index);
     texture.index = if **direction == IndexDirection::Up {
         texture.index + 1
     } else {

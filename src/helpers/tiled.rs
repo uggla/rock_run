@@ -18,7 +18,7 @@ use std::sync::Arc;
 
 use bevy::{
     asset::{io::Reader, AssetLoader, AssetPath, AsyncReadExt},
-    log,
+    log::{self, info},
     prelude::{
         Added, Asset, AssetApp, AssetEvent, AssetId, Assets, Bundle, Commands, Component,
         DespawnRecursiveExt, Entity, EventReader, GlobalTransform, Handle, Image, Plugin, Query,
@@ -256,6 +256,7 @@ pub fn process_loaded_maps(
                 // the per-tile images must be the same size. Since Tiled allows tiles of mixed
                 // tilesets on each layer and allows differently-sized tile images in each tileset,
                 // this means we need to load each combination of tileset and layer separately.
+                let mut count = 0;
                 for (tileset_index, tileset) in tiled_map.map.tilesets().iter().enumerate() {
                     let Some(tilemap_texture) = tiled_map.tilemap_textures.get(&tileset_index)
                     else {
@@ -393,7 +394,13 @@ pub fn process_loaded_maps(
 
                         layer_storage
                             .storage
-                            .insert(layer_index as u32, layer_entity);
+                            // .insert(layer_index as u32, layer_entity);
+                            .insert(count as u32, layer_entity);
+                        info!(
+                            "tileset index: {:?} layer index {:?}, entity {:?}",
+                            tileset_index, layer_index, layer_entity
+                        );
+                        count += 1;
                     }
                 }
             }

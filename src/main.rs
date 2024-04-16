@@ -14,7 +14,10 @@ use bevy_ecs_tilemap::prelude::*;
 use bevy_rapier2d::prelude::*;
 use text_syllable::TextSyllablePlugin;
 
-use crate::text_syllable::{TextSyllableState, TextSyllableValues};
+use crate::{
+    helpers::tiled::{TiledLayersStorage, TiledMap},
+    text_syllable::{TextSyllableState, TextSyllableValues},
+};
 
 // 16/9 1280x720
 pub const WINDOW_WIDTH: f32 = 1280.0;
@@ -42,6 +45,7 @@ fn main() {
         ))
         .init_state::<PlayerMovement>()
         .add_event::<CollisionEvent>()
+        .insert_resource(Levels::default())
         .add_systems(
             Startup,
             (setup_background, setup_ground, setup_player, setup_physics),
@@ -100,14 +104,32 @@ fn setup_ground(mut commands: Commands) {
     ));
 }
 
-fn setup_background(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.spawn(Camera2dBundle::default());
-    let map_handle: Handle<helpers::tiled::TiledMap> = asset_server.load("level01.tmx");
+#[derive(Resource, Default)]
+struct Levels {
+    menu: Option<Handle<helpers::tiled::TiledMap>>,
+}
 
-    commands.spawn(helpers::tiled::TiledMapBundle {
-        tiled_map: map_handle,
-        ..Default::default()
-    });
+#[derive(Component)]
+struct Truc;
+
+fn setup_background(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut levels: ResMut<Levels>,
+) {
+    commands.spawn(Camera2dBundle::default());
+
+    // let menu: Handle<helpers::tiled::TiledMap> = asset_server.load("menu.tmx");
+    // levels.menu = Some(menu);
+
+    let map_handle: Handle<helpers::tiled::TiledMap> = asset_server.load("level01.tmx");
+    commands.spawn((
+        helpers::tiled::TiledMapBundle {
+            tiled_map: map_handle,
+            ..Default::default()
+        },
+        Truc,
+    ));
 }
 
 // #[derive(Event, Default)]
@@ -243,15 +265,57 @@ fn apply_forces(
 }
 
 fn update_text(
+    mut commands: Commands,
     mut params: ResMut<TextSyllableValues>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
     state: Res<State<TextSyllableState>>,
     mut next_state: ResMut<NextState<TextSyllableState>>,
     time: Res<Time>,
+    map_handle: Res<Levels>,
+    mut map_query: Query<
+        (
+            Entity,
+            &Handle<TiledMap>,
+            &mut TiledLayersStorage,
+            &TilemapRenderSettings,
+        ),
+        With<Truc>,
+    >,
+
+    tile_storage_query: Query<(Entity, &TileStorage)>,
+    mut tile_query: Query<&mut TileVisible>,
 ) {
-    time.delta_seconds();
     if state.get() == &TextSyllableState::Hidden && keyboard_input.pressed(KeyCode::Space) {
         next_state.set(TextSyllableState::Visible);
+        // if let Some(map_handle) = map_handle.menu.as_ref() {
+        info!("here");
+        // commands.spawn((helpers::tiled::TiledMapBundle {
+        //     tiled_map: map_handle.clone(),
+        //     ..Default::default()
+        // },));
+
+        // let (map_handle, mut layer_storage, render_settings) = map_query.single_mut();
+        for (e, map_handle, mut layer_storage, render_settings) in map_query.iter_mut() {
+            for layer_entity in layer_storage.storage.values() {
+                info!("Layer entity: {:?}", layer_entity);
+                if let Ok((_, layer_tile_storage)) = tile_storage_query.get(*layer_entity) {
+                    for tile in layer_tile_storage.iter().flatten() {
+                        // info!("    {:?}", tile);
+                        commands.entity(*tile).despawn_recursive()
+                    }
+                }
+                commands.entity(*layer_entity).despawn_recursive();
+            }
+            commands.entity(e).despawn_recursive();
+        }
+        //
+        // for ts in tile_storage_query.iter() {
+        //     info!("ent: {:?}", ts);
+        // }
+        // for mut t in tile_query.iter_mut() {
+        //     t.0 = false;
+        // }
+        // }
     }
 
     if state.get() == &TextSyllableState::Visible && keyboard_input.pressed(KeyCode::Enter) {

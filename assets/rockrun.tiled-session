@@ -3,7 +3,7 @@
         "height": 4300,
         "width": 2
     },
-    "activeFile": "",
+    "activeFile": "level01.tmx",
     "expandedProjectPaths": [
         "."
     ],
@@ -16,8 +16,8 @@
             "scale": 0.7310546874999999,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 517.0611808709592,
-                "y": 359.07026449372165
+                "x": 640.8549292011755,
+                "y": 360.4381512156025
             }
         },
         "level01.tmx#backgrounds": {
@@ -28,8 +28,22 @@
         "level01.tmx#sky": {
             "dynamicWrapping": true
         },
+        "level01.tmx#sky-1": {
+            "scaleInDock": 0.25
+        },
         "level01.tmx#tileset-1": {
             "dynamicWrapping": false,
+            "scaleInDock": 0.125
+        },
+        "menu.tmx": {
+            "scale": 0.5,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 639,
+                "y": 361
+            }
+        },
+        "menu.tmx#menu_tileset": {
             "scaleInDock": 1
         }
     },
@@ -40,10 +54,12 @@
     "map.tileWidth": 16,
     "map.width": 80,
     "openFiles": [
-        "level01.tmx"
+        "level01.tmx",
+        "menu.tmx"
     ],
     "project": "rockrun.tiled-project",
     "recentFiles": [
+        "menu.tmx",
         "level01.tmx"
     ],
     "tileset.embedInMap": true,
