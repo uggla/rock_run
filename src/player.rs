@@ -1,7 +1,4 @@
-use std::{
-    ops::{Range, RangeInclusive},
-    time::Duration,
-};
+use std::ops::{Range, RangeInclusive};
 
 use bevy::prelude::*;
 use bevy_rapier2d::{
@@ -30,11 +27,10 @@ pub struct JumpTimer(Timer);
 // to know if the player is in a jumping phase or not.
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States)]
 pub enum PlayerMovement {
-    #[default]
     Idle,
     Jump,
-    // Fall,
-    // Climb,
+    #[default]
+    Fall,
     // Ascend,
     // Descent,
     Run(PlayerDirection),
@@ -80,7 +76,7 @@ pub fn setup_player(
         },
         RigidBody::KinematicPositionBased,
         AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
-        JumpTimer(Timer::from_seconds(0.5, TimerMode::Once)),
+        JumpTimer(Timer::from_seconds(0.250, TimerMode::Once)),
         Player,
         Collider::capsule(PLAYER_HITBOX.0, PLAYER_HITBOX.1, PLAYER_HITBOX.2),
         KinematicCharacterController::default(),
@@ -92,14 +88,22 @@ pub fn setup_player(
 pub fn move_player(
     time: Res<Time>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut player_query: Query<(&mut Transform, &mut Collider), With<Player>>,
+    mut player_query: Query<
+        (
+            &mut Transform,
+            &mut Collider,
+            &mut KinematicCharacterController,
+        ),
+        With<Player>,
+    >,
     mut animation_query: Query<(&mut AnimationTimer, &mut TextureAtlas, &mut Sprite)>,
     state: ResMut<State<PlayerMovement>>,
     mut next_state: ResMut<NextState<PlayerMovement>>,
     mut jump_timer: Query<&mut JumpTimer>,
     mut direction: Local<IndexDirection>,
 ) {
-    let (mut player_transform, mut player_collider) = player_query.single_mut();
+    let (mut player_transform, mut player_collider, mut player_controller) =
+        player_query.single_mut();
     let mut jump_timer = jump_timer.single_mut();
     let mut direction_x = 0.0;
     let mut anim = |current_movement: PlayerMovement| match current_movement {
@@ -146,6 +150,10 @@ pub fn move_player(
             let (_, mut texture, _) = animation_query.single_mut();
             texture.index = 11;
         }
+
+        PlayerMovement::Fall => {
+            // Falling
+        }
     };
 
     let mut current_movement: PlayerMovement = PlayerMovement::Idle;
@@ -159,7 +167,10 @@ pub fn move_player(
         current_movement = PlayerMovement::Run(PlayerDirection::Right);
         anim(current_movement);
     }
-    if keyboard_input.pressed(KeyCode::ArrowUp) && state.get() != &PlayerMovement::Jump {
+    if keyboard_input.pressed(KeyCode::ArrowUp)
+        && !(state.get() == &PlayerMovement::Jump || state.get() == &PlayerMovement::Fall)
+    {
+        info!("{:?}", state.get());
         next_state.set(PlayerMovement::Jump);
         jump_timer.reset();
         current_movement = PlayerMovement::Jump;
@@ -172,22 +183,33 @@ pub fn move_player(
 
     // Calculate the new horizontal player position based on player input
     // let new_player_position =
-    player_transform.translation.x += direction_x * PLAYER_SPEED * time.delta_seconds();
+    // player_transform.translation.x += direction_x * PLAYER_SPEED * time.delta_seconds();
+    // player_controller.translation = Some(Vec2::new(
+    //     direction_x * PLAYER_SPEED * time.delta_seconds(),
+    //     0.0,
+    // ));
 
     if state.get() == &PlayerMovement::Jump {
-        // if jump_timer.fraction() > 0.5 {
-        if jump_timer.elapsed() > Duration::from_millis(250) {
-            player_transform.translation.y -= PLAYER_SPEED * time.delta_seconds();
+        if jump_timer.just_finished() {
+            next_state.set(PlayerMovement::Fall);
+            player_controller.translation = Some(Vec2::new(
+                direction_x * PLAYER_SPEED * time.delta_seconds(),
+                -PLAYER_SPEED * time.delta_seconds(),
+            ));
         } else {
-            player_transform.translation.y += PLAYER_SPEED * time.delta_seconds();
+            player_controller.translation = Some(Vec2::new(
+                direction_x * PLAYER_SPEED * time.delta_seconds(),
+                PLAYER_SPEED * time.delta_seconds(),
+            ));
         }
+    } else {
+        player_controller.translation = Some(Vec2::new(
+            direction_x * PLAYER_SPEED * time.delta_seconds(),
+            -PLAYER_SPEED * time.delta_seconds(),
+        ));
     }
 
     jump_timer.tick(time.delta());
-    if jump_timer.just_finished() {
-        next_state.set(PlayerMovement::Idle);
-        player_transform.translation.y -= PLAYER_SPEED * time.delta_seconds();
-    }
 }
 
 fn cycle_texture(texture: &mut TextureAtlas, texture_index_range: Range<usize>) {
