@@ -14,8 +14,8 @@ pub const PLAYER_SPEED: f32 = 500.0;
 pub const PLAYER_SCALE_FACTOR: f32 = 1.0;
 pub const PLAYER_WIDTH: f32 = 100.0;
 pub const PLAYER_HEIGHT: f32 = 75.0;
-pub const PLAYER_HITBOX_WIDTH: f32 = 14.0;
-pub const PLAYER_HITBOX_HEIGHT: f32 = 24.0;
+const PLAYER_HITBOX: (Vec2, Vec2, f32) = (Vec2::new(-4.0, -9.0), Vec2::new(-4.0, 8.0), 22.0);
+const PLAYER_HITBOX_TRANSLATION: Vec2 = Vec2::new(8.0, 0.0);
 
 #[derive(Component)]
 pub struct Player;
@@ -82,8 +82,7 @@ pub fn setup_player(
         AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
         JumpTimer(Timer::from_seconds(0.5, TimerMode::Once)),
         Player,
-        // Collider::capsule_y(PLAYER_HEIGHT / 3.0, 30.0),
-        Collider::capsule(Vec2::new(-4.0, -9.0), Vec2::new(-4.0, 8.0), 22.0),
+        Collider::capsule(PLAYER_HITBOX.0, PLAYER_HITBOX.1, PLAYER_HITBOX.2),
         KinematicCharacterController::default(),
         Ccd::enabled(),
     ));
@@ -109,11 +108,18 @@ pub fn move_player(
             timer.tick(time.delta());
             if timer.just_finished() {
                 match direction {
-                    PlayerDirection::Left => sprite.flip_x = true,
+                    PlayerDirection::Left => {
+                        sprite.flip_x = true;
+                        *player_collider = Collider::capsule(
+                            PLAYER_HITBOX.0 + PLAYER_HITBOX_TRANSLATION,
+                            PLAYER_HITBOX.1 + PLAYER_HITBOX_TRANSLATION,
+                            PLAYER_HITBOX.2,
+                        );
+                    }
                     PlayerDirection::Right => {
                         sprite.flip_x = false;
                         *player_collider =
-                            Collider::capsule(Vec2::new(-4.0, -9.0), Vec2::new(-4.0, 8.0), 42.0);
+                            Collider::capsule(PLAYER_HITBOX.0, PLAYER_HITBOX.1, PLAYER_HITBOX.2);
                     }
                 }
                 match state.get() {
