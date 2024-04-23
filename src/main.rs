@@ -2,20 +2,16 @@ mod helpers;
 mod player;
 mod text_syllable;
 
-use bevy::math::bounding::{Aabb2d, IntersectsVolume};
 use bevy::prelude::*;
 use bevy::window::WindowResolution;
-use player::{
-    move_player, setup_player, Player, PlayerMovement, PLAYER_HITBOX_HEIGHT, PLAYER_HITBOX_WIDTH,
-    PLAYER_SCALE_FACTOR, PLAYER_SPEED,
-};
+use player::{move_player, setup_player, PlayerMovement};
 
 use bevy_ecs_tilemap::prelude::*;
 use bevy_rapier2d::prelude::*;
 use text_syllable::TextSyllablePlugin;
 
 use crate::{
-    helpers::tiled::{TiledLayersStorage, TiledMap},
+    helpers::tiled::{TiledMap, TilesetLayerToStorageEntity},
     text_syllable::{TextSyllableState, TextSyllableValues},
 };
 
@@ -44,19 +40,13 @@ fn main() {
             TextSyllablePlugin::default(),
         ))
         .init_state::<PlayerMovement>()
-        .add_event::<CollisionEvent>()
         .insert_resource(Levels::default())
-        .add_systems(
-            Startup,
-            (setup_background, setup_ground, setup_player, setup_physics),
-        )
+        .add_systems(Startup, (setup_background, setup_player, setup_physics))
         .add_systems(
             Update,
             (
                 move_player,
-                // check_for_collisions,
-                // gravity.after(check_for_collisions),
-                gravity,
+                read_result_system,
                 apply_forces,
                 print_ball_altitude,
                 bevy::window::close_on_esc,
@@ -65,43 +55,6 @@ fn main() {
             ),
         )
         .run();
-}
-
-#[derive(Component)]
-struct Ground;
-
-#[derive(Component)]
-struct MyCollider;
-
-const GROUND_SIZE: Vec2 = Vec2::new(200.0, 60.0);
-
-fn setup_ground(mut commands: Commands) {
-    commands.spawn((
-        SpriteBundle {
-            sprite: Sprite {
-                color: Color::RED,
-                custom_size: Some(GROUND_SIZE),
-                ..default()
-            },
-            transform: Transform::from_xyz(0.0, -300.0, 10.0),
-            ..default()
-        },
-        Ground,
-        MyCollider,
-    ));
-    commands.spawn((
-        SpriteBundle {
-            sprite: Sprite {
-                color: Color::RED,
-                custom_size: Some(GROUND_SIZE),
-                ..default()
-            },
-            transform: Transform::from_xyz(290.0, -260.0, 10.0),
-            ..default()
-        },
-        Ground,
-        MyCollider,
-    ));
 }
 
 #[derive(Resource, Default)]
@@ -132,84 +85,29 @@ fn setup_background(
     ));
 }
 
-// #[derive(Event, Default)]
-// #[allow(dead_code)]
-// struct CollisionEvent {
-//     x: f32,
-//     y: f32,
-// }
-//
-// fn check_for_collisions(
-//     player_query: Query<&Transform, With<Player>>,
-//
-//     collider_query: Query<(Entity, &Transform), With<MyCollider>>,
-//     mut collision_events: EventWriter<CollisionEvent>,
-// ) {
-//     let player_transform = player_query.single();
-//     let player_size = Vec2::new(
-//         PLAYER_HITBOX_WIDTH * PLAYER_SCALE_FACTOR,
-//         PLAYER_HITBOX_HEIGHT * PLAYER_SCALE_FACTOR,
-//     );
-//     for (_collider_entity, collider_transform) in &collider_query {
-//         let player = Aabb2d::new(player_transform.translation.truncate(), player_size);
-//         let ground = Aabb2d::new(collider_transform.translation.truncate(), GROUND_SIZE);
-//         let collision = player.intersects(&ground);
-//         if collision {
-//             // Sends a collision event so that other systems can react to the collision
-//             collision_events.send(CollisionEvent {
-//                 x: collider_transform.translation.x,
-//                 y: collider_transform.translation.y,
-//             });
-//
-//             // match collision {
-//             //     Collision::Left => println!("Left collision"),
-//             //     Collision::Right => println!("Right collision"),
-//             //     Collision::Top => println!("Top collision"),
-//             //     Collision::Bottom => println!("Bottom collision"),
-//             //     Collision::Inside => println!("Inside collision"),
-//             // }
-//         }
-//     }
-// }
-
-fn gravity(
-    time: Res<Time>,
-    mut player_query: Query<&mut KinematicCharacterController>,
-    // mut collision_events: EventReader<CollisionEvent>,
-    state: ResMut<State<PlayerMovement>>,
+fn read_result_system(
+    controllers: Query<(Entity, &KinematicCharacterControllerOutput)>,
+    state: Res<State<PlayerMovement>>,
+    mut next_state: ResMut<NextState<PlayerMovement>>,
 ) {
-    let mut player_controller = player_query.single_mut();
-    match state.get() {
-        PlayerMovement::Jump => {}
-        _ => {
-            // if !collision_events.is_empty() {
-            //     for collision_event in collision_events.read() {
-            //         player_transform.translation.y = collision_event.y
-            //             + PLAYER_HITBOX_HEIGHT * PLAYER_SCALE_FACTOR / 2.0
-            //             + GROUND_SIZE.y / 2.0
-            //             - 1.0; // make the collision
-            //     }
-            //     collision_events.clear();
-            // } else {
-            player_controller.translation =
-                Some(Vec2::new(0.0, -PLAYER_SPEED * time.delta_seconds()));
-            // }
-        }
-    }
-}
-
-fn read_result_system(controllers: Query<(Entity, &KinematicCharacterControllerOutput)>) {
     for (entity, output) in controllers.iter() {
-        println!(
-            "Entity {:?} moved by {:?} and touches the ground: {:?}",
-            entity, output.effective_translation, output.grounded
-        );
+        // info!(
+        //     "Entity {:?} moved by {:?} and touches the ground: {:?}",
+        //     entity, output.effective_translation, output.grounded
+        // );
+
+        if output.grounded && state.get() != &PlayerMovement::Jump {
+            next_state.set(PlayerMovement::Idle);
+        }
     }
 }
 
 fn setup_physics(mut commands: Commands) {
     /* Create the ground. */
-    let points = vec![Vec2::new(-250.0, -100.0), Vec2::new(250.0, -100.0)];
+    let points = vec![
+        Vec2::new(-640.0, -8.0 - 224.0),
+        Vec2::new(640.0, -8.0 - 224.0),
+    ];
 
     commands
         .spawn(Collider::polyline(points, None))
@@ -276,7 +174,7 @@ fn update_text(
         (
             Entity,
             &Handle<TiledMap>,
-            &mut TiledLayersStorage,
+            &mut TilesetLayerToStorageEntity,
             &TilemapRenderSettings,
         ),
         With<Truc>,
@@ -295,12 +193,10 @@ fn update_text(
         // },));
 
         // let (map_handle, mut layer_storage, render_settings) = map_query.single_mut();
-        for (e, map_handle, mut layer_storage, render_settings) in map_query.iter_mut() {
-            for layer_entity in layer_storage.storage.values() {
-                info!("Layer entity: {:?}", layer_entity);
+        for (e, map_handle, mut tileset_layer_storage, render_settings) in map_query.iter_mut() {
+            for layer_entity in tileset_layer_storage.get_entities() {
                 if let Ok((_, layer_tile_storage)) = tile_storage_query.get(*layer_entity) {
                     for tile in layer_tile_storage.iter().flatten() {
-                        // info!("    {:?}", tile);
                         commands.entity(*tile).despawn_recursive()
                     }
                 }
