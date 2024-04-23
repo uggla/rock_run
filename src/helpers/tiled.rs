@@ -18,6 +18,7 @@ use std::sync::Arc;
 
 use bevy::{
     asset::{io::Reader, AssetLoader, AssetPath, AsyncReadExt},
+    log,
     prelude::{
         Added, Asset, AssetApp, AssetEvent, AssetId, Assets, Bundle, Commands, Component,
         DespawnRecursiveExt, Entity, EventReader, GlobalTransform, Handle, Image, Plugin, Query,
