@@ -1,4 +1,4 @@
-use std::ops::{Range, RangeInclusive};
+use std::ops::RangeInclusive;
 
 use bevy::prelude::*;
 use bevy_rapier2d::{
@@ -25,14 +25,22 @@ pub struct JumpTimer(Timer);
 
 // Player movement is used to define current movement requested by the player and a state in order
 // to know if the player is in a jumping phase or not.
+
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States)]
+pub enum PlayerState {
+    Idling,
+    Jumping,
+    #[default]
+    Falling,
+    // Ascend,
+    // Descent,
+}
+
+#[derive(Debug, Eq, PartialEq, Clone, Copy)]
 pub enum PlayerMovement {
     Idle,
     Jump,
-    #[default]
-    Fall,
-    // Ascend,
-    // Descent,
+    Crouch,
     Run(PlayerDirection),
 }
 
@@ -88,22 +96,14 @@ pub fn setup_player(
 pub fn move_player(
     time: Res<Time>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut player_query: Query<
-        (
-            &mut Transform,
-            &mut Collider,
-            &mut KinematicCharacterController,
-        ),
-        With<Player>,
-    >,
+    mut player_query: Query<(&mut Collider, &mut KinematicCharacterController), With<Player>>,
     mut animation_query: Query<(&mut AnimationTimer, &mut TextureAtlas, &mut Sprite)>,
-    state: Res<State<PlayerMovement>>,
-    mut next_state: ResMut<NextState<PlayerMovement>>,
+    state: Res<State<PlayerState>>,
+    mut next_state: ResMut<NextState<PlayerState>>,
     mut jump_timer: Query<&mut JumpTimer>,
     mut direction: Local<IndexDirection>,
 ) {
-    let (mut player_transform, mut player_collider, mut player_controller) =
-        player_query.single_mut();
+    let (mut player_collider, mut player_controller) = player_query.single_mut();
     let mut jump_timer = jump_timer.single_mut();
     let mut direction_x = 0.0;
     let mut anim = |current_movement: PlayerMovement| match current_movement {
@@ -127,8 +127,8 @@ pub fn move_player(
                     }
                 }
                 match state.get() {
-                    PlayerMovement::Jump => {}
-                    PlayerMovement::Fall => {
+                    PlayerState::Jumping => {}
+                    PlayerState::Falling => {
                         cycle_texture(&mut texture, 14..=16);
                     }
                     _ => {
@@ -142,8 +142,8 @@ pub fn move_player(
             timer.tick(time.delta());
             if timer.just_finished() {
                 match state.get() {
-                    PlayerMovement::Jump => {}
-                    PlayerMovement::Fall => {
+                    PlayerState::Jumping => {}
+                    PlayerState::Falling => {
                         cycle_texture(&mut texture, 14..=16);
                     }
                     _ => {
@@ -157,9 +157,7 @@ pub fn move_player(
             texture.index = 11;
         }
 
-        PlayerMovement::Fall => {
-            // Falling
-        }
+        PlayerMovement::Crouch => {}
     };
 
     let mut current_movement: PlayerMovement = PlayerMovement::Idle;
@@ -174,12 +172,16 @@ pub fn move_player(
         anim(current_movement);
     }
     if keyboard_input.pressed(KeyCode::ArrowUp)
-        && !(state.get() == &PlayerMovement::Jump || state.get() == &PlayerMovement::Fall)
+        && !(state.get() == &PlayerState::Jumping || state.get() == &PlayerState::Falling)
     {
-        info!("{:?}", state.get());
-        next_state.set(PlayerMovement::Jump);
+        next_state.set(PlayerState::Jumping);
         jump_timer.reset();
         current_movement = PlayerMovement::Jump;
+        anim(current_movement);
+    }
+
+    if keyboard_input.pressed(KeyCode::ArrowDown) {
+        current_movement = PlayerMovement::Crouch;
         anim(current_movement);
     }
 
@@ -187,17 +189,9 @@ pub fn move_player(
         anim(PlayerMovement::Idle);
     }
 
-    // Calculate the new horizontal player position based on player input
-    // let new_player_position =
-    // player_transform.translation.x += direction_x * PLAYER_SPEED * time.delta_seconds();
-    // player_controller.translation = Some(Vec2::new(
-    //     direction_x * PLAYER_SPEED * time.delta_seconds(),
-    //     0.0,
-    // ));
-
-    if state.get() == &PlayerMovement::Jump {
+    if state.get() == &PlayerState::Jumping {
         if jump_timer.just_finished() {
-            next_state.set(PlayerMovement::Fall);
+            next_state.set(PlayerState::Falling);
             player_controller.translation = Some(Vec2::new(
                 direction_x * PLAYER_SPEED * time.delta_seconds(),
                 -PLAYER_SPEED * time.delta_seconds(),
