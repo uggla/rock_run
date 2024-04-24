@@ -4,7 +4,7 @@ mod text_syllable;
 
 use bevy::prelude::*;
 use bevy::window::WindowResolution;
-use player::{move_player, setup_player, PlayerMovement};
+use player::{move_player, setup_player, PlayerState};
 
 use bevy_ecs_tilemap::prelude::*;
 use bevy_rapier2d::prelude::*;
@@ -39,7 +39,7 @@ fn main() {
             RapierDebugRenderPlugin::default(),
             TextSyllablePlugin::default(),
         ))
-        .init_state::<PlayerMovement>()
+        .init_state::<PlayerState>()
         .insert_resource(Levels::default())
         .add_systems(Startup, (setup_background, setup_player, setup_physics))
         .add_systems(
@@ -87,8 +87,8 @@ fn setup_background(
 
 fn read_result_system(
     controllers: Query<(Entity, &KinematicCharacterControllerOutput)>,
-    state: Res<State<PlayerMovement>>,
-    mut next_state: ResMut<NextState<PlayerMovement>>,
+    state: Res<State<PlayerState>>,
+    mut next_state: ResMut<NextState<PlayerState>>,
 ) {
     for (entity, output) in controllers.iter() {
         // info!(
@@ -96,12 +96,12 @@ fn read_result_system(
         //     entity, output.effective_translation, output.grounded
         // );
 
-        if output.grounded && state.get() != &PlayerMovement::Jump {
-            next_state.set(PlayerMovement::Idle);
+        if output.grounded && state.get() != &PlayerState::Jumping {
+            next_state.set(PlayerState::Idling);
         }
 
-        if !output.grounded && state.get() == &PlayerMovement::Idle {
-            next_state.set(PlayerMovement::Fall);
+        if !output.grounded && state.get() == &PlayerState::Idling {
+            next_state.set(PlayerState::Falling);
         }
     }
 }
@@ -115,9 +115,24 @@ fn setup_physics(mut commands: Commands) {
 
     commands
         .spawn(Collider::polyline(points, None))
-        // .spawn(Collider::cuboid(500.0, 50.0))
         .insert(Ccd::enabled());
-    // .insert(TransformBundle::from(Transform::from_xyz(0.0, -100.0, 0.0)));
+
+    // Create 2 x test platforms
+    commands
+        .spawn(Collider::cuboid(60.0, 5.0))
+        .insert(TransformBundle::from(Transform::from_xyz(
+            100.0,
+            -224.0 + 5.0 * 16.0, // 8.0 is hard to climb, 9.0 can not be climbed
+            0.0,
+        )));
+
+    commands
+        .spawn(Collider::cuboid(60.0, 5.0))
+        .insert(TransformBundle::from(Transform::from_xyz(
+            380.0,                // 270 Gap is reachable, 290 seems not
+            -224.0 + 10.0 * 16.0, // 8.0 is hard to climb, 9.0 can not be climbed
+            0.0,
+        )));
 
     /* Create the bouncing ball. */
     commands
@@ -148,10 +163,10 @@ fn print_ball_altitude(positions: Query<&Transform, With<RigidBody>>) {
 fn apply_forces(
     mut ext_impulses: Query<&mut ExternalImpulse>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    state: ResMut<State<PlayerMovement>>,
+    state: ResMut<State<PlayerState>>,
 ) {
     // Apply impulses.
-    if keyboard_input.pressed(KeyCode::ArrowUp) && state.get() != &PlayerMovement::Jump {
+    if keyboard_input.pressed(KeyCode::ArrowUp) && state.get() != &PlayerState::Jumping {
         for mut ext_impulse in ext_impulses.iter_mut() {
             ext_impulse.impulse = Vec2::new(0.0, 250.0);
             // ext_impulse.torque_impulse = 0.4;
