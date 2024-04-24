@@ -4,7 +4,7 @@ mod text_syllable;
 
 use bevy::prelude::*;
 use bevy::window::WindowResolution;
-use player::{move_player, setup_player, PlayerState};
+use player::PlayerState;
 
 use bevy_ecs_tilemap::prelude::*;
 use bevy_rapier2d::prelude::*;
@@ -12,6 +12,7 @@ use text_syllable::TextSyllablePlugin;
 
 use crate::{
     helpers::tiled::{TiledMap, TilesetLayerToStorageEntity},
+    player::{Player, PlayerPlugin},
     text_syllable::{TextSyllableState, TextSyllableValues},
 };
 
@@ -37,15 +38,14 @@ fn main() {
             helpers::tiled::TiledMapPlugin,
             RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(60.0),
             RapierDebugRenderPlugin::default(),
+            PlayerPlugin,
             TextSyllablePlugin::default(),
         ))
-        .init_state::<PlayerState>()
         .insert_resource(Levels::default())
-        .add_systems(Startup, (setup_background, setup_player, setup_physics))
+        .add_systems(Startup, (setup_background, setup_physics))
         .add_systems(
             Update,
             (
-                move_player,
                 read_result_system,
                 apply_forces,
                 print_ball_altitude,
@@ -86,7 +86,7 @@ fn setup_background(
 }
 
 fn read_result_system(
-    controllers: Query<(Entity, &KinematicCharacterControllerOutput)>,
+    controllers: Query<(Entity, &KinematicCharacterControllerOutput), With<Player>>,
     state: Res<State<PlayerState>>,
     mut next_state: ResMut<NextState<PlayerState>>,
 ) {

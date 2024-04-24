@@ -23,9 +23,6 @@ pub struct AnimationTimer(Timer);
 #[derive(Component, Deref, DerefMut)]
 pub struct JumpTimer(Timer);
 
-// Player movement is used to define current movement requested by the player and a state in order
-// to know if the player is in a jumping phase or not.
-
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States)]
 pub enum PlayerState {
     Idling,
@@ -55,6 +52,16 @@ pub enum IndexDirection {
     #[default]
     Up,
     Down,
+}
+
+pub struct PlayerPlugin;
+
+impl Plugin for PlayerPlugin {
+    fn build(&self, app: &mut App) {
+        app.init_state::<PlayerState>()
+            .add_systems(Startup, setup_player)
+            .add_systems(Update, move_player);
+    }
 }
 
 pub fn setup_player(
