@@ -97,7 +97,7 @@ pub fn move_player(
         With<Player>,
     >,
     mut animation_query: Query<(&mut AnimationTimer, &mut TextureAtlas, &mut Sprite)>,
-    state: ResMut<State<PlayerMovement>>,
+    state: Res<State<PlayerMovement>>,
     mut next_state: ResMut<NextState<PlayerMovement>>,
     mut jump_timer: Query<&mut JumpTimer>,
     mut direction: Local<IndexDirection>,
@@ -128,8 +128,11 @@ pub fn move_player(
                 }
                 match state.get() {
                     PlayerMovement::Jump => {}
+                    PlayerMovement::Fall => {
+                        cycle_texture(&mut texture, 14..=16);
+                    }
                     _ => {
-                        cycle_texture(&mut texture, 5..10);
+                        cycle_texture(&mut texture, 6..=10);
                     }
                 }
             }
@@ -140,6 +143,9 @@ pub fn move_player(
             if timer.just_finished() {
                 match state.get() {
                     PlayerMovement::Jump => {}
+                    PlayerMovement::Fall => {
+                        cycle_texture(&mut texture, 14..=16);
+                    }
                     _ => {
                         swing_texture(&mut texture, 0..=4, &mut direction);
                     }
@@ -212,13 +218,12 @@ pub fn move_player(
     jump_timer.tick(time.delta());
 }
 
-fn cycle_texture(texture: &mut TextureAtlas, texture_index_range: Range<usize>) {
-    trace!("tindex: {}", texture.index);
+fn cycle_texture(texture: &mut TextureAtlas, texture_index_range: RangeInclusive<usize>) {
     if !texture_index_range.contains(&texture.index) {
-        texture.index = texture_index_range.start;
+        texture.index = *texture_index_range.start();
     }
-    texture.index = if texture.index == texture_index_range.end {
-        texture_index_range.start
+    texture.index = if texture.index == *texture_index_range.end() {
+        *texture_index_range.start()
     } else {
         texture.index + 1
     };
