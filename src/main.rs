@@ -99,6 +99,10 @@ fn read_result_system(
         if output.grounded && state.get() != &PlayerMovement::Jump {
             next_state.set(PlayerMovement::Idle);
         }
+
+        if !output.grounded && state.get() == &PlayerMovement::Idle {
+            next_state.set(PlayerMovement::Fall);
+        }
     }
 }
 
