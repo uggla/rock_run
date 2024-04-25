@@ -6,6 +6,10 @@ use bevy_rapier2d::{
     dynamics::{Ccd, RigidBody},
     geometry::Collider,
 };
+use leafwing_input_manager::{
+    action_state::ActionState, axislike::SingleAxis, input_map::InputMap, Actionlike,
+    InputManagerBundle,
+};
 
 pub const PLAYER_SPEED: f32 = 500.0;
 pub const PLAYER_SCALE_FACTOR: f32 = 1.0;
@@ -33,7 +37,7 @@ pub enum PlayerState {
     // Descent,
 }
 
-#[derive(Debug, Eq, PartialEq, Clone, Copy)]
+#[derive(Debug, Eq, PartialEq, Clone, Copy, Actionlike, Hash, Reflect)]
 pub enum PlayerMovement {
     Idle,
     Jump,
@@ -41,7 +45,7 @@ pub enum PlayerMovement {
     Run(PlayerDirection),
 }
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
+#[derive(Debug, Eq, PartialEq, Clone, Copy, Actionlike, Hash, Reflect)]
 pub enum PlayerDirection {
     Left,
     Right,
@@ -74,6 +78,29 @@ pub fn setup_player(
         TextureAtlasLayout::from_grid(Vec2::new(PLAYER_WIDTH, PLAYER_HEIGHT), 6, 7, None, None);
     let texture_atlas_layout = texture_atlases.add(layout);
 
+    let mut input_map = InputMap::new([
+        (PlayerMovement::Jump, KeyCode::ArrowUp),
+        (
+            PlayerMovement::Run(PlayerDirection::Left),
+            KeyCode::ArrowLeft,
+        ),
+        (
+            PlayerMovement::Run(PlayerDirection::Right),
+            KeyCode::ArrowRight,
+        ),
+        (PlayerMovement::Crouch, KeyCode::ArrowDown),
+    ]);
+
+    input_map.insert(PlayerMovement::Jump, GamepadButtonType::South);
+    input_map.insert(
+        PlayerMovement::Run(PlayerDirection::Right),
+        SingleAxis::positive_only(GamepadAxisType::LeftStickX, 0.4),
+    );
+    input_map.insert(
+        PlayerMovement::Run(PlayerDirection::Left),
+        SingleAxis::negative_only(GamepadAxisType::LeftStickX, -0.4),
+    );
+
     commands.spawn((
         SpriteSheetBundle {
             texture,
@@ -92,17 +119,18 @@ pub fn setup_player(
         RigidBody::KinematicPositionBased,
         AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
         JumpTimer(Timer::from_seconds(0.250, TimerMode::Once)),
-        Player,
         Collider::capsule(PLAYER_HITBOX.0, PLAYER_HITBOX.1, PLAYER_HITBOX.2),
         KinematicCharacterController::default(),
         Ccd::enabled(),
+        InputManagerBundle::with_map(input_map),
+        Player,
     ));
 }
 
 #[allow(clippy::too_many_arguments)]
 pub fn move_player(
     time: Res<Time>,
-    keyboard_input: Res<ButtonInput<KeyCode>>,
+    input: Query<&ActionState<PlayerMovement>, With<Player>>,
     mut player_query: Query<(&mut Collider, &mut KinematicCharacterController), With<Player>>,
     mut animation_query: Query<(&mut AnimationTimer, &mut TextureAtlas, &mut Sprite)>,
     state: Res<State<PlayerState>>,
@@ -167,18 +195,23 @@ pub fn move_player(
         PlayerMovement::Crouch => {}
     };
 
+    let input_state = input.single();
+
     let mut current_movement: PlayerMovement = PlayerMovement::Idle;
-    if keyboard_input.pressed(KeyCode::ArrowLeft) {
+
+    if input_state.pressed(&PlayerMovement::Run(PlayerDirection::Left)) {
         direction_x -= 1.0;
         current_movement = PlayerMovement::Run(PlayerDirection::Left);
         anim(current_movement);
     }
-    if keyboard_input.pressed(KeyCode::ArrowRight) {
+
+    if input_state.pressed(&PlayerMovement::Run(PlayerDirection::Right)) {
         direction_x += 1.0;
         current_movement = PlayerMovement::Run(PlayerDirection::Right);
         anim(current_movement);
     }
-    if keyboard_input.pressed(KeyCode::ArrowUp)
+
+    if input_state.just_pressed(&PlayerMovement::Jump)
         && !(state.get() == &PlayerState::Jumping || state.get() == &PlayerState::Falling)
     {
         next_state.set(PlayerState::Jumping);
@@ -187,7 +220,7 @@ pub fn move_player(
         anim(current_movement);
     }
 
-    if keyboard_input.pressed(KeyCode::ArrowDown) {
+    if input_state.just_pressed(&PlayerMovement::Crouch) {
         current_movement = PlayerMovement::Crouch;
         anim(current_movement);
     }

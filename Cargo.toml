@@ -10,6 +10,7 @@ edition = "2021"
 bevy = "0.13.2"
 bevy_ecs_tilemap = { path = "../bevy_ecs_tilemap" }
 bevy_rapier2d = "0.25.0"
+leafwing-input-manager = "0.13.3"
 raqote = { version = "0.8.3", default-features = false, features = [
   "pathfinder_geometry",
 ] }
