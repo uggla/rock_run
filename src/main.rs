@@ -1,3 +1,4 @@
+mod collision;
 mod helpers;
 mod player;
 mod text_syllable;
@@ -11,8 +12,9 @@ use bevy_rapier2d::prelude::*;
 use text_syllable::TextSyllablePlugin;
 
 use crate::{
+    collision::CollisionPlugin,
     helpers::tiled::{TiledMap, TilesetLayerToStorageEntity},
-    player::{Player, PlayerPlugin},
+    player::PlayerPlugin,
     text_syllable::{TextSyllableState, TextSyllableValues},
 };
 
@@ -39,6 +41,7 @@ fn main() {
             RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(60.0),
             RapierDebugRenderPlugin::default(),
             PlayerPlugin,
+            CollisionPlugin,
             TextSyllablePlugin::default(),
         ))
         .insert_resource(Levels::default())
@@ -46,7 +49,6 @@ fn main() {
         .add_systems(
             Update,
             (
-                read_result_system,
                 apply_forces,
                 print_ball_altitude,
                 bevy::window::close_on_esc,
@@ -85,26 +87,11 @@ fn setup_background(
     ));
 }
 
-fn read_result_system(
-    controllers: Query<(Entity, &KinematicCharacterControllerOutput), With<Player>>,
-    state: Res<State<PlayerState>>,
-    mut next_state: ResMut<NextState<PlayerState>>,
-) {
-    for (entity, output) in controllers.iter() {
-        // info!(
-        //     "Entity {:?} moved by {:?} and touches the ground: {:?}",
-        //     entity, output.effective_translation, output.grounded
-        // );
+#[derive(Component)]
+struct Ground;
 
-        if output.grounded && state.get() != &PlayerState::Jumping {
-            next_state.set(PlayerState::Idling);
-        }
-
-        if !output.grounded && state.get() == &PlayerState::Idling {
-            next_state.set(PlayerState::Falling);
-        }
-    }
-}
+#[derive(Component)]
+struct Platform;
 
 fn setup_physics(mut commands: Commands) {
     /* Create the ground. */
@@ -114,12 +101,12 @@ fn setup_physics(mut commands: Commands) {
     ];
 
     commands
-        .spawn(Collider::polyline(points, None))
+        .spawn((Collider::polyline(points, None), Ground))
         .insert(Ccd::enabled());
 
     // Create 2 x test platforms
     commands
-        .spawn(Collider::cuboid(60.0, 5.0))
+        .spawn((Collider::cuboid(60.0, 5.0), Platform))
         .insert(TransformBundle::from(Transform::from_xyz(
             100.0,
             -224.0 + 5.0 * 16.0, // 8.0 is hard to climb, 9.0 can not be climbed
@@ -127,7 +114,7 @@ fn setup_physics(mut commands: Commands) {
         )));
 
     commands
-        .spawn(Collider::cuboid(60.0, 5.0))
+        .spawn((Collider::cuboid(60.0, 5.0), Platform))
         .insert(TransformBundle::from(Transform::from_xyz(
             380.0,                // 270 Gap is reachable, 290 seems not
             -224.0 + 10.0 * 16.0, // 8.0 is hard to climb, 9.0 can not be climbed
