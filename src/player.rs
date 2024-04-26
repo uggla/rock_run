@@ -7,8 +7,8 @@ use bevy_rapier2d::{
     geometry::Collider,
 };
 use leafwing_input_manager::{
-    action_state::ActionState, axislike::SingleAxis, input_map::InputMap, Actionlike,
-    InputManagerBundle,
+    action_state::ActionState, axislike::SingleAxis, input_map::InputMap,
+    plugin::InputManagerPlugin, Actionlike, InputManagerBundle,
 };
 
 pub const PLAYER_SPEED: f32 = 500.0;
@@ -62,7 +62,8 @@ pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
-        app.init_state::<PlayerState>()
+        app.add_plugins(InputManagerPlugin::<PlayerMovement>::default())
+            .init_state::<PlayerState>()
             .add_systems(Startup, setup_player)
             .add_systems(Update, move_player);
     }

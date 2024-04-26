@@ -4,7 +4,6 @@ mod text_syllable;
 
 use bevy::prelude::*;
 use bevy::window::WindowResolution;
-use leafwing_input_manager::plugin::InputManagerPlugin;
 use player::PlayerState;
 
 use bevy_ecs_tilemap::prelude::*;
@@ -13,7 +12,7 @@ use text_syllable::TextSyllablePlugin;
 
 use crate::{
     helpers::tiled::{TiledMap, TilesetLayerToStorageEntity},
-    player::{Player, PlayerMovement, PlayerPlugin},
+    player::{Player, PlayerPlugin},
     text_syllable::{TextSyllableState, TextSyllableValues},
 };
 
@@ -39,7 +38,6 @@ fn main() {
             helpers::tiled::TiledMapPlugin,
             RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(60.0),
             RapierDebugRenderPlugin::default(),
-            InputManagerPlugin::<PlayerMovement>::default(),
             PlayerPlugin,
             TextSyllablePlugin::default(),
         ))
