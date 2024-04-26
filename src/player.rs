@@ -11,12 +11,15 @@ use leafwing_input_manager::{
     plugin::InputManagerPlugin, Actionlike, InputManagerBundle,
 };
 
+use crate::WINDOW_WIDTH;
+
 pub const PLAYER_SPEED: f32 = 500.0;
 pub const PLAYER_SCALE_FACTOR: f32 = 1.0;
 pub const PLAYER_WIDTH: f32 = 100.0;
 pub const PLAYER_HEIGHT: f32 = 75.0;
 const PLAYER_HITBOX: (Vec2, Vec2, f32) = (Vec2::new(-4.0, -9.0), Vec2::new(-4.0, 8.0), 22.0);
 const PLAYER_HITBOX_TRANSLATION: Vec2 = Vec2::new(8.0, 0.0);
+const LEVEL01_START: Vec3 = Vec3::new(-WINDOW_WIDTH / 2.0, 200.0, 20.0);
 
 #[derive(Component)]
 pub struct Player;
@@ -112,7 +115,7 @@ pub fn setup_player(
             },
             transform: Transform {
                 scale: Vec3::splat(PLAYER_SCALE_FACTOR),
-                translation: Vec3::new(0.0, 200.0, 20.0),
+                translation: LEVEL01_START,
                 ..default()
             },
             ..default()
@@ -121,7 +124,12 @@ pub fn setup_player(
         AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
         JumpTimer(Timer::from_seconds(0.250, TimerMode::Once)),
         Collider::capsule(PLAYER_HITBOX.0, PLAYER_HITBOX.1, PLAYER_HITBOX.2),
-        KinematicCharacterController::default(),
+        KinematicCharacterController {
+            max_slope_climb_angle: 30.0f32.to_radians(),
+            // Automatically slide down on slopes smaller than 30 degrees.
+            min_slope_slide_angle: 30.0f32.to_radians(),
+            ..default()
+        },
         Ccd::enabled(),
         InputManagerBundle::with_map(input_map),
         Player,

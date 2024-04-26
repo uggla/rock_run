@@ -29,6 +29,7 @@
             "dynamicWrapping": true
         },
         "level01.tmx#sky-1": {
+            "dynamicWrapping": false,
             "scaleInDock": 0.25
         },
         "level01.tmx#tileset-1": {
@@ -39,7 +40,7 @@
             "scale": 0.5,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 639,
+                "x": 641,
                 "y": 361
             }
         },

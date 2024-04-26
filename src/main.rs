@@ -72,7 +72,10 @@ fn setup_background(
     asset_server: Res<AssetServer>,
     mut levels: ResMut<Levels>,
 ) {
-    commands.spawn(Camera2dBundle::default());
+    commands.spawn(Camera2dBundle {
+        transform: Transform::from_xyz(-WINDOW_WIDTH / 2.0, 0.0, 0.0),
+        ..Default::default()
+    });
 
     // let menu: Handle<helpers::tiled::TiledMap> = asset_server.load("menu.tmx");
     // levels.menu = Some(menu);
@@ -96,8 +99,12 @@ struct Platform;
 fn setup_physics(mut commands: Commands) {
     /* Create the ground. */
     let points = vec![
-        Vec2::new(-640.0, -8.0 - 224.0),
-        Vec2::new(640.0, -8.0 - 224.0),
+        Vec2::new(-1280.0, -8.0 - 224.0),
+        Vec2::new(48.0, -8.0 - 224.0),
+        Vec2::new(48.0 + 14.0 * 16.0, -8.0 - (224.0 - 7.0 * 16.0)),
+        Vec2::new(272.0 + 3.0 * 16.0, -8.0 - (224.0 - 7.0 * 16.0)),
+        Vec2::new(320.0 + 7.0 * 16.0, -8.0 - (224.0)),
+        Vec2::new(1280.0, -8.0 - 224.0),
     ];
 
     commands
@@ -108,7 +115,7 @@ fn setup_physics(mut commands: Commands) {
     commands
         .spawn((Collider::cuboid(60.0, 5.0), Platform))
         .insert(TransformBundle::from(Transform::from_xyz(
-            100.0,
+            -1280.0 / 2.0 + 100.0,
             -224.0 + 5.0 * 16.0, // 8.0 is hard to climb, 9.0 can not be climbed
             0.0,
         )));
@@ -116,8 +123,8 @@ fn setup_physics(mut commands: Commands) {
     commands
         .spawn((Collider::cuboid(60.0, 5.0), Platform))
         .insert(TransformBundle::from(Transform::from_xyz(
-            380.0,                // 270 Gap is reachable, 290 seems not
-            -224.0 + 10.0 * 16.0, // 8.0 is hard to climb, 9.0 can not be climbed
+            -1280.0 / 2.0 + 380.0, // 270 Gap is reachable, 290 seems not
+            -224.0 + 10.0 * 16.0,  // 8.0 is hard to climb, 9.0 can not be climbed
             0.0,
         )));
 
