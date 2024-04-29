@@ -8,9 +8,12 @@ use crate::{
 
 pub struct CollisionPlugin;
 
+#[derive(SystemSet, Clone, Hash, Debug, PartialEq, Eq)]
+pub struct CollisionState;
+
 impl Plugin for CollisionPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, player_ground);
+        app.add_systems(Update, player_ground.in_set(CollisionState));
     }
 }
 fn player_ground(

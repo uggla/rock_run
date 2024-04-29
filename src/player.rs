@@ -11,7 +11,7 @@ use leafwing_input_manager::{
     plugin::InputManagerPlugin, Actionlike, InputManagerBundle,
 };
 
-use crate::{state::AppState, WINDOW_WIDTH};
+use crate::{collision::CollisionState, state::AppState, WINDOW_WIDTH};
 
 pub const PLAYER_SPEED: f32 = 500.0;
 pub const PLAYER_SCALE_FACTOR: f32 = 1.0;
@@ -69,7 +69,12 @@ impl Plugin for PlayerPlugin {
             .init_state::<PlayerState>()
             .add_systems(OnEnter(AppState::GameCreate), setup_player)
             .add_systems(OnEnter(AppState::StartMenu), despawn_player)
-            .add_systems(Update, move_player.run_if(in_state(AppState::GameRunning)));
+            .add_systems(
+                Update,
+                move_player
+                    .after(CollisionState)
+                    .run_if(in_state(AppState::GameRunning)),
+            );
     }
 }
 

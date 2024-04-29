@@ -118,43 +118,49 @@ fn setup_physics(mut commands: Commands) {
     ];
 
     commands
-        .spawn((Collider::polyline(points, None), Ground))
-        .insert(Ccd::enabled());
+        .spawn((
+            SpatialBundle::default(),
+            Collider::polyline(points, None),
+            Ground,
+        ))
+        .insert(Ccd::enabled())
+        // .insert(TransformBundle::from(Transform::from_xyz(0.0, 0.0, 0.0)))
+        .with_children(|parent| {
+            // Create 2 x test platforms
+            parent
+                .spawn((Collider::cuboid(60.0, 5.0), Platform))
+                .insert(TransformBundle::from(Transform::from_xyz(
+                    -1280.0 / 2.0 + 100.0,
+                    -224.0 + 5.0 * 16.0, // 8.0 is hard to climb, 9.0 can not be climbed
+                    0.0,
+                )));
 
-    // Create 2 x test platforms
-    commands
-        .spawn((Collider::cuboid(60.0, 5.0), Platform))
-        .insert(TransformBundle::from(Transform::from_xyz(
-            -1280.0 / 2.0 + 100.0,
-            -224.0 + 5.0 * 16.0, // 8.0 is hard to climb, 9.0 can not be climbed
-            0.0,
-        )));
+            parent
+                .spawn((Collider::cuboid(60.0, 5.0), Platform))
+                .insert(TransformBundle::from(Transform::from_xyz(
+                    -1280.0 / 2.0 + 380.0, // 270 Gap is reachable, 290 seems not
+                    -224.0 + 10.0 * 16.0,  // 8.0 is hard to climb, 9.0 can not be climbed
+                    0.0,
+                )));
 
-    commands
-        .spawn((Collider::cuboid(60.0, 5.0), Platform))
-        .insert(TransformBundle::from(Transform::from_xyz(
-            -1280.0 / 2.0 + 380.0, // 270 Gap is reachable, 290 seems not
-            -224.0 + 10.0 * 16.0,  // 8.0 is hard to climb, 9.0 can not be climbed
-            0.0,
-        )));
-
-    /* Create the bouncing ball. */
-    commands
-        .spawn(RigidBody::Dynamic)
-        .insert(GravityScale(20.0))
-        .insert(Collider::ball(20.0))
-        .insert(Restitution::coefficient(0.0))
-        // .insert(ColliderMassProperties::Density(20.0))
-        .insert(ExternalImpulse {
-            // impulse: Vec2::new(100.0, 200.0),
-            // torque_impulse: 14.0,
-            ..default()
-        })
-        // .insert(Damping {
-        //     linear_damping: 100.0,
-        //     angular_damping: 0.0,
-        // })
-        .insert(TransformBundle::from(Transform::from_xyz(0.0, 400.0, 0.0)));
+            /* Create the bouncing ball. */
+            parent
+                .spawn(RigidBody::Dynamic)
+                .insert(GravityScale(20.0))
+                .insert(Collider::ball(20.0))
+                .insert(Restitution::coefficient(0.0))
+                // .insert(ColliderMassProperties::Density(20.0))
+                .insert(ExternalImpulse {
+                    // impulse: Vec2::new(100.0, 200.0),
+                    // torque_impulse: 14.0,
+                    ..default()
+                })
+                // .insert(Damping {
+                //     linear_damping: 100.0,
+                //     angular_damping: 0.0,
+                // })
+                .insert(TransformBundle::from(Transform::from_xyz(0.0, 400.0, 0.0)));
+        });
 }
 
 fn print_ball_altitude(positions: Query<&Transform, With<RigidBody>>) {
