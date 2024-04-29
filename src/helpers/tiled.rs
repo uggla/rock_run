@@ -376,6 +376,7 @@ pub fn process_loaded_maps(
                                             y: layer_tile_data.flip_v,
                                             d: layer_tile_data.flip_d,
                                         },
+                                        visible: TileVisible(false),
                                         ..Default::default()
                                     })
                                     .id();
