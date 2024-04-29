@@ -11,7 +11,7 @@ use leafwing_input_manager::{
     plugin::InputManagerPlugin, Actionlike, InputManagerBundle,
 };
 
-use crate::WINDOW_WIDTH;
+use crate::{state::AppState, WINDOW_WIDTH};
 
 pub const PLAYER_SPEED: f32 = 500.0;
 pub const PLAYER_SCALE_FACTOR: f32 = 1.0;
@@ -67,8 +67,9 @@ impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(InputManagerPlugin::<PlayerMovement>::default())
             .init_state::<PlayerState>()
-            .add_systems(Startup, setup_player)
-            .add_systems(Update, move_player);
+            .add_systems(OnEnter(AppState::GameCreate), setup_player)
+            .add_systems(OnEnter(AppState::StartMenu), despawn_player)
+            .add_systems(Update, move_player.run_if(in_state(AppState::GameRunning)));
     }
 }
 
@@ -296,4 +297,10 @@ fn swing_texture(
     } else {
         texture.index - 1
     };
+}
+
+fn despawn_player(mut commands: Commands, player: Query<Entity, With<Player>>) {
+    if let Ok(player) = player.get_single() {
+        commands.entity(player).despawn_recursive();
+    }
 }

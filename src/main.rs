@@ -1,6 +1,8 @@
 mod collision;
 mod helpers;
+mod menu;
 mod player;
+mod state;
 mod text_syllable;
 
 use bevy::prelude::*;
@@ -14,7 +16,9 @@ use text_syllable::TextSyllablePlugin;
 use crate::{
     collision::CollisionPlugin,
     helpers::tiled::{TiledMap, TilesetLayerToStorageEntity},
+    menu::MenuPlugin,
     player::PlayerPlugin,
+    state::{AppState, StatesPlugin},
     text_syllable::{TextSyllableState, TextSyllableValues},
 };
 
@@ -24,6 +28,7 @@ pub const WINDOW_HEIGHT: f32 = 720.0;
 
 fn main() {
     App::new()
+        .init_state::<AppState>()
         .add_plugins((
             DefaultPlugins
                 .set(WindowPlugin {
@@ -36,6 +41,8 @@ fn main() {
                 })
                 // prevents blurry sprites
                 .set(ImagePlugin::default_nearest()),
+            StatesPlugin,
+            MenuPlugin,
             TilemapPlugin,
             helpers::tiled::TiledMapPlugin,
             RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(60.0),
@@ -45,42 +52,37 @@ fn main() {
             #[cfg(debug_assertions)]
             RapierDebugRenderPlugin::default(),
         ))
-        .insert_resource(Levels::default())
         .add_systems(Startup, (setup_background, setup_physics))
         .add_systems(
             Update,
             (
                 apply_forces,
                 print_ball_altitude,
-                bevy::window::close_on_esc,
                 update_text,
+                // bevy::window::close_on_esc,
                 #[cfg(debug_assertions)]
                 helpers::camera::movement,
             ),
         )
+        .add_systems(
+            OnEnter(AppState::GameCreate),
+            toggle_level_background_visibility,
+        )
+        .add_systems(
+            OnEnter(AppState::StartMenu),
+            toggle_level_background_visibility,
+        )
         .run();
 }
 
-#[derive(Resource, Default)]
-struct Levels {
-    menu: Option<Handle<helpers::tiled::TiledMap>>,
-}
-
 #[derive(Component)]
-struct Truc;
+struct Level01;
 
-fn setup_background(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-    mut levels: ResMut<Levels>,
-) {
+fn setup_background(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(Camera2dBundle {
         transform: Transform::from_xyz(-WINDOW_WIDTH / 2.0, 0.0, 0.0),
         ..Default::default()
     });
-
-    // let menu: Handle<helpers::tiled::TiledMap> = asset_server.load("menu.tmx");
-    // levels.menu = Some(menu);
 
     let map_handle: Handle<helpers::tiled::TiledMap> = asset_server.load("level01.tmx");
     commands.spawn((
@@ -88,8 +90,14 @@ fn setup_background(
             tiled_map: map_handle,
             ..Default::default()
         },
-        Truc,
+        Level01,
     ));
+}
+
+fn toggle_level_background_visibility(mut tile_query: Query<&mut TileVisible>) {
+    for mut tile_visible in tile_query.iter_mut() {
+        tile_visible.0 = !tile_visible.0;
+    }
 }
 
 #[derive(Component)]
@@ -184,7 +192,6 @@ fn update_text(
     state: Res<State<TextSyllableState>>,
     mut next_state: ResMut<NextState<TextSyllableState>>,
     time: Res<Time>,
-    map_handle: Res<Levels>,
     mut map_query: Query<
         (
             Entity,
@@ -192,7 +199,7 @@ fn update_text(
             &mut TilesetLayerToStorageEntity,
             &TilemapRenderSettings,
         ),
-        With<Truc>,
+        With<Level01>,
     >,
 
     tile_storage_query: Query<(Entity, &TileStorage)>,
@@ -229,9 +236,9 @@ fn update_text(
         // }
     }
 
-    if state.get() == &TextSyllableState::Visible && keyboard_input.pressed(KeyCode::Enter) {
-        params.text = "bi-du-le".into();
-    }
+    // if state.get() == &TextSyllableState::Visible && keyboard_input.pressed(KeyCode::Enter) {
+    //     params.text = "bi-du-le".into();
+    // }
     if state.get() == &TextSyllableState::Visible && keyboard_input.pressed(KeyCode::Backspace) {
         next_state.set(TextSyllableState::Hidden);
     }
