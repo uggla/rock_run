@@ -22,7 +22,7 @@ fn player_ground(
 ) {
     let ground_entity = ground.single();
 
-    if let Ok((player_entity, output)) = controllers.get_single() {
+    if let Ok((_player_entity, output)) = controllers.get_single() {
         // info!(
         //     "Entity {:?} moved by {:?} and touches the ground: {:?}",
         //     player_entity, output.effective_translation, output.grounded
@@ -30,17 +30,18 @@ fn player_ground(
         // if output.collisions == ground_entity {
         for character_collision in output.collisions.iter() {
             // Player collides with ground or platforms
+            #[allow(clippy::collapsible_if)]
             if character_collision.entity == ground_entity
                 || platforms.contains(character_collision.entity)
             {
                 if output.grounded && state.get() != &PlayerState::Jumping {
                     next_state.set(PlayerState::Idling);
                 }
-
-                if !output.grounded && state.get() == &PlayerState::Idling {
-                    next_state.set(PlayerState::Falling);
-                }
             }
+        }
+        // Player is falling
+        if !output.grounded && state.get() == &PlayerState::Idling {
+            next_state.set(PlayerState::Falling);
         }
     }
 }
