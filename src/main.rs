@@ -39,10 +39,11 @@ fn main() {
             TilemapPlugin,
             helpers::tiled::TiledMapPlugin,
             RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(60.0),
-            RapierDebugRenderPlugin::default(),
             PlayerPlugin,
             CollisionPlugin,
             TextSyllablePlugin::default(),
+            #[cfg(debug_assertions)]
+            RapierDebugRenderPlugin::default(),
         ))
         .insert_resource(Levels::default())
         .add_systems(Startup, (setup_background, setup_physics))
@@ -52,8 +53,9 @@ fn main() {
                 apply_forces,
                 print_ball_altitude,
                 bevy::window::close_on_esc,
-                helpers::camera::movement,
                 update_text,
+                #[cfg(debug_assertions)]
+                helpers::camera::movement,
             ),
         )
         .run();
