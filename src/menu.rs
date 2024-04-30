@@ -211,7 +211,6 @@ fn menu_input_system(
     state: ResMut<State<AppState>>,
     mut next_state: ResMut<NextState<AppState>>,
     menu_action_state: Res<ActionState<MenuAction>>,
-    // mut physics_time: ResMut<Time<Physics>>,
     mut app_exit_events: EventWriter<AppExit>,
     mut rapier_config: ResMut<RapierConfiguration>,
 ) {

@@ -1,6 +1,7 @@
 mod camera;
 mod collision;
 mod helpers;
+mod level;
 mod menu;
 mod player;
 mod state;
@@ -17,7 +18,7 @@ use text_syllable::TextSyllablePlugin;
 use crate::{
     camera::CameraPlugin,
     collision::CollisionPlugin,
-    helpers::tiled::{TiledMap, TilesetLayerToStorageEntity},
+    level::LevelPlugin,
     menu::MenuPlugin,
     player::PlayerPlugin,
     state::{AppState, StatesPlugin},
@@ -45,6 +46,7 @@ fn main() {
                 .set(ImagePlugin::default_nearest()),
             StatesPlugin,
             CameraPlugin,
+            LevelPlugin,
             MenuPlugin,
             TilemapPlugin,
             helpers::tiled::TiledMapPlugin,
@@ -55,7 +57,7 @@ fn main() {
             #[cfg(debug_assertions)]
             RapierDebugRenderPlugin::default(),
         ))
-        .add_systems(Startup, (setup_background, setup_physics))
+        .add_systems(Startup, setup_physics)
         .add_systems(
             Update,
             (
@@ -67,68 +69,7 @@ fn main() {
                 helpers::camera::movement,
             ),
         )
-        .add_systems(
-            OnEnter(AppState::GameCreate),
-            toggle_level_background_visibility,
-        )
-        .add_systems(
-            OnEnter(AppState::StartMenu),
-            toggle_level_background_visibility,
-        )
-        .insert_resource(CurrentLevel(Level(1)))
         .run();
-}
-
-#[derive(Resource, Eq, PartialEq)]
-pub struct CurrentLevel(Level);
-
-#[derive(Component, Eq, PartialEq)]
-pub struct Level(u8);
-
-fn setup_background(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let sprite_handle: Handle<Image> = asset_server.load("menu.jpg");
-
-    commands.spawn((
-        SpriteBundle {
-            texture: sprite_handle,
-            transform: Transform::from_xyz(-(WINDOW_WIDTH / 2.0 - 720.0 / 2.0), 0.0, 0.0),
-            ..default()
-        },
-        Level(0),
-    ));
-
-    let map_handle: Handle<helpers::tiled::TiledMap> = asset_server.load("level01.tmx");
-    commands.spawn((
-        helpers::tiled::TiledMapBundle {
-            tiled_map: map_handle,
-            ..Default::default()
-        },
-        Level(1),
-    ));
-}
-
-fn toggle_level_background_visibility(
-    current_level: Res<CurrentLevel>,
-    mut tile_query: Query<&mut TileVisible>,
-    map_query: Query<(&Level, &TilesetLayerToStorageEntity), With<Level>>,
-    tile_storage_query: Query<(Entity, &TileStorage)>,
-) {
-    for (level, tileset_layer_storage) in map_query.iter() {
-        if *level == current_level.0 {
-            for layer_entity in tileset_layer_storage.get_entities() {
-                if let Ok((_, layer_tile_storage)) = tile_storage_query.get(*layer_entity) {
-                    for tile in layer_tile_storage.iter().flatten() {
-                        let mut tile_visible = tile_query.get_mut(*tile).unwrap();
-                        tile_visible.0 = !tile_visible.0;
-                    }
-                }
-            }
-        }
-    }
-
-    // for mut tile_visible in tile_query.iter_mut() {
-    //     tile_visible.0 = !tile_visible.0;
-    // }
 }
 
 #[derive(Component)]
@@ -223,59 +164,42 @@ fn apply_forces(
 }
 
 fn update_text(
-    mut commands: Commands,
+    // mut commands: Commands,
     mut params: ResMut<TextSyllableValues>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
     state: Res<State<TextSyllableState>>,
     mut next_state: ResMut<NextState<TextSyllableState>>,
-    time: Res<Time>,
-    mut map_query: Query<
-        (
-            Entity,
-            &Handle<TiledMap>,
-            &mut TilesetLayerToStorageEntity,
-            &TilemapRenderSettings,
-        ),
-        With<Level>,
-    >,
-
-    tile_storage_query: Query<(Entity, &TileStorage)>,
-    mut tile_query: Query<&mut TileVisible>,
+    // time: Res<Time>,
+    // mut map_query: Query<
+    //     (
+    //         Entity,
+    //         &Handle<TiledMap>,
+    //         &mut TilesetLayerToStorageEntity,
+    //         &TilemapRenderSettings,
+    //     ),
+    //     With<Level>,
+    // >,
+    // tile_storage_query: Query<(Entity, &TileStorage)>,
+    // mut tile_query: Query<&mut TileVisible>,
 ) {
     if state.get() == &TextSyllableState::Hidden && keyboard_input.pressed(KeyCode::Space) {
         next_state.set(TextSyllableState::Visible);
-        // if let Some(map_handle) = map_handle.menu.as_ref() {
-        info!("here");
-        // commands.spawn((helpers::tiled::TiledMapBundle {
-        //     tiled_map: map_handle.clone(),
-        //     ..Default::default()
-        // },));
-
-        // let (map_handle, mut layer_storage, render_settings) = map_query.single_mut();
-        for (e, map_handle, mut tileset_layer_storage, render_settings) in map_query.iter_mut() {
-            for layer_entity in tileset_layer_storage.get_entities() {
-                if let Ok((_, layer_tile_storage)) = tile_storage_query.get(*layer_entity) {
-                    for tile in layer_tile_storage.iter().flatten() {
-                        commands.entity(*tile).despawn_recursive()
-                    }
-                }
-                commands.entity(*layer_entity).despawn_recursive();
-            }
-            commands.entity(e).despawn_recursive();
-        }
-        //
-        // for ts in tile_storage_query.iter() {
-        //     info!("ent: {:?}", ts);
-        // }
-        // for mut t in tile_query.iter_mut() {
-        //     t.0 = false;
-        // }
+        // for (e, map_handle, mut tileset_layer_storage, render_settings) in map_query.iter_mut() {
+        //     for layer_entity in tileset_layer_storage.get_entities() {
+        //         if let Ok((_, layer_tile_storage)) = tile_storage_query.get(*layer_entity) {
+        //             for tile in layer_tile_storage.iter().flatten() {
+        //                 commands.entity(*tile).despawn_recursive()
+        //             }
+        //         }
+        //         commands.entity(*layer_entity).despawn_recursive();
+        //     }
+        //     commands.entity(e).despawn_recursive();
         // }
     }
 
-    // if state.get() == &TextSyllableState::Visible && keyboard_input.pressed(KeyCode::Enter) {
-    //     params.text = "bi-du-le".into();
-    // }
+    if state.get() == &TextSyllableState::Visible && keyboard_input.pressed(KeyCode::KeyN) {
+        params.text = "bi-du-le".into();
+    }
     if state.get() == &TextSyllableState::Visible && keyboard_input.pressed(KeyCode::Backspace) {
         next_state.set(TextSyllableState::Hidden);
     }

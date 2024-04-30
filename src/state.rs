@@ -17,6 +17,8 @@ pub enum AppState {
     GamePaused,
     GameOver,
 }
+
+#[allow(dead_code)]
 impl AppState {
     pub const ANY_GAME_STATE: [AppState; 4] = [
         AppState::GameCreate,
