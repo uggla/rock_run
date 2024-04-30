@@ -200,6 +200,7 @@ fn update_text(
     if state.get() == &TextSyllableState::Visible && keyboard_input.pressed(KeyCode::KeyN) {
         params.text = "bi-du-le".into();
     }
+
     if state.get() == &TextSyllableState::Visible && keyboard_input.pressed(KeyCode::Backspace) {
         next_state.set(TextSyllableState::Hidden);
     }
