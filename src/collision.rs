@@ -13,10 +13,10 @@ pub struct CollisionState;
 
 impl Plugin for CollisionPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, player_ground.in_set(CollisionState));
+        app.add_systems(Update, player_collision.in_set(CollisionState));
     }
 }
-fn player_ground(
+fn player_collision(
     controllers: Query<(Entity, &KinematicCharacterControllerOutput), With<Player>>,
     state: Res<State<PlayerState>>,
     mut next_state: ResMut<NextState<PlayerState>>,

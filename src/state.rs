@@ -7,7 +7,7 @@ pub struct ForState<T> {
     pub states: Vec<T>,
 }
 
-// Main state enum, differianting, Menu from Game 'scenes'
+// Main state enum
 #[derive(States, Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Sequence)]
 pub enum AppState {
     #[default]
