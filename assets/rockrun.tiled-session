@@ -16,8 +16,8 @@
             "scale": 0.7310546874999999,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 640.8549292011755,
-                "y": 360.4381512156025
+                "x": 592.9788939353462,
+                "y": 359.07026449372165
             }
         },
         "level01.tmx#backgrounds": {
@@ -40,8 +40,8 @@
             "scale": 0.5,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 641,
-                "y": 361
+                "x": 639,
+                "y": 359
             }
         },
         "menu.tmx#menu_tileset": {
@@ -55,13 +55,12 @@
     "map.tileWidth": 16,
     "map.width": 80,
     "openFiles": [
-        "level01.tmx",
-        "menu.tmx"
+        "level01.tmx"
     ],
     "project": "rockrun.tiled-project",
     "recentFiles": [
-        "menu.tmx",
-        "level01.tmx"
+        "level01.tmx",
+        "menu.tmx"
     ],
     "tileset.embedInMap": true,
     "tileset.tileSize": {
