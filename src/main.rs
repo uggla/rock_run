@@ -4,6 +4,7 @@ mod helpers;
 mod level;
 mod menu;
 mod player;
+mod screen_map;
 mod state;
 mod text_syllable;
 
