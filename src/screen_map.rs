@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use std::ops::Range;
 
 #[derive(Debug, PartialEq)]
-struct Screen {
+pub struct Screen {
     x_range: Range<f32>,
     y_range: Range<f32>,
     start_screen: bool,
@@ -15,7 +15,7 @@ impl Screen {
         self.x_range.contains(&point.x) && self.y_range.contains(&point.y)
     }
 
-    fn get_center(&self) -> Vec2 {
+    pub fn get_center(&self) -> Vec2 {
         Vec2::new(
             (self.x_range.start + self.x_range.end) / 2.0,
             (self.y_range.start + self.y_range.end) / 2.0 - 1f32,
@@ -24,7 +24,7 @@ impl Screen {
 }
 
 #[derive(Debug, PartialEq)]
-struct Map {
+pub struct Map {
     width: usize,
     height: usize,
     screen_width: usize,
@@ -95,7 +95,7 @@ impl Map {
             data,
         }
     }
-    fn tiled_to_bevy_coord(&self, tiled_coord: Vec2) -> Vec2 {
+    pub fn tiled_to_bevy_coord(&self, tiled_coord: Vec2) -> Vec2 {
         Vec2::new(
             tiled_coord.x - (self.width / 2) as f32,
             (tiled_coord.y - (self.height / 2) as f32) + 1f32,
@@ -234,7 +234,7 @@ impl Map {
                 .contains(&camera_points[p2]))
     }
 
-    fn get_start_screen(&self) -> &Screen {
+    pub fn get_start_screen(&self) -> &Screen {
         self.data
             .iter()
             .flatten()

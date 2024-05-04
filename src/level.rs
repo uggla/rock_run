@@ -2,16 +2,27 @@ use bevy::prelude::*;
 use bevy_ecs_tilemap::tiles::{TileStorage, TileVisible};
 
 use crate::{
-    helpers::{self, tiled::TilesetLayerToStorageEntity},
+    helpers::{
+        self,
+        tiled::{TiledMap, TilesetLayerToStorageEntity},
+    },
     state::AppState,
-    WINDOW_WIDTH,
+    WINDOW_HEIGHT, WINDOW_WIDTH,
 };
 
-#[derive(Resource, Eq, PartialEq)]
-pub struct CurrentLevel(Level);
+use crate::screen_map::Map;
 
-#[derive(Component, Eq, PartialEq)]
-pub struct Level(u8);
+#[derive(Resource, PartialEq)]
+pub struct CurrentLevel {
+    pub id: u8,
+}
+
+#[derive(Component, PartialEq)]
+pub struct Level {
+    pub id: u8,
+    pub handle: Handle<TiledMap>,
+    pub map: Map,
+}
 
 #[derive(Component)]
 struct Menu;
@@ -35,7 +46,7 @@ impl Plugin for LevelPlugin {
                     toggle_menu_background_visibility,
                 ),
             )
-            .insert_resource(CurrentLevel(Level(1)));
+            .insert_resource(CurrentLevel { id: 1 });
     }
 }
 
@@ -54,10 +65,14 @@ fn setup_background(mut commands: Commands, asset_server: Res<AssetServer>) {
     let map_handle: Handle<helpers::tiled::TiledMap> = asset_server.load("level01.tmx");
     commands.spawn((
         helpers::tiled::TiledMapBundle {
-            tiled_map: map_handle,
+            tiled_map: map_handle.clone(),
             ..Default::default()
         },
-        Level(1),
+        Level {
+            id: 1,
+            handle: map_handle.clone(),
+            map: Map::new("SO", WINDOW_WIDTH as usize, WINDOW_HEIGHT as usize),
+        },
     ));
 }
 
@@ -68,7 +83,7 @@ fn toggle_level_background_visibility(
     tile_storage_query: Query<(Entity, &TileStorage)>,
 ) {
     for (level, tileset_layer_storage) in map_query.iter() {
-        if *level == current_level.0 {
+        if level.id == current_level.id {
             for layer_entity in tileset_layer_storage.get_entities() {
                 if let Ok((_, layer_tile_storage)) = tile_storage_query.get(*layer_entity) {
                     for tile in layer_tile_storage.iter().flatten() {
@@ -77,6 +92,7 @@ fn toggle_level_background_visibility(
                     }
                 }
             }
+            break;
         }
     }
 }
