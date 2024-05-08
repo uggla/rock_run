@@ -38,6 +38,7 @@ fn main() {
                 .set(WindowPlugin {
                     primary_window: Some(Window {
                         title: "RockRun: Rose's Odyssey".to_string(),
+                        resizable: false,
                         resolution: WindowResolution::new(WINDOW_WIDTH, WINDOW_HEIGHT),
                         ..default()
                     }),
