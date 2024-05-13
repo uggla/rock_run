@@ -2,8 +2,8 @@ use bevy::prelude::*;
 use bevy_rapier2d::control::KinematicCharacterControllerOutput;
 
 use crate::{
+    ground_platforms::{Ground, Platform},
     player::{Player, PlayerState},
-    Ground, Platform,
 };
 
 pub struct CollisionPlugin;
@@ -23,26 +23,26 @@ fn player_collision(
     ground: Query<Entity, With<Ground>>,
     platforms: Query<Entity, With<Platform>>,
 ) {
-    let ground_entity = ground.single();
-
-    if let Ok((_player_entity, output)) = controllers.get_single() {
-        // info!(
-        //     "Entity {:?} moved by {:?} and touches the ground: {:?}",
-        //     player_entity, output.effective_translation, output.grounded
-        // );
-        for character_collision in output.collisions.iter() {
-            // Player collides with ground or platforms
-            if (character_collision.entity == ground_entity
-                || platforms.contains(character_collision.entity))
-                && output.grounded
-                && state.get() != &PlayerState::Jumping
-            {
-                next_state.set(PlayerState::Idling);
+    if let Ok(ground_entity) = ground.get_single() {
+        if let Ok((_player_entity, output)) = controllers.get_single() {
+            // info!(
+            //     "Entity {:?} moved by {:?} and touches the ground: {:?}",
+            //     player_entity, output.effective_translation, output.grounded
+            // );
+            for character_collision in output.collisions.iter() {
+                // Player collides with ground or platforms
+                if (character_collision.entity == ground_entity
+                    || platforms.contains(character_collision.entity))
+                    && output.grounded
+                    && state.get() != &PlayerState::Jumping
+                {
+                    next_state.set(PlayerState::Idling);
+                }
             }
-        }
-        // Player is falling
-        if !output.grounded && state.get() == &PlayerState::Idling {
-            next_state.set(PlayerState::Falling);
+            // Player is falling
+            if !output.grounded && state.get() == &PlayerState::Idling {
+                next_state.set(PlayerState::Falling);
+            }
         }
     }
 }

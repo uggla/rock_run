@@ -19,7 +19,7 @@ pub const PLAYER_WIDTH: f32 = 100.0;
 pub const PLAYER_HEIGHT: f32 = 75.0;
 const PLAYER_HITBOX: (Vec2, Vec2, f32) = (Vec2::new(-4.0, -9.0), Vec2::new(-4.0, 8.0), 22.0);
 const PLAYER_HITBOX_TRANSLATION: Vec2 = Vec2::new(8.0, 0.0);
-const LEVEL01_START: Vec3 = Vec3::new(-WINDOW_WIDTH / 2.0, 200.0, 20.0);
+const LEVEL01_START: Vec3 = Vec3::new(-WINDOW_WIDTH / 2.0, 400.0, 20.0);
 
 #[derive(Component)]
 pub struct Player;

@@ -33,3 +33,13 @@ opt-level = 3
 
 [dev-dependencies]
 pretty_assertions = "1.4.0"
+
+# Binary target
+[[bin]]
+name = "rock_run"
+path = "src/main.rs"
+
+# Library target
+[lib]
+name = "screen_map"
+path = "src/screen_map.rs"

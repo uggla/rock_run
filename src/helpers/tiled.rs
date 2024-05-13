@@ -289,7 +289,7 @@ pub fn process_loaded_maps(
                         let offset_y = layer.offset_y;
 
                         let tiled::LayerType::Tiles(tile_layer) = layer.layer_type() else {
-                            log::info!(
+                            log::debug!(
                                 "Skipping layer {} because only tile layers are supported.",
                                 layer.id()
                             );
@@ -297,7 +297,7 @@ pub fn process_loaded_maps(
                         };
 
                         let tiled::TileLayer::Finite(layer_data) = tile_layer else {
-                            log::info!(
+                            log::debug!(
                                 "Skipping layer {} because only finite layers are supported.",
                                 layer.id()
                             );
