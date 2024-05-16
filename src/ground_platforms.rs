@@ -226,7 +226,7 @@ fn despawn_ground_platforms_spikes(
 
 fn print_ball_altitude(positions: Query<&Transform, With<RigidBody>>) {
     for transform in positions.iter() {
-        debug!("Ball altitude: {}", transform.translation.y);
+        trace!("Ball altitude: {}", transform.translation.y);
     }
 }
 

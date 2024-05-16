@@ -118,8 +118,8 @@ fn camera_follows_player(
                         }
                     }
 
-                    debug!("player_state: {:?}", player_state);
-                    debug!("offset: {:?}", offset);
+                    trace!("player_state: {:?}", player_state);
+                    trace!("offset: {:?}", offset);
                     Vec2::new(player.translation.x, player.translation.y + offset.y)
                 }
                 (false, _, true, Transition::Smooth) => {
@@ -139,8 +139,8 @@ fn camera_follows_player(
                         }
                     }
 
-                    debug!("player_state: {:?}", player_state);
-                    debug!("offset: {:?}", offset);
+                    trace!("player_state: {:?}", player_state);
+                    trace!("offset: {:?}", offset);
                     Vec2::new(player.translation.x, player.translation.y + offset.y)
                 }
                 _ => {

@@ -13,6 +13,7 @@ pub enum AppState {
     #[default]
     StartMenu,
     GameCreate,
+    GameMessage,
     GameRunning,
     GamePaused,
     GameOver,
@@ -20,8 +21,9 @@ pub enum AppState {
 
 #[allow(dead_code)]
 impl AppState {
-    pub const ANY_GAME_STATE: [AppState; 4] = [
+    pub const ANY_GAME_STATE: [AppState; 5] = [
         AppState::GameCreate,
+        AppState::GameMessage,
         AppState::GameRunning,
         AppState::GamePaused,
         AppState::GameOver,

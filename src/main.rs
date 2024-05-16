@@ -1,30 +1,34 @@
 mod camera;
 mod collision;
+mod events;
 mod ground_platforms;
 mod helpers;
 mod level;
+mod localization;
 mod menu;
 mod player;
 mod screen_map;
 mod state;
 mod text_syllable;
 
-use bevy::prelude::*;
 use bevy::window::WindowResolution;
+use bevy::{prelude::*, utils::HashMap};
 
 use bevy_ecs_tilemap::prelude::*;
+use bevy_fluent::FluentPlugin;
 use bevy_rapier2d::prelude::*;
 use text_syllable::TextSyllablePlugin;
 
 use crate::{
     camera::CameraPlugin,
     collision::CollisionPlugin,
+    events::{NoMoreStoryMessages, StoryMessages},
     ground_platforms::GroundAndPlatformsPlugin,
     level::LevelPlugin,
+    localization::LocalizationPlugin,
     menu::MenuPlugin,
     player::PlayerPlugin,
     state::{AppState, StatesPlugin},
-    text_syllable::{TextSyllableState, TextSyllableValues},
 };
 
 // 16/9 1280x720
@@ -57,6 +61,8 @@ fn main() {
             GroundAndPlatformsPlugin,
             PlayerPlugin,
             CollisionPlugin,
+            FluentPlugin,
+            LocalizationPlugin,
             TextSyllablePlugin::default(),
             #[cfg(debug_assertions)]
             RapierDebugRenderPlugin::default(),
@@ -70,48 +76,32 @@ fn main() {
                 helpers::camera::movement,
             ),
         )
+        .add_event::<StoryMessages>()
+        .add_event::<NoMoreStoryMessages>()
         .run();
 }
 
+// TODO: remove as this is for debugging purpose
 fn update_text(
-    // mut commands: Commands,
-    mut params: ResMut<TextSyllableValues>,
-    keyboard_input: Res<ButtonInput<KeyCode>>,
-    state: Res<State<TextSyllableState>>,
-    mut next_state: ResMut<NextState<TextSyllableState>>,
-    // time: Res<Time>,
-    // mut map_query: Query<
-    //     (
-    //         Entity,
-    //         &Handle<TiledMap>,
-    //         &mut TilesetLayerToStorageEntity,
-    //         &TilemapRenderSettings,
-    //     ),
-    //     With<Level>,
-    // >,
-    // tile_storage_query: Query<(Entity, &TileStorage)>,
-    // mut tile_query: Query<&mut TileVisible>,
+    mut msg_event: EventWriter<StoryMessages>,
+    input: Query<
+        &leafwing_input_manager::action_state::ActionState<player::PlayerMovement>,
+        With<player::Player>,
+    >,
 ) {
-    if state.get() == &TextSyllableState::Hidden && keyboard_input.pressed(KeyCode::Space) {
-        next_state.set(TextSyllableState::Visible);
-        // for (e, map_handle, mut tileset_layer_storage, render_settings) in map_query.iter_mut() {
-        //     for layer_entity in tileset_layer_storage.get_entities() {
-        //         if let Ok((_, layer_tile_storage)) = tile_storage_query.get(*layer_entity) {
-        //             for tile in layer_tile_storage.iter().flatten() {
-        //                 commands.entity(*tile).despawn_recursive()
-        //             }
-        //         }
-        //         commands.entity(*layer_entity).despawn_recursive();
-        //     }
-        //     commands.entity(e).despawn_recursive();
-        // }
-    }
+    let input_state = match input.get_single() {
+        Ok(state) => state,
+        Err(_) => return,
+    };
 
-    if state.get() == &TextSyllableState::Visible && keyboard_input.pressed(KeyCode::KeyN) {
-        params.text = "bi-du-le".into();
-    }
-
-    if state.get() == &TextSyllableState::Visible && keyboard_input.pressed(KeyCode::Backspace) {
-        next_state.set(TextSyllableState::Hidden);
+    if input_state.just_pressed(&player::PlayerMovement::Crouch) {
+        debug!("open window to display messages");
+        msg_event.send(StoryMessages::Display(vec![
+            (
+                "hello-world".to_string(),
+                Some(HashMap::from([("name".to_string(), "Rose".to_string())])),
+            ),
+            ("story01".to_string(), None),
+        ]));
     }
 }

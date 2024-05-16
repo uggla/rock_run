@@ -12,6 +12,8 @@ use bevy::{
 
 use raqote::{DrawOptions, DrawTarget, Gradient, GradientStop, PathBuilder, Point, Source, Spread};
 
+use crate::events::StoryMessages;
+
 const Z_VALUE: f32 = 10.0;
 
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States)]
@@ -125,7 +127,7 @@ impl Plugin for TextSyllablePlugin {
         app.init_state::<TextSyllableState>()
             .insert_resource(text_params)
             .add_systems(Startup, setup)
-            .add_systems(Update, toggle_visibility);
+            .add_systems(Update, (toggle_visibility, display_or_hide_messages));
     }
 }
 
@@ -325,6 +327,23 @@ fn toggle_visibility(
         }
     } else if let Ok((_, mut visibility)) = text_syllable_box.get_single_mut() {
         *visibility = Visibility::Hidden;
+    }
+}
+
+fn display_or_hide_messages(
+    mut msg_event: EventReader<StoryMessages>,
+    mut next_state: ResMut<NextState<TextSyllableState>>,
+) {
+    for ev in msg_event.read() {
+        match ev {
+            StoryMessages::Display(_msgs) => {
+                next_state.set(TextSyllableState::Visible);
+            }
+            StoryMessages::Hide => {
+                next_state.set(TextSyllableState::Hidden);
+            }
+            StoryMessages::Next => {}
+        }
     }
 }
 

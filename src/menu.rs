@@ -6,7 +6,10 @@ use leafwing_input_manager::{
     action_state::ActionState, input_map::InputMap, plugin::InputManagerPlugin, Actionlike,
 };
 
-use crate::state::{AppState, ForState};
+use crate::{
+    events::{NoMoreStoryMessages, StoryMessages},
+    state::{AppState, ForState},
+};
 
 #[derive(Component)]
 pub struct DrawBlinkTimer(pub Timer);
@@ -33,7 +36,10 @@ impl Plugin for MenuPlugin {
             .add_systems(OnEnter(AppState::StartMenu), start_menu)
             .add_systems(OnEnter(AppState::GamePaused), pause_menu)
             .add_systems(OnEnter(AppState::GameOver), gameover_menu)
-            .add_systems(Update, (menu_input_system, menu_blink_system))
+            .add_systems(
+                Update,
+                (menu_input_system, menu_blink_system, game_messages),
+            )
             .add_systems(Startup, setup);
     }
 }
@@ -213,13 +219,15 @@ fn menu_input_system(
     menu_action_state: Res<ActionState<MenuAction>>,
     mut app_exit_events: EventWriter<AppExit>,
     mut rapier_config: ResMut<RapierConfiguration>,
+    mut msg_event: EventWriter<StoryMessages>,
+    mut no_more_msg_event: EventReader<NoMoreStoryMessages>,
 ) {
-    // info!("{:?}", state.get());
     if state.get() != &AppState::StartMenu
         && menu_action_state.just_pressed(&MenuAction::ExitToMenu)
     {
         next_state.set(AppState::StartMenu);
         rapier_config.physics_pipeline_active = true;
+        msg_event.send(StoryMessages::Hide);
     } else {
         match state.get() {
             AppState::StartMenu => {
@@ -245,10 +253,47 @@ fn menu_input_system(
                     rapier_config.physics_pipeline_active = true;
                 }
             }
+            AppState::GameMessage => {
+                if !no_more_msg_event.is_empty() {
+                    // No more messages to display
+                    next_state.set(AppState::GameRunning);
+                    rapier_config.physics_pipeline_active = true;
+                    debug!("no more message, hide messages window");
+                    msg_event.send(StoryMessages::Hide);
+                    no_more_msg_event.clear();
+                }
+                if menu_action_state.just_pressed(&MenuAction::Accept) {
+                    // we still have messages to display
+                    debug!("next message");
+                    msg_event.send(StoryMessages::Next);
+                }
+                if menu_action_state.just_pressed(&MenuAction::PauseUnpause) {
+                    // User request to close the messages window
+                    next_state.set(AppState::GameRunning);
+                    rapier_config.physics_pipeline_active = true;
+                    debug!("hide messages window");
+                    msg_event.send(StoryMessages::Hide);
+                }
+            }
             AppState::GameOver => {
                 if menu_action_state.just_pressed(&MenuAction::Accept) {
                     next_state.set(AppState::StartMenu);
                 }
+            }
+        }
+    }
+}
+
+fn game_messages(
+    mut next_state: ResMut<NextState<AppState>>,
+    mut msg_event: EventReader<StoryMessages>,
+) {
+    for ev in msg_event.read() {
+        match ev {
+            StoryMessages::Next => {}
+            StoryMessages::Hide => {}
+            StoryMessages::Display(_) => {
+                next_state.set(AppState::GameMessage);
             }
         }
     }

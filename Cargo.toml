@@ -9,14 +9,17 @@ edition = "2021"
 [dependencies]
 bevy = { version = "0.13.2", features = ["jpeg"] }
 bevy_ecs_tilemap = { git = "https://github.com/StarArawn/bevy_ecs_tilemap.git" }
-bevy_rapier2d = "0.25.0"
+bevy_fluent = "0.9.0"
+bevy_rapier2d = "0.26.0"
 enum-iterator = "2.0.1"
+fluent = "0.16.1"
 leafwing-input-manager = "0.13.3"
 raqote = { version = "0.8.4", default-features = false, features = [
   "pathfinder_geometry",
 ] }
 thiserror = "1.0.59"
 tiled = { version = "0.11.2", default-features = false }
+unic-langid = { version = "0.9.5", features = ["unic-langid-macros"] }
 
 [target.x86_64-unknown-linux-gnu.dependencies.bevy]
 version = "0.13.2"
