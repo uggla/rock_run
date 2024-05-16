@@ -9,11 +9,11 @@ use crate::{
 pub struct CollisionPlugin;
 
 #[derive(SystemSet, Clone, Hash, Debug, PartialEq, Eq)]
-pub struct CollisionState;
+pub struct CollisionSet;
 
 impl Plugin for CollisionPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, player_collision.in_set(CollisionState));
+        app.add_systems(Update, player_collision.in_set(CollisionSet));
     }
 }
 fn player_collision(

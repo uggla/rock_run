@@ -7,6 +7,9 @@ use crate::{
 };
 pub struct CameraPlugin;
 
+#[derive(SystemSet, Clone, Hash, Debug, PartialEq, Eq)]
+pub struct CameraSet;
+
 impl Plugin for CameraPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, setup_camera);
@@ -17,7 +20,9 @@ impl Plugin for CameraPlugin {
         .add_systems(OnEnter(AppState::StartMenu), move_camera_to_center)
         .add_systems(
             Update,
-            camera_follows_player.run_if(in_state(AppState::GameRunning)),
+            camera_follows_player
+                .in_set(CameraSet)
+                .run_if(in_state(AppState::GameRunning)),
         );
     }
 }
