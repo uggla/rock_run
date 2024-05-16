@@ -6,10 +6,10 @@ use bevy_rapier2d::{
 use tiled::ObjectShape;
 
 use crate::{
+    coregame::level::{CurrentLevel, Level},
+    coregame::state::AppState,
     helpers::tiled::TiledMap,
-    level::{CurrentLevel, Level},
     player::PlayerState,
-    state::AppState,
 };
 
 pub struct GroundAndPlatformsPlugin;

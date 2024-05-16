@@ -7,8 +7,8 @@ use leafwing_input_manager::{
 };
 
 use crate::{
+    coregame::state::{AppState, ForState},
     events::{NoMoreStoryMessages, StoryMessages},
-    state::{AppState, ForState},
 };
 
 #[derive(Component)]

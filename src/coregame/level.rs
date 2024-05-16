@@ -2,11 +2,11 @@ use bevy::prelude::*;
 use bevy_ecs_tilemap::tiles::{TileStorage, TileVisible};
 
 use crate::{
+    coregame::state::AppState,
     helpers::{
         self,
         tiled::{TiledMap, TilesetLayerToStorageEntity},
     },
-    state::AppState,
     WINDOW_HEIGHT, WINDOW_WIDTH,
 };
 

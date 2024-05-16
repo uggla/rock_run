@@ -1,10 +1,9 @@
-use crate::screen_map::Transition;
+use crate::{coregame::state::AppState, screen_map::Transition};
 use bevy::prelude::*;
 
 use crate::{
-    level::{CurrentLevel, Level},
+    coregame::level::{CurrentLevel, Level},
     player::{Player, PlayerState, PLAYER_SPEED},
-    state::AppState,
 };
 pub struct CameraPlugin;
 

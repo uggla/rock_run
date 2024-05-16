@@ -1,34 +1,29 @@
-mod camera;
 mod collision;
+mod coregame;
 mod events;
+mod external_plugins;
 mod ground_platforms;
 mod helpers;
-mod level;
+mod life;
 mod localization;
-mod menu;
 mod player;
 mod screen_map;
-mod state;
 mod text_syllable;
 
 use bevy::window::WindowResolution;
 use bevy::{prelude::*, utils::HashMap};
 
-use bevy_ecs_tilemap::prelude::*;
-use bevy_fluent::FluentPlugin;
-use bevy_rapier2d::prelude::*;
 use text_syllable::TextSyllablePlugin;
 
 use crate::{
-    camera::CameraPlugin,
     collision::CollisionPlugin,
+    coregame::{plugins::CoreGamePlugins, state::AppState},
     events::{NoMoreStoryMessages, StoryMessages},
+    external_plugins::ExternalPlugins,
     ground_platforms::GroundAndPlatformsPlugin,
-    level::LevelPlugin,
+    life::LifePlugin,
     localization::LocalizationPlugin,
-    menu::MenuPlugin,
     player::PlayerPlugin,
-    state::{AppState, StatesPlugin},
 };
 
 // 16/9 1280x720
@@ -51,21 +46,15 @@ fn main() {
                 })
                 // prevents blurry sprites
                 .set(ImagePlugin::default_nearest()),
-            StatesPlugin,
-            CameraPlugin,
-            LevelPlugin,
-            MenuPlugin,
-            TilemapPlugin,
+            CoreGamePlugins,
+            ExternalPlugins,
             helpers::tiled::TiledMapPlugin,
-            RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(60.0),
             GroundAndPlatformsPlugin,
             PlayerPlugin,
+            LifePlugin,
             CollisionPlugin,
-            FluentPlugin,
             LocalizationPlugin,
             TextSyllablePlugin::default(),
-            #[cfg(debug_assertions)]
-            RapierDebugRenderPlugin::default(),
         ))
         .add_systems(
             Update,

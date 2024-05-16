@@ -11,7 +11,7 @@ use leafwing_input_manager::{
     plugin::InputManagerPlugin, Actionlike, InputManagerBundle,
 };
 
-use crate::{collision::CollisionState, state::AppState, WINDOW_WIDTH};
+use crate::{collision::CollisionState, coregame::state::AppState, WINDOW_WIDTH};
 
 pub const PLAYER_SPEED: f32 = 500.0;
 pub const PLAYER_SCALE_FACTOR: f32 = 1.0;
