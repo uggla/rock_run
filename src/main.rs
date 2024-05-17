@@ -73,6 +73,7 @@ fn main() {
 // TODO: remove as this is for debugging purpose
 fn update_text(
     mut msg_event: EventWriter<StoryMessages>,
+    mut life_event: EventWriter<life::LifeEvent>,
     input: Query<
         &leafwing_input_manager::action_state::ActionState<player::PlayerMovement>,
         With<player::Player>,
@@ -92,5 +93,7 @@ fn update_text(
             ),
             ("story01".to_string(), None),
         ]));
+
+        life_event.send(life::LifeEvent::Lost);
     }
 }

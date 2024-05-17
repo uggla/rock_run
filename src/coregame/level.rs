@@ -71,7 +71,11 @@ fn setup_background(mut commands: Commands, asset_server: Res<AssetServer>) {
         Level {
             id: 1,
             handle: map_handle.clone(),
-            map: Map::new("SHF\nXOO", WINDOW_WIDTH as usize, WINDOW_HEIGHT as usize),
+            map: Map::new(
+                "SHFXX\nXOFOO",
+                WINDOW_WIDTH as usize,
+                WINDOW_HEIGHT as usize,
+            ),
         },
     ));
 }

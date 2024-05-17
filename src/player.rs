@@ -9,7 +9,14 @@ use leafwing_input_manager::{
     plugin::InputManagerPlugin, Actionlike, InputManagerBundle,
 };
 
-use crate::{collision::CollisionSet, coregame::state::AppState, WINDOW_WIDTH};
+use crate::{
+    collision::CollisionSet,
+    coregame::{
+        level::{CurrentLevel, Level},
+        state::AppState,
+    },
+    life::LifeEvent,
+};
 
 pub const PLAYER_SPEED: f32 = 500.0;
 pub const PLAYER_SCALE_FACTOR: f32 = 1.0;
@@ -17,7 +24,7 @@ pub const PLAYER_WIDTH: f32 = 100.0;
 pub const PLAYER_HEIGHT: f32 = 75.0;
 const PLAYER_HITBOX: (Vec2, Vec2, f32) = (Vec2::new(-4.0, -9.0), Vec2::new(-4.0, 8.0), 22.0);
 const PLAYER_HITBOX_TRANSLATION: Vec2 = Vec2::new(8.0, 0.0);
-const LEVEL01_START: Vec3 = Vec3::new(-WINDOW_WIDTH / 2.0, 400.0, 20.0);
+const PLAYER_START_OFFSET: Vec3 = Vec3::new(-480.0, 0.0, 0.0);
 
 #[derive(Component)]
 pub struct Player;
@@ -69,7 +76,7 @@ impl Plugin for PlayerPlugin {
             .add_systems(OnEnter(AppState::StartMenu), despawn_player)
             .add_systems(
                 Update,
-                move_player
+                (move_player, check_out_of_screen)
                     .after(CollisionSet)
                     .run_if(in_state(AppState::GameRunning)),
             );
@@ -80,7 +87,16 @@ pub fn setup_player(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut texture_atlases: ResMut<Assets<TextureAtlasLayout>>,
+    levels: Query<&Level, With<Level>>,
+    current_level: Res<CurrentLevel>,
 ) {
+    info!("setup_player");
+
+    let level = levels
+        .iter()
+        .find(|level| level.id == current_level.id)
+        .unwrap();
+
     let texture = asset_server.load("girl.png");
     let layout =
         TextureAtlasLayout::from_grid(Vec2::new(PLAYER_WIDTH, PLAYER_HEIGHT), 6, 7, None, None);
@@ -119,7 +135,8 @@ pub fn setup_player(
             },
             transform: Transform {
                 scale: Vec3::splat(PLAYER_SCALE_FACTOR),
-                translation: LEVEL01_START,
+                translation: level.map.get_start_screen().get_center().extend(20.0)
+                    + PLAYER_START_OFFSET,
                 ..default()
             },
             ..default()
@@ -301,6 +318,30 @@ fn swing_texture(
     } else {
         texture.index - 1
     };
+}
+
+fn check_out_of_screen(
+    levels: Query<&Level, With<Level>>,
+    current_level: Res<CurrentLevel>,
+    mut player_query: Query<&mut Transform, With<Player>>,
+    mut life_event: EventWriter<LifeEvent>,
+) {
+    let level = levels
+        .iter()
+        .find(|level| level.id == current_level.id)
+        .unwrap();
+
+    let mut player = player_query.single_mut();
+
+    if level
+        .map
+        .get_screen((player.translation.x, player.translation.y + PLAYER_HEIGHT).into())
+        .is_none()
+    {
+        life_event.send(LifeEvent::Lost);
+        player.translation =
+            level.map.get_start_screen().get_center().extend(20.00) + PLAYER_START_OFFSET;
+    }
 }
 
 fn despawn_player(mut commands: Commands, player: Query<Entity, With<Player>>) {

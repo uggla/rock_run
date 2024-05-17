@@ -16,14 +16,20 @@
             "scale": 0.25,
             "selectedLayer": 2,
             "viewCenter": {
-                "x": 474,
-                "y": 202
+                "x": 2958,
+                "y": 210
             }
         },
         "level01.tmx#backgrounds": {
             "dynamicWrapping": true,
             "scaleInDock": 1,
             "scaleInEditor": 1
+        },
+        "level01.tmx#grad-1": {
+            "scaleInDock": 1
+        },
+        "level01.tmx#rock-1": {
+            "scaleInDock": 1
         },
         "level01.tmx#sky": {
             "dynamicWrapping": true
