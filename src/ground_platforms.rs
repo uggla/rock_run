@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_rapier2d::{
-    dynamics::{Ccd, ExternalImpulse, GravityScale, RigidBody},
+    dynamics::{ExternalImpulse, GravityScale, RigidBody},
     geometry::{Collider, Restitution, Sensor},
 };
 use tiled::ObjectShape;
@@ -62,13 +62,11 @@ fn tiled_object_to_collider<T: Component + Clone>(
                         object.x + *width / 2.0,
                         object.y + *height / 2.0,
                     ));
-                    commands
-                        .spawn((
-                            Collider::cuboid(*width / 2.0, *height / 2.0),
-                            bridge.component.clone(),
-                            TransformBundle::from(Transform::from_xyz(x, y, 0.0)),
-                        ))
-                        .insert(Ccd::enabled());
+                    commands.spawn((
+                        Collider::cuboid(*width / 2.0, *height / 2.0),
+                        bridge.component.clone(),
+                        TransformBundle::from(Transform::from_xyz(x, y, 0.0)),
+                    ));
                 }
                 ObjectShape::Polygon { points } => {
                     let points: Vec<Vec2> = points
@@ -84,9 +82,7 @@ fn tiled_object_to_collider<T: Component + Clone>(
 
                     match Collider::convex_hull(&points) {
                         Some(collider) => {
-                            commands
-                                .spawn((collider, bridge.component.clone()))
-                                .insert(Ccd::enabled());
+                            commands.spawn((collider, bridge.component.clone()));
                         }
                         None => {
                             error!("Failed to create convex hull");
@@ -105,9 +101,7 @@ fn tiled_object_to_collider<T: Component + Clone>(
 
                     debug!("Polyline points: {:?}", points);
 
-                    commands
-                        .spawn((Collider::polyline(points, None), bridge.component.clone()))
-                        .insert(Ccd::enabled());
+                    commands.spawn((Collider::polyline(points, None), bridge.component.clone()));
                 }
                 ObjectShape::Text { .. } => {
                     warn!("Text shape not supported");
@@ -120,14 +114,12 @@ fn tiled_object_to_collider<T: Component + Clone>(
                     if *width != *height {
                         warn!("Ellipse shape not supported: {:?}x{:?}", width, height);
                     }
-                    commands
-                        .spawn((
-                            Collider::ball(*width / 2.0),
-                            bridge.component.clone(),
-                            // Platform,
-                            TransformBundle::from(Transform::from_xyz(x, y, 0.0)),
-                        ))
-                        .insert(Ccd::enabled());
+                    commands.spawn((
+                        Collider::ball(*width / 2.0),
+                        bridge.component.clone(),
+                        // Platform,
+                        TransformBundle::from(Transform::from_xyz(x, y, 0.0)),
+                    ));
                 }
                 ObjectShape::Point(x, y) => {
                     // Used as a sensor
@@ -138,10 +130,9 @@ fn tiled_object_to_collider<T: Component + Clone>(
                             bridge.component.clone(),
                             TransformBundle::from(Transform::from_xyz(x, y, 0.0)),
                         ))
-                        .insert(Sensor)
-                        .insert(Ccd::enabled());
+                        .insert(Sensor);
                 }
-            }
+            };
         })
     })
 }
@@ -187,7 +178,6 @@ fn setup_ground_platforms_spikes(
     // Simple ball collider for debugging
     commands
         .spawn((SpatialBundle::default(),))
-        .insert(Ccd::enabled())
         .with_children(|parent| {
             // Create 2 x test platforms
             parent

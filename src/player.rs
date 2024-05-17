@@ -2,9 +2,7 @@ use std::ops::RangeInclusive;
 
 use bevy::prelude::*;
 use bevy_rapier2d::{
-    control::KinematicCharacterController,
-    dynamics::{Ccd, RigidBody},
-    geometry::Collider,
+    control::KinematicCharacterController, dynamics::RigidBody, geometry::Collider,
 };
 use leafwing_input_manager::{
     action_state::ActionState, axislike::SingleAxis, input_map::InputMap,
@@ -134,9 +132,10 @@ pub fn setup_player(
             max_slope_climb_angle: 30.0f32.to_radians(),
             // Automatically slide down on slopes smaller than 30 degrees.
             min_slope_slide_angle: 30.0f32.to_radians(),
+            // offset: CharacterLength::Absolute(1.0),
             ..default()
         },
-        Ccd::enabled(),
+        // Ccd::enabled(),
         InputManagerBundle::with_map(input_map),
         Player,
     ));
@@ -157,25 +156,25 @@ pub fn move_player(
     let mut jump_timer = jump_timer.single_mut();
     let mut direction_x = 0.0;
     let mut anim = |current_movement: PlayerMovement| match current_movement {
-        PlayerMovement::Run(direction) => {
-            let (mut timer, mut texture, mut sprite) = animation_query.single_mut();
-            timer.tick(time.delta());
-            if timer.just_finished() {
-                match direction {
-                    PlayerDirection::Left => {
-                        sprite.flip_x = true;
-                        *player_collider = Collider::capsule(
-                            PLAYER_HITBOX.0 + PLAYER_HITBOX_TRANSLATION,
-                            PLAYER_HITBOX.1 + PLAYER_HITBOX_TRANSLATION,
-                            PLAYER_HITBOX.2,
-                        );
-                    }
-                    PlayerDirection::Right => {
-                        sprite.flip_x = false;
-                        *player_collider =
-                            Collider::capsule(PLAYER_HITBOX.0, PLAYER_HITBOX.1, PLAYER_HITBOX.2);
-                    }
+        PlayerMovement::Run(player_direction) => {
+            let (mut anim_timer, mut texture, mut sprite) = animation_query.single_mut();
+            anim_timer.tick(time.delta());
+            match player_direction {
+                PlayerDirection::Left => {
+                    sprite.flip_x = true;
+                    *player_collider = Collider::capsule(
+                        PLAYER_HITBOX.0 + PLAYER_HITBOX_TRANSLATION,
+                        PLAYER_HITBOX.1 + PLAYER_HITBOX_TRANSLATION,
+                        PLAYER_HITBOX.2,
+                    );
                 }
+                PlayerDirection::Right => {
+                    sprite.flip_x = false;
+                    *player_collider =
+                        Collider::capsule(PLAYER_HITBOX.0, PLAYER_HITBOX.1, PLAYER_HITBOX.2);
+                }
+            }
+            if anim_timer.just_finished() {
                 match state.get() {
                     PlayerState::Jumping => {}
                     PlayerState::Falling => {
@@ -188,9 +187,9 @@ pub fn move_player(
             }
         }
         PlayerMovement::Idle => {
-            let (mut timer, mut texture, _) = animation_query.single_mut();
-            timer.tick(time.delta());
-            if timer.just_finished() {
+            let (mut anim_timer, mut texture, _) = animation_query.single_mut();
+            anim_timer.tick(time.delta());
+            if anim_timer.just_finished() {
                 match state.get() {
                     PlayerState::Jumping => {}
                     PlayerState::Falling => {
@@ -215,13 +214,13 @@ pub fn move_player(
     let mut current_movement: PlayerMovement = PlayerMovement::Idle;
 
     if input_state.pressed(&PlayerMovement::Run(PlayerDirection::Left)) {
-        direction_x -= 1.0;
+        direction_x = -1.0;
         current_movement = PlayerMovement::Run(PlayerDirection::Left);
         anim(current_movement);
     }
 
     if input_state.pressed(&PlayerMovement::Run(PlayerDirection::Right)) {
-        direction_x += 1.0;
+        direction_x = 1.0;
         current_movement = PlayerMovement::Run(PlayerDirection::Right);
         anim(current_movement);
     }
