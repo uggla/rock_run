@@ -34,6 +34,9 @@ pub struct Ground;
 #[derive(Component, Clone, Debug)]
 pub struct Platform;
 
+#[derive(Component, Clone, Debug)]
+pub struct Spike;
+
 fn tiled_object_to_collider<T: Component + Clone>(
     commands: &mut Commands,
     tiled_map: &TiledMap,
@@ -154,7 +157,7 @@ fn setup_ground_platforms_spikes(
     current_level: Res<CurrentLevel>,
     levels: Query<&Level, With<Level>>,
 ) {
-    info!("setup_ground_platforms");
+    info!("setup_ground_platforms_spikes");
 
     levels
         .iter()
@@ -167,10 +170,14 @@ fn setup_ground_platforms_spikes(
 
             trace!("tiled_map: {:#?}", &tiled_map.map);
 
+            // Ground must contain only 1 object.
             let ground = LayerComponentBridge::new("Ground", Ground);
             tiled_object_to_collider(&mut commands, tiled_map, level, ground);
 
             let platforms = LayerComponentBridge::new("Platforms", Platform);
+            tiled_object_to_collider(&mut commands, tiled_map, level, platforms);
+
+            let platforms = LayerComponentBridge::new("Spikes", Spike);
             tiled_object_to_collider(&mut commands, tiled_map, level, platforms);
         });
 
@@ -204,12 +211,17 @@ fn despawn_ground_platforms_spikes(
     mut commands: Commands,
     ground_query: Query<(Entity, &Collider), With<Ground>>,
     platforms_query: Query<(Entity, &Collider), With<Platform>>,
+    spikes_query: Query<(Entity, &Collider), With<Spike>>,
 ) {
     for (entity, _) in ground_query.iter() {
         commands.entity(entity).despawn_recursive();
     }
 
     for (entity, _) in platforms_query.iter() {
+        commands.entity(entity).despawn_recursive();
+    }
+
+    for (entity, _) in spikes_query.iter() {
         commands.entity(entity).despawn_recursive();
     }
 }

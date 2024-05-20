@@ -213,15 +213,15 @@
   <object id="54" name="p02" x="3200" y="1312" width="64" height="16"/>
   <object id="53" name="p01" x="3072" y="1376" width="64" height="16"/>
   <object id="55" name="p00" x="3808" y="608">
-   <polyline points="0,-64 0,96 -272,96 -624,448 -624,528 -592,528"/>
+   <polyline points="0,-128 0,96 -272,96 -624,448 -624,528 -592,528"/>
   </object>
   <object id="56" name="p06" x="3280" y="528" width="64" height="16"/>
   <object id="57" name="p07" x="3392" y="480" width="64" height="16"/>
   <object id="59" name="p08" x="3424" y="640" width="64" height="16"/>
  </objectgroup>
  <objectgroup id="6" name="Spikes">
-  <object id="47" name="s01" x="2976" y="560" width="64" height="32"/>
-  <object id="50" name="s02" x="3680" y="672" width="128" height="32"/>
+  <object id="47" name="s01" x="2982.67" y="576" width="50.6667" height="16"/>
+  <object id="50" name="s02" x="3684" y="687.333" width="120" height="16.6667"/>
  </objectgroup>
  <objectgroup id="5" name="Story">
   <object id="46" name="Story01" x="256" y="576">

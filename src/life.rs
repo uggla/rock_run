@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 use crate::{
     coregame::{camera::CameraSet, state::AppState},
+    events::LifeEvent,
     WINDOW_HEIGHT, WINDOW_WIDTH,
 };
 
@@ -10,14 +11,6 @@ pub const LIFE_SCALE_FACTOR: f32 = 2.0;
 #[derive(Resource, Default)]
 pub struct Life {
     entities: Vec<Entity>,
-}
-
-// TODO: remove dead code
-#[allow(dead_code)]
-#[derive(Event)]
-pub enum LifeEvent {
-    Win,
-    Lost,
 }
 
 #[derive(Component)]

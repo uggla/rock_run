@@ -3,6 +3,7 @@ use bevy_ecs_tilemap::tiles::{TileStorage, TileVisible};
 
 use crate::{
     coregame::state::AppState,
+    events::Restart,
     helpers::{
         self,
         tiled::{TiledMap, TilesetLayerToStorageEntity},
@@ -46,7 +47,8 @@ impl Plugin for LevelPlugin {
                     toggle_menu_background_visibility,
                 ),
             )
-            .insert_resource(CurrentLevel { id: 1 });
+            .insert_resource(CurrentLevel { id: 1 })
+            .add_event::<Restart>();
     }
 }
 

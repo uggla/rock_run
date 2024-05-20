@@ -15,7 +15,7 @@ use crate::{
         level::{CurrentLevel, Level},
         state::AppState,
     },
-    life::LifeEvent,
+    events::{Hit, LifeEvent, Restart},
 };
 
 pub const PLAYER_SPEED: f32 = 500.0;
@@ -41,6 +41,7 @@ pub enum PlayerState {
     Jumping,
     #[default]
     Falling,
+    Hit,
     // Ascend,
     // Descent,
 }
@@ -51,6 +52,7 @@ pub enum PlayerMovement {
     Jump,
     Crouch,
     Run(PlayerDirection),
+    Hit,
 }
 
 #[derive(Debug, Eq, PartialEq, Clone, Copy, Actionlike, Hash, Reflect)]
@@ -76,7 +78,7 @@ impl Plugin for PlayerPlugin {
             .add_systems(OnEnter(AppState::StartMenu), despawn_player)
             .add_systems(
                 Update,
-                (move_player, check_out_of_screen)
+                (move_player, check_out_of_screen, check_hit, restart_level)
                     .after(CollisionSet)
                     .run_if(in_state(AppState::GameRunning)),
             );
@@ -224,11 +226,24 @@ pub fn move_player(
         }
 
         PlayerMovement::Crouch => {}
+
+        PlayerMovement::Hit => {
+            let (_, mut texture, _) = animation_query.single_mut();
+            texture.index = 26;
+        }
     };
 
+    jump_timer.tick(time.delta());
     let input_state = input.single();
 
     let mut current_movement: PlayerMovement = PlayerMovement::Idle;
+
+    if *state.get() == PlayerState::Hit {
+        current_movement = PlayerMovement::Hit;
+        anim(current_movement);
+        player_controller.translation = Some(Vec2::new(0.0, PLAYER_SPEED * time.delta_seconds()));
+        return;
+    }
 
     if input_state.pressed(&PlayerMovement::Run(PlayerDirection::Left)) {
         direction_x = -1.0;
@@ -279,8 +294,6 @@ pub fn move_player(
             -PLAYER_SPEED * time.delta_seconds(),
         ));
     }
-
-    jump_timer.tick(time.delta());
 }
 
 fn cycle_texture(texture: &mut TextureAtlas, texture_index_range: RangeInclusive<usize>) {
@@ -324,8 +337,65 @@ fn check_out_of_screen(
     levels: Query<&Level, With<Level>>,
     current_level: Res<CurrentLevel>,
     mut player_query: Query<&mut Transform, With<Player>>,
-    mut life_event: EventWriter<LifeEvent>,
+    mut restart: EventWriter<Restart>,
 ) {
+    let level = levels
+        .iter()
+        .find(|level| level.id == current_level.id)
+        .unwrap();
+
+    let player = player_query.single_mut();
+
+    if level
+        .map
+        .get_screen((player.translation.x, player.translation.y + PLAYER_HEIGHT).into())
+        .is_none()
+    {
+        restart.send(Restart);
+    }
+}
+
+fn check_hit(
+    mut hit_event: EventReader<Hit>,
+    state: Res<State<PlayerState>>,
+    mut next_state: ResMut<NextState<PlayerState>>,
+    mut jump_timer: Query<&mut JumpTimer>,
+    mut just_hit: Local<bool>,
+    mut restart: EventWriter<Restart>,
+) {
+    if !hit_event.is_empty() {
+        next_state.set(PlayerState::Hit);
+        hit_event.clear();
+    }
+
+    if state.get() == &PlayerState::Hit {
+        let mut jump_timer = jump_timer.single_mut();
+        if !*just_hit {
+            jump_timer.reset();
+            *just_hit = true;
+        }
+
+        if jump_timer.just_finished() {
+            *just_hit = false;
+            restart.send(Restart);
+        }
+    }
+}
+
+fn restart_level(
+    mut restart: EventReader<Restart>,
+    levels: Query<&Level, With<Level>>,
+    current_level: Res<CurrentLevel>,
+    mut player_query: Query<&mut Transform, With<Player>>,
+    mut life_event: EventWriter<LifeEvent>,
+    mut next_state: ResMut<NextState<PlayerState>>,
+) {
+    if restart.is_empty() {
+        return;
+    }
+
+    restart.clear();
+    info!("restart level");
     let level = levels
         .iter()
         .find(|level| level.id == current_level.id)
@@ -333,15 +403,11 @@ fn check_out_of_screen(
 
     let mut player = player_query.single_mut();
 
-    if level
-        .map
-        .get_screen((player.translation.x, player.translation.y + PLAYER_HEIGHT).into())
-        .is_none()
-    {
-        life_event.send(LifeEvent::Lost);
-        player.translation =
-            level.map.get_start_screen().get_center().extend(20.00) + PLAYER_START_OFFSET;
-    }
+    next_state.set(PlayerState::Falling);
+
+    life_event.send(LifeEvent::Lost);
+    player.translation =
+        level.map.get_start_screen().get_center().extend(20.00) + PLAYER_START_OFFSET;
 }
 
 fn despawn_player(mut commands: Commands, player: Query<Entity, With<Player>>) {

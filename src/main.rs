@@ -1,8 +1,8 @@
+mod colliders;
 mod collision;
 mod coregame;
 mod events;
 mod external_plugins;
-mod ground_platforms;
 mod helpers;
 mod life;
 mod localization;
@@ -16,11 +16,11 @@ use bevy::{prelude::*, utils::HashMap};
 use text_syllable::TextSyllablePlugin;
 
 use crate::{
+    colliders::GroundAndPlatformsPlugin,
     collision::CollisionPlugin,
     coregame::{plugins::CoreGamePlugins, state::AppState},
     events::{NoMoreStoryMessages, StoryMessages},
     external_plugins::ExternalPlugins,
-    ground_platforms::GroundAndPlatformsPlugin,
     life::LifePlugin,
     localization::LocalizationPlugin,
     player::PlayerPlugin,
@@ -73,7 +73,7 @@ fn main() {
 // TODO: remove as this is for debugging purpose
 fn update_text(
     mut msg_event: EventWriter<StoryMessages>,
-    mut life_event: EventWriter<life::LifeEvent>,
+    mut life_event: EventWriter<events::LifeEvent>,
     input: Query<
         &leafwing_input_manager::action_state::ActionState<player::PlayerMovement>,
         With<player::Player>,
@@ -94,6 +94,6 @@ fn update_text(
             ("story01".to_string(), None),
         ]));
 
-        life_event.send(life::LifeEvent::Lost);
+        life_event.send(events::LifeEvent::Lost);
     }
 }

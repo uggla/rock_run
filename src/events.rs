@@ -12,3 +12,17 @@ pub enum StoryMessages {
 
 #[derive(Event)]
 pub struct NoMoreStoryMessages;
+
+#[derive(Event)]
+pub struct Hit;
+
+#[derive(Event)]
+pub struct Restart;
+
+// TODO: remove dead code
+#[allow(dead_code)]
+#[derive(Event)]
+pub enum LifeEvent {
+    Win,
+    Lost,
+}
