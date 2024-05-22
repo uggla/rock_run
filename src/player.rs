@@ -1,5 +1,3 @@
-use std::ops::RangeInclusive;
-
 use bevy::prelude::*;
 use bevy_rapier2d::{
     control::KinematicCharacterController, dynamics::RigidBody, geometry::Collider,
@@ -16,6 +14,7 @@ use crate::{
         state::AppState,
     },
     events::{Hit, LifeEvent, Restart},
+    helpers::texture::{cycle_texture, swing_texture, IndexDirection},
 };
 
 pub const PLAYER_SPEED: f32 = 500.0;
@@ -59,13 +58,6 @@ pub enum PlayerMovement {
 pub enum PlayerDirection {
     Left,
     Right,
-}
-
-#[derive(Debug, Default, Eq, PartialEq)]
-pub enum IndexDirection {
-    #[default]
-    Up,
-    Down,
 }
 
 pub struct PlayerPlugin;
@@ -151,7 +143,6 @@ pub fn setup_player(
             max_slope_climb_angle: 30.0f32.to_radians(),
             // Automatically slide down on slopes smaller than 30 degrees.
             min_slope_slide_angle: 30.0f32.to_radians(),
-            // offset: CharacterLength::Absolute(1.0),
             normal_nudge_factor: 1.0,
             ..default()
         },
@@ -297,43 +288,6 @@ pub fn move_player(
     }
 }
 
-fn cycle_texture(texture: &mut TextureAtlas, texture_index_range: RangeInclusive<usize>) {
-    if !texture_index_range.contains(&texture.index) {
-        texture.index = *texture_index_range.start();
-    }
-    texture.index = if texture.index == *texture_index_range.end() {
-        *texture_index_range.start()
-    } else {
-        texture.index + 1
-    };
-}
-
-fn swing_texture(
-    texture: &mut TextureAtlas,
-    texture_index_range: RangeInclusive<usize>,
-    direction: &mut Local<IndexDirection>,
-) {
-    if !texture_index_range.contains(&texture.index) {
-        texture.index = *texture_index_range.start();
-    }
-
-    if texture.index == *texture_index_range.end() && **direction == IndexDirection::Up {
-        **direction = IndexDirection::Down;
-    }
-
-    if texture.index == *texture_index_range.start() && **direction == IndexDirection::Down {
-        **direction = IndexDirection::Up;
-    }
-
-    trace!("tdirection: {:?}", direction);
-    trace!("tindex: {}", texture.index);
-    texture.index = if **direction == IndexDirection::Up {
-        texture.index + 1
-    } else {
-        texture.index - 1
-    };
-}
-
 fn check_out_of_screen(
     levels: Query<&Level, With<Level>>,
     current_level: Res<CurrentLevel>,
@@ -364,22 +318,23 @@ fn check_hit(
     mut just_hit: Local<bool>,
     mut restart: EventWriter<Restart>,
 ) {
-    if !hit_event.is_empty() {
-        next_state.set(PlayerState::Hit);
+    let mut jump_timer = jump_timer.single_mut();
+    if !hit_event.is_empty() && state.get() != &PlayerState::Hit {
+        debug!("hit event received");
         hit_event.clear();
-    }
-
-    if state.get() == &PlayerState::Hit {
-        let mut jump_timer = jump_timer.single_mut();
+        next_state.set(PlayerState::Hit);
+        debug!("justhit {}", *just_hit);
         if !*just_hit {
             jump_timer.reset();
             *just_hit = true;
+            debug!("justhit reset timer");
         }
+    }
 
-        if jump_timer.just_finished() {
-            *just_hit = false;
-            restart.send(Restart);
-        }
+    if state.get() == &PlayerState::Hit && jump_timer.just_finished() {
+        debug!("timer finished");
+        *just_hit = false;
+        restart.send(Restart);
     }
 }
 
@@ -404,11 +359,10 @@ fn restart_level(
 
     let mut player = player_query.single_mut();
 
-    next_state.set(PlayerState::Falling);
-
     life_event.send(LifeEvent::Lost);
     player.translation =
         level.map.get_start_screen().get_center().extend(20.00) + PLAYER_START_OFFSET;
+    next_state.set(PlayerState::Falling);
 }
 
 fn despawn_player(mut commands: Commands, player: Query<Entity, With<Player>>) {

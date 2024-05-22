@@ -26,3 +26,6 @@ pub enum LifeEvent {
     Win,
     Lost,
 }
+
+#[derive(Event)]
+pub struct TriceratopsCollision;

@@ -9,6 +9,7 @@ mod localization;
 mod player;
 mod screen_map;
 mod text_syllable;
+mod triceratops;
 
 use bevy::window::WindowResolution;
 use bevy::{prelude::*, utils::HashMap};
@@ -24,6 +25,7 @@ use crate::{
     life::LifePlugin,
     localization::LocalizationPlugin,
     player::PlayerPlugin,
+    triceratops::TriceratopsPlugin,
 };
 
 // 16/9 1280x720
@@ -51,6 +53,7 @@ fn main() {
             helpers::tiled::TiledMapPlugin,
             GroundAndPlatformsPlugin,
             PlayerPlugin,
+            TriceratopsPlugin,
             LifePlugin,
             CollisionPlugin,
             LocalizationPlugin,
