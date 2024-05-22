@@ -57,7 +57,10 @@ fn player_collision(
         }
     }
     // Player is falling
-    if !output.grounded && state.get() == &PlayerState::Idling {
+    if !output.grounded
+        && state.get() == &PlayerState::Idling
+        && output.effective_translation.y < -1.0
+    {
         next_state.set(PlayerState::Falling);
     }
 }
