@@ -152,6 +152,7 @@ pub fn setup_player(
             // Automatically slide down on slopes smaller than 30 degrees.
             min_slope_slide_angle: 30.0f32.to_radians(),
             // offset: CharacterLength::Absolute(1.0),
+            normal_nudge_factor: 1.0,
             ..default()
         },
         // Ccd::enabled(),
