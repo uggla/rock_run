@@ -16,8 +16,8 @@
             "scale": 1,
             "selectedLayer": 2,
             "viewCenter": {
-                "x": 2058.5,
-                "y": 494.5
+                "x": 1575,
+                "y": 490.5
             }
         },
         "level01.tmx#backgrounds": {
@@ -54,7 +54,7 @@
             "scaleInDock": 1
         }
     },
-    "last.imagePath": "/home/rribaud/workspace/rust/my_bevy_game/assets",
+    "last.imagePath": "/home/rribaud/workspace/rust/rock_run/assets",
     "map.height": 45,
     "map.lastUsedFormat": "tmx",
     "map.tileHeight": 16,
