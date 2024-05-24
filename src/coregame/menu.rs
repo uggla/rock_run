@@ -1,4 +1,4 @@
-use bevy::app::AppExit;
+use bevy::{app::AppExit, audio::PlaybackMode};
 
 use bevy::prelude::*;
 use bevy_rapier2d::plugin::RapierConfiguration;
@@ -109,7 +109,7 @@ fn start_menu(mut commands: Commands) {
         });
 }
 
-fn gameover_menu(mut commands: Commands) {
+fn gameover_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn((
             NodeBundle {
@@ -156,6 +156,14 @@ fn gameover_menu(mut commands: Commands) {
                 DrawBlinkTimer(Timer::from_seconds(0.5, TimerMode::Repeating)),
             ));
         });
+
+    commands.spawn(AudioBundle {
+        source: asset_server.load("sounds/loose.ogg"),
+        settings: PlaybackSettings {
+            mode: PlaybackMode::Despawn,
+            ..default()
+        },
+    });
 }
 
 fn pause_menu(mut commands: Commands) {

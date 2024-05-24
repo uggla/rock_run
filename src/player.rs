@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{audio::PlaybackMode, prelude::*};
 use bevy_rapier2d::{
     control::KinematicCharacterController, dynamics::RigidBody, geometry::Collider,
 };
@@ -27,6 +27,12 @@ const PLAYER_START_OFFSET: Vec3 = Vec3::new(-480.0, 0.0, 0.0);
 
 #[derive(Component)]
 pub struct Player;
+
+#[derive(Component)]
+struct PlayerAudio {
+    jump_sound: Handle<AudioSource>,
+    hit_sound: Handle<AudioSource>,
+}
 
 #[derive(Component, Deref, DerefMut)]
 pub struct AnimationTimer(Timer);
@@ -92,6 +98,9 @@ pub fn setup_player(
         .unwrap();
 
     let texture = asset_server.load("girl.png");
+    let jump_sound = asset_server.load("sounds/jump.ogg");
+    let hit_sound = asset_server.load("sounds/hit.ogg");
+
     let layout =
         TextureAtlasLayout::from_grid(Vec2::new(PLAYER_WIDTH, PLAYER_HEIGHT), 6, 7, None, None);
     let texture_atlas_layout = texture_atlases.add(layout);
@@ -149,21 +158,33 @@ pub fn setup_player(
         // Ccd::enabled(),
         InputManagerBundle::with_map(input_map),
         Player,
+        PlayerAudio {
+            jump_sound: jump_sound.clone(),
+            hit_sound,
+        },
     ));
 }
 
 #[allow(clippy::too_many_arguments)]
-pub fn move_player(
+fn move_player(
+    mut commands: Commands,
     time: Res<Time>,
     input: Query<&ActionState<PlayerMovement>, With<Player>>,
-    mut player_query: Query<(&mut Collider, &mut KinematicCharacterController), With<Player>>,
+    mut player_query: Query<
+        (
+            &mut Collider,
+            &mut KinematicCharacterController,
+            &PlayerAudio,
+        ),
+        With<Player>,
+    >,
     mut animation_query: Query<(&mut AnimationTimer, &mut TextureAtlas, &mut Sprite)>,
     state: Res<State<PlayerState>>,
     mut next_state: ResMut<NextState<PlayerState>>,
     mut jump_timer: Query<&mut JumpTimer>,
     mut direction: Local<IndexDirection>,
 ) {
-    let (mut player_collider, mut player_controller) = player_query.single_mut();
+    let (mut player_collider, mut player_controller, player_audio) = player_query.single_mut();
     let mut jump_timer = jump_timer.single_mut();
     let mut direction_x = 0.0;
     let mut anim = |current_movement: PlayerMovement| match current_movement {
@@ -254,6 +275,13 @@ pub fn move_player(
     {
         next_state.set(PlayerState::Jumping);
         jump_timer.reset();
+        commands.spawn(AudioBundle {
+            source: player_audio.jump_sound.clone(),
+            settings: PlaybackSettings {
+                mode: PlaybackMode::Despawn,
+                ..default()
+            },
+        });
         current_movement = PlayerMovement::Jump;
         anim(current_movement);
     }
@@ -310,13 +338,16 @@ fn check_out_of_screen(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn check_hit(
+    mut commands: Commands,
     mut hit_event: EventReader<Hit>,
     state: Res<State<PlayerState>>,
     mut next_state: ResMut<NextState<PlayerState>>,
     mut jump_timer: Query<&mut JumpTimer>,
     mut just_hit: Local<bool>,
     mut restart: EventWriter<Restart>,
+    mut player_query: Query<&PlayerAudio, With<Player>>,
 ) {
     let mut jump_timer = jump_timer.single_mut();
     if !hit_event.is_empty() && state.get() != &PlayerState::Hit {
@@ -325,8 +356,16 @@ fn check_hit(
         next_state.set(PlayerState::Hit);
         debug!("justhit {}", *just_hit);
         if !*just_hit {
+            let player_audio = player_query.single_mut();
             jump_timer.reset();
             *just_hit = true;
+            commands.spawn(AudioBundle {
+                source: player_audio.hit_sound.clone(),
+                settings: PlaybackSettings {
+                    mode: PlaybackMode::Despawn,
+                    ..default()
+                },
+            });
             debug!("justhit reset timer");
         }
     }
