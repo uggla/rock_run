@@ -33,8 +33,8 @@ pub const WINDOW_WIDTH: f32 = 1280.0;
 pub const WINDOW_HEIGHT: f32 = 720.0;
 
 fn main() {
-    App::new()
-        .init_state::<AppState>()
+    let mut app = App::new();
+    app.init_state::<AppState>()
         .add_plugins((
             DefaultPlugins
                 .set(WindowPlugin {
@@ -69,8 +69,33 @@ fn main() {
             ),
         )
         .add_event::<StoryMessages>()
-        .add_event::<NoMoreStoryMessages>()
-        .run();
+        .add_event::<NoMoreStoryMessages>();
+
+    #[cfg(all(debug_assertions, not(target_arch = "wasm32")))]
+    app.add_systems(
+        Update,
+        toggle_perf_ui.before(iyes_perf_ui::PerfUiSet::Setup),
+    );
+
+    app.run()
+}
+
+#[allow(dead_code)]
+fn toggle_perf_ui(
+    mut commands: Commands,
+    q_root: Query<Entity, With<iyes_perf_ui::PerfUiRoot>>,
+    kbd: Res<ButtonInput<KeyCode>>,
+) {
+    if kbd.just_pressed(KeyCode::F12) {
+        if let Ok(e) = q_root.get_single() {
+            // despawn the existing Perf UI
+            commands.entity(e).despawn_recursive();
+        } else {
+            // create a simple Perf UI with default settings
+            // and all entries provided by the crate:
+            commands.spawn(iyes_perf_ui::PerfUiCompleteBundle::default());
+        }
+    }
 }
 
 // TODO: remove as this is for debugging purpose

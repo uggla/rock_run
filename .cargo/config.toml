@@ -2,3 +2,13 @@
 # export CARGO_TARGET_WASM32_UNKNOWN_UNKNOWN_RUNNER=wasm-server-runner
 # cargo run --target wasm32-unknown-unknown
 runner = "wasm-server-runner"
+
+[alias]
+bd = "build --features bevy/dynamic_linking"
+br = "build -r"
+bwd = "build --target wasm32-unknown-unknown"
+bwr = "build -r --target wasm32-unknown-unknown"
+rd = "run --features bevy/dynamic_linking"
+rr = "run -r"
+rwd = "run --target wasm32-unknown-unknown"
+rwr = "run -r --target wasm32-unknown-unknown"
