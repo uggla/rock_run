@@ -72,7 +72,11 @@ fn show_life(
     mut life_query: Query<&mut Transform, With<LifeUI>>,
     camera_query: Query<&mut Transform, (With<Camera2d>, Without<LifeUI>)>,
 ) {
-    let mut life_ui = life_query.single_mut();
+    let mut life_ui = match life_query.get_single_mut() {
+        Ok(life) => life,
+        Err(_) => return,
+    };
+
     let camera = camera_query.single();
 
     life_ui.translation = camera.translation
