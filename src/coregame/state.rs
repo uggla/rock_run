@@ -11,6 +11,7 @@ pub struct ForState<T> {
 #[derive(States, Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Sequence)]
 pub enum AppState {
     #[default]
+    Loading,
     StartMenu,
     GameCreate,
     GameMessage,
@@ -21,15 +22,14 @@ pub enum AppState {
 
 #[allow(dead_code)]
 impl AppState {
-    pub const ANY_GAME_STATE: [AppState; 5] = [
-        AppState::GameCreate,
+    const ANY_GAME_MENU: [AppState; 4] = [
+        AppState::StartMenu,
         AppState::GameMessage,
-        AppState::GameRunning,
         AppState::GamePaused,
         AppState::GameOver,
     ];
-    pub fn is_any_game_state(&self) -> bool {
-        AppState::ANY_GAME_STATE.contains(self)
+    pub fn is_any_game_menu(current_state: &AppState) -> bool {
+        AppState::ANY_GAME_MENU.contains(current_state)
     }
 }
 

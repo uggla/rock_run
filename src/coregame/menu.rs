@@ -1,18 +1,32 @@
 use bevy::{app::AppExit, audio::PlaybackMode};
 
 use bevy::prelude::*;
+use bevy_fluent::{BundleAsset, Locale};
 use bevy_rapier2d::plugin::RapierConfiguration;
 use leafwing_input_manager::{
-    action_state::ActionState, input_map::InputMap, plugin::InputManagerPlugin, Actionlike,
+    action_state::ActionState, axislike::SingleAxis, input_map::InputMap,
+    plugin::InputManagerPlugin, Actionlike,
 };
+use unic_langid::langid;
 
 use crate::{
     coregame::state::{AppState, ForState},
     events::{NoMoreStoryMessages, StoryMessages},
+    localization::{get_translation, LocaleHandles},
+    WINDOW_WIDTH,
 };
 
 #[derive(Component)]
 pub struct DrawBlinkTimer(pub Timer);
+
+#[derive(Component)]
+struct Sel0;
+
+#[derive(Component)]
+struct Sel1;
+
+#[derive(Component)]
+struct Sel2;
 
 // List of user actions associated to menu/ui interaction
 #[derive(Actionlike, PartialEq, Eq, Clone, Copy, Hash, Debug, Reflect)]
@@ -27,6 +41,8 @@ pub enum MenuAction {
     ExitToMenu,
     // During non-gameplay screens, quit the game
     Quit,
+    Up,
+    Down,
 }
 
 pub struct MenuPlugin;
@@ -40,36 +56,57 @@ impl Plugin for MenuPlugin {
                 Update,
                 (menu_input_system, menu_blink_system, game_messages),
             )
+            .add_systems(Update, update_menu.run_if(in_state(AppState::StartMenu)))
             .add_systems(Startup, setup);
     }
 }
 
 fn setup(mut commands: Commands) {
+    info!("setup");
     let mut input_map = InputMap::<MenuAction>::new([
         (MenuAction::Accept, KeyCode::Enter),
         (MenuAction::PauseUnpause, KeyCode::Escape),
         (MenuAction::ExitToMenu, KeyCode::Backspace),
-        (MenuAction::Quit, KeyCode::Escape),
+        (MenuAction::Up, KeyCode::ArrowUp),
+        (MenuAction::Down, KeyCode::ArrowDown),
     ]);
     input_map.insert(MenuAction::ExitToMenu, GamepadButtonType::Select);
     input_map.insert(MenuAction::PauseUnpause, GamepadButtonType::Start);
     input_map.insert(MenuAction::Accept, GamepadButtonType::South);
+    input_map.insert(
+        MenuAction::Up,
+        SingleAxis::positive_only(GamepadAxisType::LeftStickY, 0.4),
+    );
+    input_map.insert(
+        MenuAction::Down,
+        SingleAxis::negative_only(GamepadAxisType::LeftStickY, -0.4),
+    );
+
+    #[cfg(not(target_arch = "wasm32"))]
     input_map.insert(MenuAction::Quit, GamepadButtonType::East);
+    #[cfg(not(target_arch = "wasm32"))]
+    input_map.insert(MenuAction::Quit, KeyCode::Escape);
+
     // Insert MenuAction resources
     commands.insert_resource(input_map);
     commands.insert_resource(ActionState::<MenuAction>::default());
 }
 
-fn start_menu(mut commands: Commands) {
+fn start_menu(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    locale: Res<Locale>,
+    assets: Res<Assets<BundleAsset>>,
+    locale_handles: Res<LocaleHandles>,
+) {
+    info!("start_menu");
     commands
         .spawn((
             NodeBundle {
                 style: Style {
                     width: Val::Percent(100.0),
                     height: Val::Percent(100.0),
-                    align_items: AlignItems::Center,
-                    justify_content: JustifyContent::Center,
-                    flex_direction: FlexDirection::Column,
+                    flex_direction: FlexDirection::Row,
                     ..default()
                 },
                 ..default()
@@ -78,35 +115,345 @@ fn start_menu(mut commands: Commands) {
                 states: vec![AppState::StartMenu],
             },
         ))
+        // Right column
         .with_children(|parent| {
-            parent.spawn((TextBundle {
-                style: Style { ..default() },
-                text: Text::from_section(
-                    "Rock Run",
-                    TextStyle {
-                        font: default(),
-                        font_size: 100.0,
-                        color: Color::rgb_u8(0x00, 0xAA, 0xAA),
-                    },
-                ),
-                ..default()
-            },));
             parent.spawn((
-                TextBundle {
-                    style: Style { ..default() },
-                    text: Text::from_section(
-                        "enter",
-                        TextStyle {
-                            font: default(),
-                            font_size: 50.0,
-                            color: Color::rgb_u8(0x00, 0x44, 0x44),
-                        },
-                    ),
+                NodeBundle {
+                    style: Style {
+                        width: Val::Px(720.0),
+                        ..default()
+                    },
+                    background_color: Color::WHITE.into(),
                     ..default()
                 },
-                DrawBlinkTimer(Timer::from_seconds(0.5, TimerMode::Repeating)),
+                UiImage::new(asset_server.load("menu.jpg")),
             ));
+        })
+        // Left column
+        .with_children(|parent| {
+            parent
+                .spawn((
+                    NodeBundle {
+                        style: Style {
+                            align_items: AlignItems::Center,
+                            flex_direction: FlexDirection::Column,
+                            width: Val::Px(WINDOW_WIDTH - 720.0),
+                            ..default()
+                        },
+                        background_color: Color::WHITE.into(),
+                        ..default()
+                    },
+                    UiImage::new(asset_server.load("menu2.jpg")),
+                ))
+                .with_children(|parent| {
+                    parent.spawn(TextBundle {
+                        style: Style {
+                            position_type: PositionType::Absolute,
+                            top: Val::Px(185.0),
+                            ..default()
+                        },
+                        text: Text::from_section(
+                            "Menu",
+                            TextStyle {
+                                font: asset_server.load("fonts/Cute_Dino.ttf"),
+                                font_size: 55.0,
+                                color: Color::rgb_u8(0x54, 0x2E, 0x0A),
+                            },
+                        ),
+                        ..default()
+                    });
+                })
+                // English box
+                .with_children(|parent| {
+                    parent
+                        .spawn((NodeBundle {
+                            style: Style {
+                                position_type: PositionType::Absolute,
+                                top: Val::Px(290.0),
+                                ..default()
+                            },
+                            ..default()
+                        },))
+                        .with_children(|parent| {
+                            // lang01 flag
+                            parent.spawn((
+                                NodeBundle {
+                                    style: Style {
+                                        justify_content: JustifyContent::Start,
+                                        width: Val::Px(66.0),
+                                        right: Val::Px(30.0),
+                                        ..default()
+                                    },
+                                    background_color: Color::WHITE.into(),
+                                    ..default()
+                                },
+                                UiImage::new(asset_server.load("en.png")),
+                            ));
+
+                            // lang01 text
+                            parent.spawn((
+                                TextBundle {
+                                    style: Style {
+                                        justify_content: JustifyContent::Start,
+                                        ..default()
+                                    },
+                                    text: Text::from_section(
+                                        get_translation(
+                                            &locale,
+                                            &assets,
+                                            &locale_handles,
+                                            "lang01",
+                                            None,
+                                        ),
+                                        TextStyle {
+                                            font: asset_server.load("fonts/Cute_Dino.ttf"),
+                                            font_size: 40.0,
+                                            color: Color::rgb_u8(0x54, 0x2E, 0x0A),
+                                        },
+                                    ),
+                                    ..default()
+                                },
+                                Sel2,
+                            ));
+                        });
+                })
+                // French box
+                .with_children(|parent| {
+                    parent
+                        .spawn((NodeBundle {
+                            style: Style {
+                                position_type: PositionType::Absolute,
+                                top: Val::Px(395.0),
+                                ..default()
+                            },
+                            ..default()
+                        },))
+                        .with_children(|parent| {
+                            let style_flag = if locale.requested == langid!("fr-FR") {
+                                Style {
+                                    justify_content: JustifyContent::Start,
+                                    width: Val::Px(66.0),
+                                    right: Val::Px(20.0),
+                                    ..default()
+                                }
+                            } else {
+                                Style {
+                                    justify_content: JustifyContent::Start,
+                                    width: Val::Px(66.0),
+                                    right: Val::Px(33.0),
+                                    ..default()
+                                }
+                            };
+
+                            let style_lang = if locale.requested == langid!("fr-FR") {
+                                Style {
+                                    justify_content: JustifyContent::Start,
+                                    left: Val::Px(13.0),
+                                    ..default()
+                                }
+                            } else {
+                                Style {
+                                    justify_content: JustifyContent::Start,
+                                    left: Val::Px(-2.0),
+                                    ..default()
+                                }
+                            };
+
+                            // lang02 flag
+                            parent.spawn((
+                                NodeBundle {
+                                    style: style_flag,
+                                    background_color: Color::WHITE.into(),
+                                    ..default()
+                                },
+                                UiImage::new(asset_server.load("fr.png")),
+                            ));
+
+                            // lang02 text
+                            parent.spawn((
+                                TextBundle {
+                                    style: style_lang,
+                                    text: Text::from_section(
+                                        get_translation(
+                                            &locale,
+                                            &assets,
+                                            &locale_handles,
+                                            "lang02",
+                                            None,
+                                        ),
+                                        TextStyle {
+                                            font: asset_server.load("fonts/Cute_Dino.ttf"),
+                                            font_size: 40.0,
+                                            color: Color::rgb_u8(0x54, 0x2E, 0x0A),
+                                        },
+                                    ),
+                                    ..default()
+                                },
+                                Sel1,
+                            ));
+                        });
+                })
+                // start instruction
+                .with_children(|parent| {
+                    parent.spawn((
+                        TextBundle {
+                            style: Style {
+                                position_type: PositionType::Absolute,
+                                top: Val::Px(500.0),
+                                ..default()
+                            },
+                            text: Text::from_section(
+                                get_translation(
+                                    &locale,
+                                    &assets,
+                                    &locale_handles,
+                                    "start_game",
+                                    None,
+                                ),
+                                TextStyle {
+                                    font: asset_server.load("fonts/Cute_Dino.ttf"),
+                                    font_size: 30.0,
+                                    color: Color::rgb_u8(0x54, 0x2E, 0x0A),
+                                },
+                            ),
+                            ..default()
+                        },
+                        Sel0,
+                    ));
+                });
         });
+}
+
+type Select0 = (With<Sel0>, Without<Sel1>, Without<Sel2>);
+type Select1 = (With<Sel1>, Without<Sel0>, Without<Sel2>);
+type Select2 = (With<Sel2>, Without<Sel0>, Without<Sel1>);
+
+#[allow(clippy::too_many_arguments)]
+fn update_menu(
+    mut next_state: ResMut<NextState<AppState>>,
+    mut menu_sel: Local<i8>,
+    mut locale: ResMut<Locale>,
+    menu_action_state: Res<ActionState<MenuAction>>,
+    mut query0: Query<&mut Text, Select0>,
+    mut query1: Query<&mut Text, Select1>,
+    mut query2: Query<&mut Text, Select2>,
+    assets: Res<Assets<BundleAsset>>,
+    locale_handles: Res<LocaleHandles>,
+) {
+    enum MenuColor {
+        Selected,
+        CurrentLang,
+        OtherLang,
+    }
+
+    impl MenuColor {
+        fn color(&self) -> Color {
+            match self {
+                MenuColor::Selected => Color::rgb_u8(0xD3, 0xCD, 0x39),
+                MenuColor::CurrentLang => Color::rgb_u8(0xF4, 0x78, 0x04),
+                MenuColor::OtherLang => Color::rgb_u8(0x54, 0x2E, 0x0A),
+            }
+        }
+    }
+
+    let mut sel0 = query0.single_mut();
+    let mut sel1 = query1.single_mut();
+    let mut sel2 = query2.single_mut();
+
+    if menu_action_state.just_pressed(&MenuAction::Up) {
+        *menu_sel = (*menu_sel + 1) % 3;
+        debug!("menu_sel: {}", *menu_sel);
+    }
+
+    if menu_action_state.just_pressed(&MenuAction::Down) {
+        if *menu_sel == 0 {
+            *menu_sel = 3;
+        }
+        *menu_sel = (*menu_sel - 1) % 3;
+        debug!("menu_sel: {}", *menu_sel);
+    }
+
+    if menu_action_state.just_pressed(&MenuAction::Accept) {
+        match *menu_sel {
+            0 => {
+                info!("start");
+                next_state.set(AppState::GameCreate);
+            }
+            1 => {
+                info!("French");
+                locale.requested = langid!("fr-FR");
+                refresh_menu_items(
+                    &locale,
+                    assets,
+                    locale_handles,
+                    &mut sel0,
+                    &mut sel1,
+                    &mut sel2,
+                );
+            }
+            2 => {
+                info!("English");
+                locale.requested = langid!("en-US");
+                refresh_menu_items(
+                    &locale,
+                    assets,
+                    locale_handles,
+                    &mut sel0,
+                    &mut sel1,
+                    &mut sel2,
+                );
+            }
+            _ => {}
+        }
+    }
+
+    match *menu_sel {
+        0 => {
+            if locale.requested == langid!("fr-FR") {
+                sel1.sections[0].style.color = MenuColor::color(&MenuColor::CurrentLang);
+                sel2.sections[0].style.color = MenuColor::color(&MenuColor::OtherLang);
+            } else {
+                sel2.sections[0].style.color = MenuColor::color(&MenuColor::CurrentLang);
+                sel1.sections[0].style.color = MenuColor::color(&MenuColor::OtherLang);
+            }
+            sel0.sections[0].style.color = MenuColor::color(&MenuColor::Selected);
+        }
+        1 => {
+            if locale.requested == langid!("fr-FR") {
+                sel1.sections[0].style.color = MenuColor::color(&MenuColor::Selected);
+                sel2.sections[0].style.color = MenuColor::color(&MenuColor::OtherLang);
+            } else {
+                sel2.sections[0].style.color = MenuColor::color(&MenuColor::CurrentLang);
+                sel1.sections[0].style.color = MenuColor::color(&MenuColor::Selected);
+            }
+            sel0.sections[0].style.color = MenuColor::color(&MenuColor::OtherLang);
+        }
+        2 => {
+            if locale.requested == langid!("fr-FR") {
+                sel1.sections[0].style.color = MenuColor::color(&MenuColor::CurrentLang);
+                sel2.sections[0].style.color = MenuColor::color(&MenuColor::Selected);
+            } else {
+                sel2.sections[0].style.color = MenuColor::color(&MenuColor::Selected);
+                sel1.sections[0].style.color = MenuColor::color(&MenuColor::OtherLang);
+            }
+            sel0.sections[0].style.color = MenuColor::color(&MenuColor::OtherLang);
+        }
+        _ => {}
+    }
+}
+
+fn refresh_menu_items(
+    locale: &ResMut<Locale>,
+    assets: Res<Assets<BundleAsset>>,
+    locale_handles: Res<LocaleHandles>,
+    sel0: &mut Mut<Text>,
+    sel1: &mut Mut<Text>,
+    sel2: &mut Mut<Text>,
+) {
+    // Refresh menu items in case we has just changed the locale
+    sel0.sections[0].value = get_translation(locale, &assets, &locale_handles, "start_game", None);
+    sel1.sections[0].value = get_translation(locale, &assets, &locale_handles, "lang02", None);
+    sel2.sections[0].value = get_translation(locale, &assets, &locale_handles, "lang01", None);
 }
 
 fn gameover_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -116,11 +463,11 @@ fn gameover_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
                 style: Style {
                     width: Val::Percent(100.0),
                     height: Val::Percent(100.0),
-                    align_items: AlignItems::Center,
                     justify_content: JustifyContent::Center,
-                    flex_direction: FlexDirection::Column,
+                    flex_direction: FlexDirection::Row,
                     ..default()
                 },
+                background_color: Color::BLACK.into(),
                 ..default()
             },
             ForState {
@@ -128,32 +475,16 @@ fn gameover_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
             },
         ))
         .with_children(|parent| {
-            parent.spawn((TextBundle {
-                style: Style { ..default() },
-                text: Text::from_section(
-                    "Game Over",
-                    TextStyle {
-                        font: default(),
-                        font_size: 100.0,
-                        color: Color::rgb_u8(0xAA, 0x22, 0x22),
-                    },
-                ),
-                ..default()
-            },));
             parent.spawn((
-                TextBundle {
-                    style: Style { ..default() },
-                    text: Text::from_section(
-                        "enter",
-                        TextStyle {
-                            font: default(),
-                            font_size: 50.0,
-                            color: Color::rgb_u8(0x88, 0x22, 0x22),
-                        },
-                    ),
+                NodeBundle {
+                    style: Style {
+                        width: Val::Px(720.0),
+                        ..default()
+                    },
+                    background_color: Color::WHITE.into(),
                     ..default()
                 },
-                DrawBlinkTimer(Timer::from_seconds(0.5, TimerMode::Repeating)),
+                UiImage::new(asset_server.load("game_over.jpg")),
             ));
         });
 
@@ -166,7 +497,7 @@ fn gameover_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
     });
 }
 
-fn pause_menu(mut commands: Commands) {
+fn pause_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn((
             NodeBundle {
@@ -189,9 +520,9 @@ fn pause_menu(mut commands: Commands) {
                 TextBundle {
                     style: Style { ..default() },
                     text: Text::from_section(
-                        "pause",
+                        "Pause",
                         TextStyle {
-                            font: default(),
+                            font: asset_server.load("fonts/Cute_Dino.ttf"),
                             font_size: 100.0,
                             color: Color::rgb_u8(0xF8, 0xE4, 0x73),
                         },
@@ -221,6 +552,7 @@ fn menu_blink_system(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn menu_input_system(
     state: ResMut<State<AppState>>,
     mut next_state: ResMut<NextState<AppState>>,
@@ -229,6 +561,7 @@ fn menu_input_system(
     mut rapier_config: ResMut<RapierConfiguration>,
     mut msg_event: EventWriter<StoryMessages>,
     mut no_more_msg_event: EventReader<NoMoreStoryMessages>,
+    mut localization_asset_events: EventReader<AssetEvent<BundleAsset>>,
 ) {
     if state.get() != &AppState::StartMenu
         && menu_action_state.just_pressed(&MenuAction::ExitToMenu)
@@ -239,9 +572,9 @@ fn menu_input_system(
     } else {
         match state.get() {
             AppState::StartMenu => {
-                if menu_action_state.just_pressed(&MenuAction::Accept) {
-                    next_state.set(AppState::GameCreate);
-                }
+                // if menu_action_state.just_pressed(&MenuAction::Accept) {
+                //     next_state.set(AppState::GameCreate);
+                // }
                 if menu_action_state.just_pressed(&MenuAction::Quit) {
                     app_exit_events.send(AppExit);
                 }
@@ -286,6 +619,15 @@ fn menu_input_system(
             AppState::GameOver => {
                 if menu_action_state.just_pressed(&MenuAction::Accept) {
                     next_state.set(AppState::StartMenu);
+                }
+            }
+            AppState::Loading => {
+                // Wait for the localization assets to be fully loaded...
+                for event in localization_asset_events.read() {
+                    if let AssetEvent::LoadedWithDependencies { id } = event {
+                        debug!("Localization asset id: {:?}", id);
+                        next_state.set(AppState::StartMenu);
+                    }
                 }
             }
         }

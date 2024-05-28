@@ -25,45 +25,19 @@ pub struct Level {
     pub map: Map,
 }
 
-#[derive(Component)]
-struct Menu;
-
 pub struct LevelPlugin;
 
 impl Plugin for LevelPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, setup_background)
-            .add_systems(
-                OnEnter(AppState::GameCreate),
-                (
-                    toggle_level_background_visibility,
-                    toggle_menu_background_visibility,
-                ),
-            )
-            .add_systems(
-                OnEnter(AppState::StartMenu),
-                (
-                    toggle_level_background_visibility,
-                    toggle_menu_background_visibility,
-                ),
-            )
+            .add_systems(OnEnter(AppState::GameCreate), show_level_background)
+            .add_systems(OnEnter(AppState::StartMenu), hide_level_background)
             .insert_resource(CurrentLevel { id: 1 })
             .add_event::<Restart>();
     }
 }
 
 fn setup_background(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let sprite_handle: Handle<Image> = asset_server.load("menu.jpg");
-
-    commands.spawn((
-        SpriteBundle {
-            texture: sprite_handle,
-            transform: Transform::from_xyz(-(WINDOW_WIDTH / 2.0 - 720.0 / 2.0), 0.0, 0.0),
-            ..default()
-        },
-        Menu,
-    ));
-
     let map_handle: Handle<helpers::tiled::TiledMap> = asset_server.load("level01.tmx");
     commands.spawn((
         helpers::tiled::TiledMapBundle {
@@ -82,32 +56,47 @@ fn setup_background(mut commands: Commands, asset_server: Res<AssetServer>) {
     ));
 }
 
-fn toggle_level_background_visibility(
+fn show_level_background(
     current_level: Res<CurrentLevel>,
     mut tile_query: Query<&mut TileVisible>,
     map_query: Query<(&Level, &TilesetLayerToStorageEntity), With<Level>>,
     tile_storage_query: Query<(Entity, &TileStorage)>,
 ) {
-    for (level, tileset_layer_storage) in map_query.iter() {
-        if level.id == current_level.id {
-            for layer_entity in tileset_layer_storage.get_entities() {
-                if let Ok((_, layer_tile_storage)) = tile_storage_query.get(*layer_entity) {
-                    for tile in layer_tile_storage.iter().flatten() {
-                        let mut tile_visible = tile_query.get_mut(*tile).unwrap();
-                        tile_visible.0 = !tile_visible.0;
-                    }
-                }
-            }
-            break;
-        }
-    }
+    let mut tiles = get_tiles(map_query, current_level, tile_storage_query);
+
+    tiles.iter_mut().for_each(|tile| {
+        let mut tile_visible = tile_query.get_mut(*tile).unwrap();
+        tile_visible.0 = true;
+    });
 }
 
-fn toggle_menu_background_visibility(mut menu: Query<&mut Visibility, With<Menu>>) {
-    let mut visibility = menu.single_mut();
-    if *visibility == Visibility::Visible {
-        *visibility = Visibility::Hidden;
-    } else {
-        *visibility = Visibility::Visible;
-    }
+fn hide_level_background(
+    current_level: Res<CurrentLevel>,
+    mut tile_query: Query<&mut TileVisible>,
+    map_query: Query<(&Level, &TilesetLayerToStorageEntity), With<Level>>,
+    tile_storage_query: Query<(Entity, &TileStorage)>,
+) {
+    let mut tiles = get_tiles(map_query, current_level, tile_storage_query);
+
+    tiles.iter_mut().for_each(|tile| {
+        let mut tile_visible = tile_query.get_mut(*tile).unwrap();
+        tile_visible.0 = false;
+    });
+}
+
+fn get_tiles(
+    map_query: Query<(&Level, &TilesetLayerToStorageEntity), With<Level>>,
+    current_level: Res<CurrentLevel>,
+    tile_storage_query: Query<(Entity, &TileStorage), ()>,
+) -> Vec<Entity> {
+    map_query
+        .iter()
+        .find(|(level, _)| level.id == current_level.id)
+        .unwrap()
+        .1
+        .get_entities()
+        .iter()
+        .filter_map(|layer_entity| tile_storage_query.get(**layer_entity).ok())
+        .flat_map(|(_, layer_tile_storage)| layer_tile_storage.iter().flatten().copied())
+        .collect::<Vec<_>>()
 }
