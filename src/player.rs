@@ -55,6 +55,7 @@ pub enum PlayerState {
 pub enum PlayerMovement {
     Idle,
     Jump,
+    Climb,
     Crouch,
     Run(PlayerDirection),
     Hit,
@@ -106,7 +107,7 @@ pub fn setup_player(
     let texture_atlas_layout = texture_atlases.add(layout);
 
     let mut input_map = InputMap::new([
-        (PlayerMovement::Jump, KeyCode::ArrowUp),
+        (PlayerMovement::Jump, KeyCode::Space),
         (
             PlayerMovement::Run(PlayerDirection::Left),
             KeyCode::ArrowLeft,
@@ -115,6 +116,7 @@ pub fn setup_player(
             PlayerMovement::Run(PlayerDirection::Right),
             KeyCode::ArrowRight,
         ),
+        (PlayerMovement::Climb, KeyCode::ArrowUp),
         (PlayerMovement::Crouch, KeyCode::ArrowDown),
     ]);
 
@@ -126,6 +128,14 @@ pub fn setup_player(
     input_map.insert(
         PlayerMovement::Run(PlayerDirection::Left),
         SingleAxis::negative_only(GamepadAxisType::LeftStickX, -0.4),
+    );
+    input_map.insert(
+        PlayerMovement::Climb,
+        SingleAxis::positive_only(GamepadAxisType::LeftStickY, 0.4),
+    );
+    input_map.insert(
+        PlayerMovement::Crouch,
+        SingleAxis::negative_only(GamepadAxisType::LeftStickY, -0.4),
     );
 
     commands.spawn((
@@ -238,6 +248,7 @@ fn move_player(
             texture.index = 11;
         }
 
+        PlayerMovement::Climb => {}
         PlayerMovement::Crouch => {}
 
         PlayerMovement::Hit => {

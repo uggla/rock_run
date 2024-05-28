@@ -127,11 +127,6 @@ pub fn setup_triceratops(
                     .map
                     .tiled_to_bevy_coord(Vec2::new(2400.0, 480.0))
                     .extend(20.0),
-                // .get_screen_from_index(1, 0)
-                // .unwrap()
-                // .get_center()
-                // .extend(0.0)
-                // + Vec3::new(100.0, -100.0, 20.0),
                 ..default()
             },
             ..default()
@@ -139,10 +134,7 @@ pub fn setup_triceratops(
         RigidBody::KinematicPositionBased,
         AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
         Collider::compound(get_collider_shapes(false)),
-        KinematicCharacterController {
-            // filter_flags: QueryFilterFlags::EXCLUDE_KINEMATIC,
-            ..default()
-        },
+        KinematicCharacterController { ..default() },
         Triceratops,
     ));
 }

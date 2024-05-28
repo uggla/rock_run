@@ -27,6 +27,7 @@ use crate::{
     player::PlayerPlugin,
     triceratops::TriceratopsPlugin,
 };
+use glam::Vec2;
 
 // 16/9 1280x720
 pub const WINDOW_WIDTH: f32 = 1280.0;
@@ -101,7 +102,7 @@ fn toggle_perf_ui(
 // TODO: remove as this is for debugging purpose
 fn update_text(
     mut msg_event: EventWriter<StoryMessages>,
-    mut life_event: EventWriter<events::LifeEvent>,
+    // mut life_event: EventWriter<events::LifeEvent>,
     input: Query<
         &leafwing_input_manager::action_state::ActionState<player::PlayerMovement>,
         With<player::Player>,
@@ -119,9 +120,14 @@ fn update_text(
                 "hello-world".to_string(),
                 Some(HashMap::from([("name".to_string(), "Rose".to_string())])),
             ),
-            ("story01".to_string(), None),
+            ("story01-01".to_string(), None),
         ]));
 
-        life_event.send(events::LifeEvent::Lost);
+        // life_event.send(events::LifeEvent::Lost);
+        //
+        let v1 = Vec2::new(0.0, 0.0);
+        let v2 = Vec2::new(5.0, 1.0);
+        let np = v1.move_towards(v2, 1.0);
+        info!("New pos:{:?}", np);
     }
 }

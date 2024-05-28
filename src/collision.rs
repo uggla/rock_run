@@ -1,13 +1,14 @@
 use bevy::prelude::*;
 use bevy_rapier2d::{
     control::{KinematicCharacterController, KinematicCharacterControllerOutput},
-    pipeline::QueryFilterFlags,
+    pipeline::{CollisionEvent, QueryFilterFlags},
 };
 
 use crate::{
-    colliders::{Ground, Platform, Spike},
-    events::{Hit, TriceratopsCollision},
-    player::{Player, PlayerState},
+    colliders::{ColliderName, Ground, Platform, Spike, Story},
+    coregame::state::AppState,
+    events::{Hit, StoryMessages, TriceratopsCollision},
+    player::{self, Player, PlayerState, PLAYER_HEIGHT},
     triceratops::Triceratops,
 };
 
@@ -20,8 +21,16 @@ impl Plugin for CollisionPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
             Update,
-            (player_collision, triceratops_collision).in_set(CollisionSet),
+            (
+                player_collision,
+                triceratops_collision,
+                story_collision,
+                display_story,
+            )
+                .in_set(CollisionSet)
+                .run_if(in_state(AppState::GameRunning)),
         )
+        .add_systems(OnEnter(AppState::StartMenu), despawn_qm)
         .add_event::<Hit>()
         .add_event::<TriceratopsCollision>();
     }
@@ -135,5 +144,101 @@ fn triceratops_collision(
         {
             collision_event.send(TriceratopsCollision);
         }
+    }
+}
+
+#[derive(Debug, Component)]
+pub struct StoryQM(String);
+
+fn story_collision(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    stories: Query<(Entity, &ColliderName), With<Story>>,
+    mut collision_events: EventReader<CollisionEvent>,
+    entity_pos: Query<&Transform>,
+    qm_entity: Query<(Entity, &StoryQM)>,
+) {
+    for collision_event in collision_events.read() {
+        match collision_event {
+            CollisionEvent::Started(e1, e2, _cf) => {
+                // Warning, e1 and e2 can be swapped.
+                if let Some((entity, collider_name)) = stories
+                    .iter()
+                    .find(|(entity, _collider_name)| entity == e1 || entity == e2)
+                {
+                    debug!("Received collision event: {:?}", collision_event);
+
+                    let pos = entity_pos.get(entity).unwrap();
+                    debug!("Collision: {:?}", pos);
+                    commands
+                        .spawn(SpriteBundle {
+                            texture: asset_server.load("qm.png"),
+                            transform: Transform {
+                                translation: pos.translation
+                                    + Vec3::new(0.0, PLAYER_HEIGHT / 2.0 + 20.0, 20.0),
+                                scale: Vec3::splat(1.5),
+                                ..default()
+                            },
+                            ..default()
+                        })
+                        .insert(StoryQM(collider_name.0.clone()));
+                };
+            }
+            CollisionEvent::Stopped(e1, e2, _cf) => {
+                if stories.contains(*e1) || stories.contains(*e2) {
+                    debug!("Received collision event: {:?}", collision_event);
+                    for (entity, _) in qm_entity.iter() {
+                        commands.entity(entity).despawn_recursive();
+                    }
+                }
+            }
+        }
+    }
+}
+
+fn display_story(
+    mut commands: Commands,
+    qm_entity: Query<(Entity, &StoryQM)>,
+    mut msg_event: EventWriter<StoryMessages>,
+    input: Query<
+        &leafwing_input_manager::action_state::ActionState<player::PlayerMovement>,
+        With<player::Player>,
+    >,
+) {
+    let (entity, story_name) = match qm_entity.get_single() {
+        Ok((entity, qm)) => (entity, qm.0.clone()),
+        Err(_) => return,
+    };
+
+    let input_state = match input.get_single() {
+        Ok(state) => state,
+        Err(_) => return,
+    };
+
+    if input_state.just_pressed(&player::PlayerMovement::Climb) {
+        commands.entity(entity).despawn_recursive();
+        match story_name.as_str() {
+            "story01" => {
+                msg_event.send(StoryMessages::Display(vec![
+                    ("story01-01".to_string(), None),
+                    ("story01-02".to_string(), None),
+                    ("story01-03".to_string(), None),
+                ]));
+            }
+            "story02" => {
+                msg_event.send(StoryMessages::Display(vec![
+                    ("story02-01".to_string(), None),
+                    ("story02-02".to_string(), None),
+                ]));
+            }
+            _ => {}
+        };
+    }
+}
+
+// Remove QM entities if player goes to menu and question mark is displayed
+fn despawn_qm(mut commands: Commands, qm_entity: Query<(Entity, &StoryQM)>) {
+    for (entity, _) in qm_entity.iter() {
+        commands.entity(entity).despawn_recursive();
     }
 }

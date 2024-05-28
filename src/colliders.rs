@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_rapier2d::{
     dynamics::{ExternalImpulse, GravityScale, RigidBody},
-    geometry::{Collider, Restitution, Sensor},
+    geometry::{ActiveCollisionTypes, ActiveEvents, Collider, Restitution, Sensor},
 };
 use tiled::ObjectShape;
 
@@ -23,7 +23,7 @@ impl Plugin for GroundAndPlatformsPlugin {
             )
             .add_systems(
                 Update,
-                (print_ball_altitude, apply_forces).run_if(in_state(AppState::GameRunning)),
+                (apply_forces).run_if(in_state(AppState::GameRunning)),
             );
     }
 }
@@ -36,6 +36,12 @@ pub struct Platform;
 
 #[derive(Component, Clone, Debug)]
 pub struct Spike;
+
+#[derive(Component, Clone, Debug)]
+pub struct Story;
+
+#[derive(Component, Clone, Debug)]
+pub struct ColliderName(pub String);
 
 fn tiled_object_to_collider<T: Component + Clone>(
     commands: &mut Commands,
@@ -65,11 +71,27 @@ fn tiled_object_to_collider<T: Component + Clone>(
                         object.x + *width / 2.0,
                         object.y + *height / 2.0,
                     ));
-                    commands.spawn((
-                        Collider::cuboid(*width / 2.0, *height / 2.0),
-                        bridge.component.clone(),
-                        TransformBundle::from(Transform::from_xyz(x, y, 0.0)),
-                    ));
+
+                    if bridge.sensor {
+                        commands
+                            .spawn((
+                                Collider::cuboid(*width / 2.0, *height / 2.0),
+                                bridge.component.clone(),
+                                TransformBundle::from(Transform::from_xyz(x, y, 0.0)),
+                            ))
+                            .insert(Sensor)
+                            .insert(ActiveEvents::COLLISION_EVENTS)
+                            .insert(ActiveCollisionTypes::KINEMATIC_STATIC)
+                            .insert(ColliderName(object.name.clone()));
+                    } else {
+                        commands
+                            .spawn((
+                                Collider::cuboid(*width / 2.0, *height / 2.0),
+                                bridge.component.clone(),
+                                TransformBundle::from(Transform::from_xyz(x, y, 0.0)),
+                            ))
+                            .insert(ColliderName(object.name.clone()));
+                    }
                 }
                 ObjectShape::Polygon { points } => {
                     let points: Vec<Vec2> = points
@@ -85,7 +107,18 @@ fn tiled_object_to_collider<T: Component + Clone>(
 
                     match Collider::convex_hull(&points) {
                         Some(collider) => {
-                            commands.spawn((collider, bridge.component.clone()));
+                            if bridge.sensor {
+                                commands
+                                    .spawn((collider, bridge.component.clone()))
+                                    .insert(Sensor)
+                                    .insert(ActiveEvents::COLLISION_EVENTS)
+                                    .insert(ActiveCollisionTypes::KINEMATIC_STATIC)
+                                    .insert(ColliderName(object.name.clone()));
+                            } else {
+                                commands
+                                    .spawn((collider, bridge.component.clone()))
+                                    .insert(ColliderName(object.name.clone()));
+                            }
                         }
                         None => {
                             error!("Failed to create convex hull");
@@ -104,7 +137,18 @@ fn tiled_object_to_collider<T: Component + Clone>(
 
                     debug!("Polyline points: {:?}", points);
 
-                    commands.spawn((Collider::polyline(points, None), bridge.component.clone()));
+                    if bridge.sensor {
+                        commands
+                            .spawn((Collider::polyline(points, None), bridge.component.clone()))
+                            .insert(Sensor)
+                            .insert(ActiveEvents::COLLISION_EVENTS)
+                            .insert(ActiveCollisionTypes::KINEMATIC_STATIC)
+                            .insert(ColliderName(object.name.clone()));
+                    } else {
+                        commands
+                            .spawn((Collider::polyline(points, None), bridge.component.clone()))
+                            .insert(ColliderName(object.name.clone()));
+                    }
                 }
                 ObjectShape::Text { .. } => {
                     warn!("Text shape not supported");
@@ -117,12 +161,28 @@ fn tiled_object_to_collider<T: Component + Clone>(
                     if *width != *height {
                         warn!("Ellipse shape not supported: {:?}x{:?}", width, height);
                     }
-                    commands.spawn((
-                        Collider::ball(*width / 2.0),
-                        bridge.component.clone(),
-                        // Platform,
-                        TransformBundle::from(Transform::from_xyz(x, y, 0.0)),
-                    ));
+                    if bridge.sensor {
+                        commands
+                            .spawn((
+                                Collider::ball(*width / 2.0),
+                                bridge.component.clone(),
+                                // Platform,
+                                TransformBundle::from(Transform::from_xyz(x, y, 0.0)),
+                            ))
+                            .insert(Sensor)
+                            .insert(ActiveEvents::COLLISION_EVENTS)
+                            .insert(ActiveCollisionTypes::KINEMATIC_STATIC)
+                            .insert(ColliderName(object.name.clone()));
+                    } else {
+                        commands
+                            .spawn((
+                                Collider::ball(*width / 2.0),
+                                bridge.component.clone(),
+                                // Platform,
+                                TransformBundle::from(Transform::from_xyz(x, y, 0.0)),
+                            ))
+                            .insert(ColliderName(object.name.clone()));
+                    }
                 }
                 ObjectShape::Point(x, y) => {
                     // Used as a sensor
@@ -133,7 +193,10 @@ fn tiled_object_to_collider<T: Component + Clone>(
                             bridge.component.clone(),
                             TransformBundle::from(Transform::from_xyz(x, y, 0.0)),
                         ))
-                        .insert(Sensor);
+                        .insert(Sensor)
+                        .insert(ActiveEvents::COLLISION_EVENTS)
+                        .insert(ActiveCollisionTypes::KINEMATIC_STATIC)
+                        .insert(ColliderName(object.name.clone()));
                 }
             };
         })
@@ -143,11 +206,16 @@ fn tiled_object_to_collider<T: Component + Clone>(
 struct LayerComponentBridge<'a, T: Component + Clone> {
     layer: &'a str,
     component: T,
+    sensor: bool,
 }
 
 impl<'a, T: Component + Clone> LayerComponentBridge<'a, T> {
-    fn new(layer: &'a str, component: T) -> Self {
-        Self { layer, component }
+    fn new(layer: &'a str, component: T, sensor: bool) -> Self {
+        Self {
+            layer,
+            component,
+            sensor,
+        }
     }
 }
 
@@ -171,14 +239,17 @@ fn setup_ground_platforms_spikes(
             trace!("tiled_map: {:#?}", &tiled_map.map);
 
             // Ground must contain only 1 object.
-            let ground = LayerComponentBridge::new("Ground", Ground);
+            let ground = LayerComponentBridge::new("Ground", Ground, false);
             tiled_object_to_collider(&mut commands, tiled_map, level, ground);
 
-            let platforms = LayerComponentBridge::new("Platforms", Platform);
+            let platforms = LayerComponentBridge::new("Platforms", Platform, false);
             tiled_object_to_collider(&mut commands, tiled_map, level, platforms);
 
-            let platforms = LayerComponentBridge::new("Spikes", Spike);
-            tiled_object_to_collider(&mut commands, tiled_map, level, platforms);
+            let spikes = LayerComponentBridge::new("Spikes", Spike, false);
+            tiled_object_to_collider(&mut commands, tiled_map, level, spikes);
+
+            let stories = LayerComponentBridge::new("Stories", Story, true);
+            tiled_object_to_collider(&mut commands, tiled_map, level, stories);
         });
 
     // TODO: Remove this collider
@@ -203,7 +274,9 @@ fn setup_ground_platforms_spikes(
                 //     linear_damping: 100.0,
                 //     angular_damping: 0.0,
                 // })
-                .insert(TransformBundle::from(Transform::from_xyz(0.0, 400.0, 0.0)));
+                .insert(TransformBundle::from(Transform::from_xyz(
+                    -2000.0, 500.0, 0.0,
+                )));
         });
 }
 
@@ -212,6 +285,7 @@ fn despawn_ground_platforms_spikes(
     ground_query: Query<(Entity, &Collider), With<Ground>>,
     platforms_query: Query<(Entity, &Collider), With<Platform>>,
     spikes_query: Query<(Entity, &Collider), With<Spike>>,
+    stories_query: Query<(Entity, &Collider), With<Story>>,
 ) {
     for (entity, _) in ground_query.iter() {
         commands.entity(entity).despawn_recursive();
@@ -224,11 +298,9 @@ fn despawn_ground_platforms_spikes(
     for (entity, _) in spikes_query.iter() {
         commands.entity(entity).despawn_recursive();
     }
-}
 
-fn print_ball_altitude(positions: Query<&Transform, With<RigidBody>>) {
-    for transform in positions.iter() {
-        trace!("Ball altitude: {}", transform.translation.y);
+    for (entity, _) in stories_query.iter() {
+        commands.entity(entity).despawn_recursive();
     }
 }
 
