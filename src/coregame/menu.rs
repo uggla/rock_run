@@ -100,6 +100,12 @@ fn start_menu(
     locale_handles: Res<LocaleHandles>,
 ) {
     info!("start_menu");
+    #[cfg(not(target_arch = "wasm32"))]
+    const TOP_MARGINS: [f32; 4] = [175.0, 275.0, 375.0, 475.0];
+
+    #[cfg(target_arch = "wasm32")]
+    const TOP_MARGINS: [f32; 4] = [185.0, 290.0, 395.0, 500.0];
+
     commands
         .spawn((
             NodeBundle {
@@ -149,7 +155,7 @@ fn start_menu(
                     parent.spawn(TextBundle {
                         style: Style {
                             position_type: PositionType::Absolute,
-                            top: Val::Px(185.0),
+                            top: Val::Px(TOP_MARGINS[0]),
                             ..default()
                         },
                         text: Text::from_section(
@@ -169,7 +175,7 @@ fn start_menu(
                         .spawn((NodeBundle {
                             style: Style {
                                 position_type: PositionType::Absolute,
-                                top: Val::Px(290.0),
+                                top: Val::Px(TOP_MARGINS[1]),
                                 ..default()
                             },
                             ..default()
@@ -223,7 +229,7 @@ fn start_menu(
                         .spawn((NodeBundle {
                             style: Style {
                                 position_type: PositionType::Absolute,
-                                top: Val::Px(395.0),
+                                top: Val::Px(TOP_MARGINS[2]),
                                 ..default()
                             },
                             ..default()
@@ -299,7 +305,7 @@ fn start_menu(
                         TextBundle {
                             style: Style {
                                 position_type: PositionType::Absolute,
-                                top: Val::Px(500.0),
+                                top: Val::Px(TOP_MARGINS[3]),
                                 ..default()
                             },
                             text: Text::from_section(

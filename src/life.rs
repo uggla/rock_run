@@ -79,10 +79,16 @@ fn show_life(
 
     let camera = camera_query.single();
 
+    #[cfg(not(target_arch = "wasm32"))]
+    const TOP_MARGIN: f32 = 38.0;
+
+    #[cfg(target_arch = "wasm32")]
+    const TOP_MARGIN: f32 = 20.0;
+
     life_ui.translation = camera.translation
         + Vec3::new(
             -WINDOW_WIDTH / 2.0 + 20.0,
-            WINDOW_HEIGHT / 2.0 - 20.0,
+            WINDOW_HEIGHT / 2.0 - TOP_MARGIN,
             100.0,
         );
     life_ui.scale = Vec3::splat(LIFE_SCALE_FACTOR);
