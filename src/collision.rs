@@ -1,13 +1,17 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, utils::HashMap};
 use bevy_rapier2d::{
     control::{KinematicCharacterController, KinematicCharacterControllerOutput},
     pipeline::{CollisionEvent, QueryFilterFlags},
 };
 
 use crate::{
-    colliders::{ColliderName, Ground, Platform, Spike, Story},
-    coregame::state::AppState,
-    events::{Hit, StoryMessages, TriceratopsCollision},
+    bat::Bat,
+    colliders::{BatSensor, ColliderName, Ground, Platform, Spike, Story},
+    coregame::{
+        level::{CurrentLevel, Level},
+        state::AppState,
+    },
+    events::{BatSensorCollision, Hit, StoryMessages, TriceratopsCollision},
     player::{self, Player, PlayerState, PLAYER_HEIGHT},
     triceratops::Triceratops,
 };
@@ -24,15 +28,18 @@ impl Plugin for CollisionPlugin {
             (
                 player_collision,
                 triceratops_collision,
+                bat_collision,
                 story_collision,
                 display_story,
+                bat_sensor_collision,
             )
                 .in_set(CollisionSet)
                 .run_if(in_state(AppState::GameRunning)),
         )
         .add_systems(OnEnter(AppState::StartMenu), despawn_qm)
         .add_event::<Hit>()
-        .add_event::<TriceratopsCollision>();
+        .add_event::<TriceratopsCollision>()
+        .add_event::<BatSensorCollision>();
     }
 }
 
@@ -236,6 +243,103 @@ fn display_story(
     }
 }
 
+fn bat_collision(
+    state: Res<State<PlayerState>>,
+    mut bat_controller: Query<
+        (
+            &KinematicCharacterControllerOutput,
+            &mut KinematicCharacterController,
+        ),
+        With<Bat>,
+    >,
+    player: Query<Entity, With<Player>>,
+    mut hit: EventWriter<Hit>,
+) {
+    if state.get() == &PlayerState::Hit {
+        return;
+    }
+
+    let player_entity = match player.get_single() {
+        Ok(entity) => entity,
+        Err(_) => return,
+    };
+
+    let (output, mut ctrl) = match bat_controller.get_single_mut() {
+        Ok(controller) => controller,
+        Err(_) => return,
+    };
+
+    if state.get() == &PlayerState::Falling {
+        ctrl.filter_flags
+            .remove(QueryFilterFlags::EXCLUDE_KINEMATIC);
+        debug!("Re-enabling collision with triceratops");
+    }
+
+    for character_collision in output.collisions.iter() {
+        // bat hits player
+        if character_collision.entity == player_entity {
+            hit.send(Hit);
+            ctrl.filter_flags = QueryFilterFlags::EXCLUDE_KINEMATIC;
+            debug!("Bat hits player, disabling further collision with bat");
+        }
+    }
+}
+
+fn bat_sensor_collision(
+    bat_sensors: Query<(Entity, &ColliderName), With<BatSensor>>,
+    mut collision_events: EventReader<CollisionEvent>,
+    mut bat_sensor_collision: EventWriter<BatSensorCollision>,
+    levels: Query<&Level, With<Level>>,
+    current_level: Res<CurrentLevel>,
+) {
+    for collision_event in collision_events.read() {
+        let level = levels
+            .iter()
+            .find(|level| level.id == current_level.id)
+            .unwrap();
+
+        let mut level_bat_pos: HashMap<u8, HashMap<String, [Vec2; 2]>> = HashMap::new();
+        level_bat_pos.insert(
+            1,
+            HashMap::from([(
+                "bs01".to_string(),
+                [
+                    level.map.tiled_to_bevy_coord(Vec2::new(3940.0, 850.0)),
+                    level.map.tiled_to_bevy_coord(Vec2::new(3060.0, 1460.0)),
+                ],
+            )]),
+        );
+
+        match collision_event {
+            CollisionEvent::Started(e1, e2, _cf) => {
+                // Warning, e1 and e2 can be swapped.
+                if let Some((_entity, collider_name)) = bat_sensors
+                    .iter()
+                    .find(|(entity, _collider_name)| entity == e1 || entity == e2)
+                {
+                    debug!(
+                        "Received collision event: {:?}, collider name: {:?}",
+                        collision_event, collider_name
+                    );
+
+                    if let Some(collider) = level_bat_pos.get(&current_level.id) {
+                        if let Some(pos) = collider.get(&collider_name.0) {
+                            bat_sensor_collision.send(BatSensorCollision {
+                                spawn_pos: pos[0],
+                                exit_pos: pos[1],
+                            });
+                        }
+                    }
+                };
+            }
+            CollisionEvent::Stopped(e1, e2, _cf) => {
+                if bat_sensors.contains(*e1) || bat_sensors.contains(*e2) {
+                    debug!("Received collision event: {:?}", collision_event);
+                }
+            }
+        }
+    }
+}
 // Remove QM entities if player goes to menu and question mark is displayed
 fn despawn_qm(mut commands: Commands, qm_entity: Query<(Entity, &StoryQM)>) {
     for (entity, _) in qm_entity.iter() {

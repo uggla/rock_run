@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.10.2" orientation="orthogonal" renderorder="right-down" width="400" height="90" tilewidth="16" tileheight="16" infinite="0" nextlayerid="8" nextobjectid="72">
+<map version="1.10" tiledversion="1.10.2" orientation="orthogonal" renderorder="right-down" width="400" height="90" tilewidth="16" tileheight="16" infinite="0" nextlayerid="9" nextobjectid="74">
  <tileset firstgid="1" name="tileset-1" tilewidth="16" tileheight="16" tilecount="2030" columns="58">
   <image source="tileset-1.png" width="928" height="560"/>
  </tileset>
@@ -219,6 +219,7 @@
   <object id="59" name="p08" x="3424" y="640" width="64" height="16"/>
   <object id="60" name="p09" x="1760" y="416" width="64" height="32"/>
   <object id="61" name="p10" x="1968" y="416" width="64" height="32"/>
+  <object id="73" name="p11" x="6272" y="912" width="96" height="16"/>
  </objectgroup>
  <objectgroup id="6" name="Spikes">
   <object id="47" name="s01" x="2982.67" y="576" width="50.6667" height="16"/>
@@ -231,6 +232,9 @@
   <object id="70" name="story02" x="4367" y="1378">
    <point/>
   </object>
+ </objectgroup>
+ <objectgroup id="8" name="BatSensors">
+  <object id="72" name="bs01" x="3040" y="1104" width="144"/>
  </objectgroup>
  <objectgroup id="7" name="Ladders">
   <object id="71" name="l01" x="6336" y="624.667" width="1" height="288"/>

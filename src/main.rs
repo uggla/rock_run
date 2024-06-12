@@ -1,3 +1,4 @@
+mod bat;
 mod colliders;
 mod collision;
 mod coregame;
@@ -11,12 +12,13 @@ mod screen_map;
 mod text_syllable;
 mod triceratops;
 
+use bevy::prelude::*;
 use bevy::window::WindowResolution;
-use bevy::{prelude::*, utils::HashMap};
 
 use text_syllable::TextSyllablePlugin;
 
 use crate::{
+    bat::BatPlugin,
     colliders::GroundAndPlatformsPlugin,
     collision::CollisionPlugin,
     coregame::{plugins::CoreGamePlugins, state::AppState},
@@ -27,7 +29,6 @@ use crate::{
     player::PlayerPlugin,
     triceratops::TriceratopsPlugin,
 };
-use glam::Vec2;
 
 // 16/9 1280x720
 pub const WINDOW_WIDTH: f32 = 1280.0;
@@ -55,6 +56,7 @@ fn main() {
             GroundAndPlatformsPlugin,
             PlayerPlugin,
             TriceratopsPlugin,
+            BatPlugin,
             LifePlugin,
             CollisionPlugin,
             LocalizationPlugin,
@@ -100,6 +102,7 @@ fn toggle_perf_ui(
 }
 
 // TODO: remove as this is for debugging purpose
+#[allow(unused)]
 fn update_text(
     mut msg_event: EventWriter<StoryMessages>,
     // mut life_event: EventWriter<events::LifeEvent>,
@@ -113,21 +116,16 @@ fn update_text(
         Err(_) => return,
     };
 
-    if input_state.just_pressed(&player::PlayerMovement::Crouch) {
-        debug!("open window to display messages");
-        msg_event.send(StoryMessages::Display(vec![
-            (
-                "hello-world".to_string(),
-                Some(HashMap::from([("name".to_string(), "Rose".to_string())])),
-            ),
-            ("story01-01".to_string(), None),
-        ]));
+    // if input_state.just_pressed(&player::PlayerMovement::Crouch) {
+    //     debug!("open window to display messages");
+    //     msg_event.send(StoryMessages::Display(vec![
+    //         (
+    //             "hello-world".to_string(),
+    //             Some(HashMap::from([("name".to_string(), "Rose".to_string())])),
+    //         ),
+    //         ("story01-01".to_string(), None),
+    //     ]));
 
-        // life_event.send(events::LifeEvent::Lost);
-        //
-        let v1 = Vec2::new(0.0, 0.0);
-        let v2 = Vec2::new(5.0, 1.0);
-        let np = v1.move_towards(v2, 1.0);
-        info!("New pos:{:?}", np);
-    }
+    // life_event.send(events::LifeEvent::Lost);
+    // }
 }
