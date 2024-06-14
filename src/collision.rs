@@ -6,12 +6,12 @@ use bevy_rapier2d::{
 
 use crate::{
     bat::Bat,
-    colliders::{BatSensor, ColliderName, Ground, Platform, Spike, Story},
+    colliders::{ColliderName, Ground, Platform, PositionSensor, Spike, Story},
     coregame::{
         level::{CurrentLevel, Level},
         state::AppState,
     },
-    events::{BatSensorCollision, Hit, StoryMessages, TriceratopsCollision},
+    events::{Hit, PositionSensorCollision, StoryMessages, TriceratopsCollision},
     player::{self, Player, PlayerState, PLAYER_HEIGHT},
     triceratops::Triceratops,
 };
@@ -31,7 +31,7 @@ impl Plugin for CollisionPlugin {
                 bat_collision,
                 story_collision,
                 display_story,
-                bat_sensor_collision,
+                position_sensor_collision,
             )
                 .in_set(CollisionSet)
                 .run_if(in_state(AppState::GameRunning)),
@@ -39,7 +39,7 @@ impl Plugin for CollisionPlugin {
         .add_systems(OnEnter(AppState::StartMenu), despawn_qm)
         .add_event::<Hit>()
         .add_event::<TriceratopsCollision>()
-        .add_event::<BatSensorCollision>();
+        .add_event::<PositionSensorCollision>();
     }
 }
 
@@ -285,13 +285,15 @@ fn bat_collision(
     }
 }
 
-fn bat_sensor_collision(
-    bat_sensors: Query<(Entity, &ColliderName), With<BatSensor>>,
-    mut collision_events: EventReader<CollisionEvent>,
-    mut bat_sensor_collision: EventWriter<BatSensorCollision>,
+fn position_sensor_collision(
+    position_sensors: Query<(Entity, &ColliderName), With<PositionSensor>>,
+    collision_events: EventReader<CollisionEvent>,
+    event_to_send: EventWriter<PositionSensorCollision>,
     levels: Query<&Level, With<Level>>,
     current_level: Res<CurrentLevel>,
 ) {
+    let mut collision_events = collision_events;
+    let mut event_to_send = event_to_send;
     for collision_event in collision_events.read() {
         let level = levels
             .iter()
@@ -302,7 +304,7 @@ fn bat_sensor_collision(
         level_bat_pos.insert(
             1,
             HashMap::from([(
-                "bs01".to_string(),
+                "bat01".to_string(),
                 [
                     level.map.tiled_to_bevy_coord(Vec2::new(3940.0, 850.0)),
                     level.map.tiled_to_bevy_coord(Vec2::new(3060.0, 1460.0)),
@@ -313,7 +315,7 @@ fn bat_sensor_collision(
         match collision_event {
             CollisionEvent::Started(e1, e2, _cf) => {
                 // Warning, e1 and e2 can be swapped.
-                if let Some((_entity, collider_name)) = bat_sensors
+                if let Some((_entity, collider_name)) = position_sensors
                     .iter()
                     .find(|(entity, _collider_name)| entity == e1 || entity == e2)
                 {
@@ -324,7 +326,8 @@ fn bat_sensor_collision(
 
                     if let Some(collider) = level_bat_pos.get(&current_level.id) {
                         if let Some(pos) = collider.get(&collider_name.0) {
-                            bat_sensor_collision.send(BatSensorCollision {
+                            event_to_send.send(PositionSensorCollision {
+                                sensor_name: collider_name.0.clone(),
                                 spawn_pos: pos[0],
                                 exit_pos: pos[1],
                             });
@@ -333,13 +336,14 @@ fn bat_sensor_collision(
                 };
             }
             CollisionEvent::Stopped(e1, e2, _cf) => {
-                if bat_sensors.contains(*e1) || bat_sensors.contains(*e2) {
+                if position_sensors.contains(*e1) || position_sensors.contains(*e2) {
                     debug!("Received collision event: {:?}", collision_event);
                 }
             }
         }
     }
 }
+
 // Remove QM entities if player goes to menu and question mark is displayed
 fn despawn_qm(mut commands: Commands, qm_entity: Query<(Entity, &StoryQM)>) {
     for (entity, _) in qm_entity.iter() {

@@ -41,7 +41,7 @@ pub struct Spike;
 pub struct Story;
 
 #[derive(Component, Clone, Debug)]
-pub struct BatSensor;
+pub struct PositionSensor;
 
 #[derive(Component, Clone, Debug, Hash, Eq, PartialEq)]
 pub struct ColliderName(pub String);
@@ -254,7 +254,7 @@ fn setup_ground_platforms_spikes(
             let stories = LayerComponentBridge::new("Stories", Story, true);
             tiled_object_to_collider(&mut commands, tiled_map, level, stories);
 
-            let bat_sensors = LayerComponentBridge::new("BatSensors", BatSensor, true);
+            let bat_sensors = LayerComponentBridge::new("PositionSensors", PositionSensor, true);
             tiled_object_to_collider(&mut commands, tiled_map, level, bat_sensors);
         });
 
@@ -292,7 +292,7 @@ fn despawn_ground_platforms_spikes(
     platforms_query: Query<(Entity, &Collider), With<Platform>>,
     spikes_query: Query<(Entity, &Collider), With<Spike>>,
     stories_query: Query<(Entity, &Collider), With<Story>>,
-    bat_sensors_query: Query<(Entity, &Collider), With<BatSensor>>,
+    bat_sensors_query: Query<(Entity, &Collider), With<PositionSensor>>,
 ) {
     for (entity, _) in ground_query.iter() {
         commands.entity(entity).despawn_recursive();

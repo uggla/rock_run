@@ -31,7 +31,8 @@ pub enum LifeEvent {
 pub struct TriceratopsCollision;
 
 #[derive(Event, Debug)]
-pub struct BatSensorCollision {
+pub struct PositionSensorCollision {
+    pub sensor_name: String,
     pub spawn_pos: Vec2,
     pub exit_pos: Vec2,
 }

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.10.2" orientation="orthogonal" renderorder="right-down" width="400" height="90" tilewidth="16" tileheight="16" infinite="0" nextlayerid="9" nextobjectid="74">
+<map version="1.10" tiledversion="1.10.2" orientation="orthogonal" renderorder="right-down" width="400" height="90" tilewidth="16" tileheight="16" infinite="0" nextlayerid="9" nextobjectid="75">
  <tileset firstgid="1" name="tileset-1" tilewidth="16" tileheight="16" tilecount="2030" columns="58">
   <image source="tileset-1.png" width="928" height="560"/>
  </tileset>
@@ -233,8 +233,9 @@
    <point/>
   </object>
  </objectgroup>
- <objectgroup id="8" name="BatSensors">
-  <object id="72" name="bs01" x="3040" y="1104" width="144"/>
+ <objectgroup id="8" name="PositionSensors">
+  <object id="72" name="bat01" x="3040" y="1104" width="144"/>
+  <object id="74" name="rock01" x="4624" y="1216" height="176"/>
  </objectgroup>
  <objectgroup id="7" name="Ladders">
   <object id="71" name="l01" x="6336" y="624.667" width="1" height="288"/>

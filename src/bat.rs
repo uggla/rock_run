@@ -7,7 +7,7 @@ use bevy_rapier2d::{
 use crate::{
     collision::CollisionSet,
     coregame::state::AppState,
-    events::{BatSensorCollision, Hit, Restart},
+    events::{Hit, PositionSensorCollision, Restart},
     helpers::texture::cycle_texture,
     player::Player,
 };
@@ -83,9 +83,13 @@ pub fn spawn_bat(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut texture_atlases: ResMut<Assets<TextureAtlasLayout>>,
-    mut bat_sensor_collision: EventReader<BatSensorCollision>,
+    mut bat_sensor_collision: EventReader<PositionSensorCollision>,
 ) {
     for collision_event in bat_sensor_collision.read() {
+        if !collision_event.sensor_name.contains("bat") {
+            return;
+        }
+
         let texture = asset_server.load("bat-1.png");
         let layout =
             TextureAtlasLayout::from_grid(Vec2::new(BAT_WIDTH, BAT_HEIGHT), 7, 2, None, None);
