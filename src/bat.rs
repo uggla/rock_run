@@ -189,7 +189,7 @@ pub fn move_bat(
     let direction = if chase_timer.finished() {
         debug!("chase_timer finished");
         debug!("bat_pos: {:?}", bat_pos);
-        bat_controller.filter_flags = QueryFilterFlags::EXCLUDE_SOLIDS;
+        bat_controller.filter_flags = QueryFilterFlags::ONLY_KINEMATIC;
         (bat.exit_pos - bat_pos).normalize() * BAT_SPEED * time.delta_seconds()
     } else {
         (player_pos - bat_pos).normalize() * BAT_SPEED * time.delta_seconds()
