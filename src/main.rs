@@ -8,6 +8,7 @@ mod helpers;
 mod life;
 mod localization;
 mod player;
+mod rock;
 mod screen_map;
 mod text_syllable;
 mod triceratops;
@@ -27,6 +28,7 @@ use crate::{
     life::LifePlugin,
     localization::LocalizationPlugin,
     player::PlayerPlugin,
+    rock::RockPlugin,
     triceratops::TriceratopsPlugin,
 };
 
@@ -57,6 +59,7 @@ fn main() {
             PlayerPlugin,
             TriceratopsPlugin,
             BatPlugin,
+            RockPlugin,
             LifePlugin,
             CollisionPlugin,
             LocalizationPlugin,
@@ -110,22 +113,26 @@ fn update_text(
         &leafwing_input_manager::action_state::ActionState<player::PlayerMovement>,
         With<player::Player>,
     >,
+    mut ext_impulses: Query<&mut bevy_rapier2d::dynamics::ExternalImpulse, With<rock::Rock>>,
 ) {
     let input_state = match input.get_single() {
         Ok(state) => state,
         Err(_) => return,
     };
 
-    // if input_state.just_pressed(&player::PlayerMovement::Crouch) {
-    //     debug!("open window to display messages");
-    //     msg_event.send(StoryMessages::Display(vec![
-    //         (
-    //             "hello-world".to_string(),
-    //             Some(HashMap::from([("name".to_string(), "Rose".to_string())])),
-    //         ),
-    //         ("story01-01".to_string(), None),
-    //     ]));
+    if input_state.just_pressed(&player::PlayerMovement::Crouch) {
+        debug!("open window to display messages");
+        for mut ext_impulse in ext_impulses.iter_mut() {
+            ext_impulse.impulse = Vec2::new(-100.0, 0.0);
+        }
+        //     msg_event.send(StoryMessages::Display(vec![
+        //         (
+        //             "hello-world".to_string(),
+        //             Some(HashMap::from([("name".to_string(), "Rose".to_string())])),
+        //         ),
+        //         ("story01-01".to_string(), None),
+        //     ]));
 
-    // life_event.send(events::LifeEvent::Lost);
-    // }
+        // life_event.send(events::LifeEvent::Lost);
+    }
 }

@@ -1,6 +1,7 @@
 use bevy::{prelude::*, utils::HashMap};
 use bevy_rapier2d::{
     control::{KinematicCharacterController, KinematicCharacterControllerOutput},
+    dynamics::Velocity,
     pipeline::{CollisionEvent, QueryFilterFlags},
 };
 
@@ -13,6 +14,7 @@ use crate::{
     },
     events::{Hit, PositionSensorCollision, StoryMessages, TriceratopsCollision},
     player::{self, Player, PlayerState, PLAYER_HEIGHT},
+    rock::Rock,
     triceratops::Triceratops,
 };
 
@@ -50,6 +52,7 @@ fn player_collision(
     ground: Query<Entity, With<Ground>>,
     platforms: Query<Entity, With<Platform>>,
     spikes: Query<Entity, With<Spike>>,
+    rocks: Query<(Entity, &Velocity), With<Rock>>,
     mut hit: EventWriter<Hit>,
 ) {
     if state.get() == &PlayerState::Hit {
@@ -83,6 +86,21 @@ fn player_collision(
         // Player collides with spikes
         if spikes.contains(character_collision.entity) {
             hit.send(Hit);
+        }
+
+        // Player collides with fast moving rocks
+        // If rocks are moving slowly, we can stay on it
+        for (rock, velocity) in rocks.iter() {
+            if character_collision.entity == rock {
+                debug!("hit velocity: {:?}", velocity);
+                if velocity.linvel.x.abs() > 175.0 || velocity.linvel.y.abs() > 20.0 {
+                    hit.send(Hit);
+                }
+
+                if output.grounded && state.get() != &PlayerState::Jumping {
+                    next_state.set(PlayerState::Idling);
+                }
+            }
         }
     }
     // Player is falling
@@ -303,13 +321,36 @@ fn position_sensor_collision(
         let mut level_bat_pos: HashMap<u8, HashMap<String, [Vec2; 2]>> = HashMap::new();
         level_bat_pos.insert(
             1,
-            HashMap::from([(
-                "bat01".to_string(),
-                [
-                    level.map.tiled_to_bevy_coord(Vec2::new(3940.0, 850.0)),
-                    level.map.tiled_to_bevy_coord(Vec2::new(3060.0, 1460.0)),
-                ],
-            )]),
+            HashMap::from([
+                (
+                    "bat01".to_string(),
+                    [
+                        level.map.tiled_to_bevy_coord(Vec2::new(3940.0, 850.0)),
+                        level.map.tiled_to_bevy_coord(Vec2::new(3060.0, 1460.0)),
+                    ],
+                ),
+                (
+                    "rock01".to_string(),
+                    [
+                        level.map.tiled_to_bevy_coord(Vec2::new(5300.0, 800.0)),
+                        level.map.tiled_to_bevy_coord(Vec2::new(5300.0, 600.0)),
+                    ],
+                ),
+                (
+                    "rock02".to_string(),
+                    [
+                        level.map.tiled_to_bevy_coord(Vec2::new(5300.0, 800.0)),
+                        level.map.tiled_to_bevy_coord(Vec2::new(5300.0, 600.0)),
+                    ],
+                ),
+                (
+                    "rock03".to_string(),
+                    [
+                        level.map.tiled_to_bevy_coord(Vec2::new(5300.0, 800.0)),
+                        level.map.tiled_to_bevy_coord(Vec2::new(5300.0, 600.0)),
+                    ],
+                ),
+            ]),
         );
 
         match collision_event {

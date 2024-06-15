@@ -322,14 +322,14 @@ fn apply_forces(
     state: ResMut<State<PlayerState>>,
 ) {
     // Apply impulses.
-    if keyboard_input.pressed(KeyCode::ArrowUp) && state.get() != &PlayerState::Jumping {
+    if keyboard_input.just_pressed(KeyCode::ArrowUp) && state.get() != &PlayerState::Jumping {
         for mut ext_impulse in ext_impulses.iter_mut() {
             ext_impulse.impulse = Vec2::new(0.0, 250.0);
             // ext_impulse.torque_impulse = 0.4;
         }
     }
 
-    if keyboard_input.pressed(KeyCode::ArrowDown) {
+    if keyboard_input.just_pressed(KeyCode::ArrowDown) {
         for mut ext_impulse in ext_impulses.iter_mut() {
             ext_impulse.impulse = Vec2::new(20.0, 0.0);
             // ext_impulse.torque_impulse = 0.4;
