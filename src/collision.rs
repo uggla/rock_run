@@ -45,6 +45,7 @@ impl Plugin for CollisionPlugin {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn player_collision(
     player_controller: Query<(Entity, &KinematicCharacterControllerOutput), With<Player>>,
     state: Res<State<PlayerState>>,
