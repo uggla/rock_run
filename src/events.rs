@@ -36,3 +36,9 @@ pub struct PositionSensorCollision {
     pub spawn_pos: Vec2,
     pub exit_pos: Vec2,
 }
+
+#[derive(Event)]
+pub struct LadderCollisionStart;
+
+#[derive(Event)]
+pub struct LadderCollisionStop;

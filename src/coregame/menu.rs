@@ -11,7 +11,7 @@ use unic_langid::langid;
 
 use crate::{
     coregame::state::{AppState, ForState},
-    events::{NoMoreStoryMessages, StoryMessages},
+    events::{LadderCollisionStop, NoMoreStoryMessages, StoryMessages},
     localization::{get_translation, LocaleHandles},
     WINDOW_WIDTH,
 };
@@ -568,6 +568,7 @@ fn menu_input_system(
     mut msg_event: EventWriter<StoryMessages>,
     mut no_more_msg_event: EventReader<NoMoreStoryMessages>,
     mut localization_asset_events: EventReader<AssetEvent<BundleAsset>>,
+    mut ladder_collision_stop: EventWriter<LadderCollisionStop>,
 ) {
     if state.get() != &AppState::StartMenu
         && menu_action_state.just_pressed(&MenuAction::ExitToMenu)
@@ -575,6 +576,7 @@ fn menu_input_system(
         next_state.set(AppState::StartMenu);
         rapier_config.physics_pipeline_active = true;
         msg_event.send(StoryMessages::Hide);
+        ladder_collision_stop.send(LadderCollisionStop);
     } else {
         match state.get() {
             AppState::StartMenu => {

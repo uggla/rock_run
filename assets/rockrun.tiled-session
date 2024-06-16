@@ -14,10 +14,10 @@
         },
         "level01.tmx": {
             "scale": 0.75,
-            "selectedLayer": 6,
+            "selectedLayer": 7,
             "viewCenter": {
-                "x": 5040.666666666666,
-                "y": 1022
+                "x": 6424.666666666666,
+                "y": 1024.6666666666665
             }
         },
         "level01.tmx#backgrounds": {

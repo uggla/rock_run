@@ -7,12 +7,15 @@ use bevy_rapier2d::{
 
 use crate::{
     bat::Bat,
-    colliders::{ColliderName, Ground, Platform, PositionSensor, Spike, Story},
+    colliders::{ColliderName, Ground, Ladder, Platform, PositionSensor, Spike, Story},
     coregame::{
         level::{CurrentLevel, Level},
         state::AppState,
     },
-    events::{Hit, PositionSensorCollision, StoryMessages, TriceratopsCollision},
+    events::{
+        Hit, LadderCollisionStart, LadderCollisionStop, PositionSensorCollision, StoryMessages,
+        TriceratopsCollision,
+    },
     player::{self, Player, PlayerState, PLAYER_HEIGHT},
     rock::Rock,
     triceratops::Triceratops,
@@ -34,6 +37,7 @@ impl Plugin for CollisionPlugin {
                 story_collision,
                 display_story,
                 position_sensor_collision,
+                ladder_collision,
             )
                 .in_set(CollisionSet)
                 .run_if(in_state(AppState::GameRunning)),
@@ -41,7 +45,9 @@ impl Plugin for CollisionPlugin {
         .add_systems(OnEnter(AppState::StartMenu), despawn_qm)
         .add_event::<Hit>()
         .add_event::<TriceratopsCollision>()
-        .add_event::<PositionSensorCollision>();
+        .add_event::<PositionSensorCollision>()
+        .add_event::<LadderCollisionStart>()
+        .add_event::<LadderCollisionStop>();
     }
 }
 
@@ -259,6 +265,37 @@ fn display_story(
             }
             _ => {}
         };
+    }
+}
+
+fn ladder_collision(
+    ladders: Query<(Entity, &ColliderName), With<Ladder>>,
+    mut collision_events: EventReader<CollisionEvent>,
+    mut ladder_collision_start: EventWriter<LadderCollisionStart>,
+    mut ladder_collision_stop: EventWriter<LadderCollisionStop>,
+) {
+    for collision_event in collision_events.read() {
+        match collision_event {
+            CollisionEvent::Started(e1, e2, _cf) => {
+                // Warning, e1 and e2 can be swapped.
+                if let Some((_entity, collider_name)) = ladders
+                    .iter()
+                    .find(|(entity, _collider_name)| entity == e1 || entity == e2)
+                {
+                    debug!(
+                        "Received collision event: {:?}, collider name: {:?}",
+                        collision_event, collider_name
+                    );
+                    ladder_collision_start.send(LadderCollisionStart);
+                };
+            }
+            CollisionEvent::Stopped(e1, e2, _cf) => {
+                if ladders.contains(*e1) || ladders.contains(*e2) {
+                    debug!("Received collision event: {:?}", collision_event);
+                    ladder_collision_stop.send(LadderCollisionStop);
+                }
+            }
+        }
     }
 }
 

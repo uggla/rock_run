@@ -43,6 +43,9 @@ pub struct Story;
 #[derive(Component, Clone, Debug)]
 pub struct PositionSensor;
 
+#[derive(Component, Clone, Debug)]
+pub struct Ladder;
+
 #[derive(Component, Clone, Debug, Hash, Eq, PartialEq)]
 pub struct ColliderName(pub String);
 
@@ -254,8 +257,12 @@ fn setup_ground_platforms_spikes(
             let stories = LayerComponentBridge::new("Stories", Story, true);
             tiled_object_to_collider(&mut commands, tiled_map, level, stories);
 
-            let bat_sensors = LayerComponentBridge::new("PositionSensors", PositionSensor, true);
-            tiled_object_to_collider(&mut commands, tiled_map, level, bat_sensors);
+            let position_sensors =
+                LayerComponentBridge::new("PositionSensors", PositionSensor, true);
+            tiled_object_to_collider(&mut commands, tiled_map, level, position_sensors);
+
+            let ladders = LayerComponentBridge::new("Ladders", Ladder, true);
+            tiled_object_to_collider(&mut commands, tiled_map, level, ladders);
         });
 
     // TODO: Remove this collider
