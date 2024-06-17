@@ -17,9 +17,6 @@ pub const ROCK_DIAMETER: f32 = 64.0;
 pub struct Rock;
 
 #[derive(Component, Deref, DerefMut)]
-pub struct AnimationTimer(Timer);
-
-#[derive(Component, Deref, DerefMut)]
 pub struct ChaseTimer(Timer);
 
 #[derive(Debug, Eq, PartialEq, Clone, Copy, Hash, Reflect)]
@@ -73,7 +70,7 @@ fn get_collider_shapes(y_mirror: bool) -> Vec<(Vec2, f32, Collider)> {
     }
 }
 
-pub fn spawn_rock(
+fn spawn_rock(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut rock_sensor_collision: EventReader<PositionSensorCollision>,

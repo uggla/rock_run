@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, utils::HashMap};
 use bevy_rapier2d::{
     control::KinematicCharacterController, dynamics::RigidBody, geometry::Collider,
 };
@@ -19,10 +19,12 @@ pub const TRICERATOPS_WIDTH: f32 = 175.0;
 pub const TRICERATOPS_HEIGHT: f32 = 120.0;
 
 #[derive(Component)]
-pub struct Triceratops;
+pub struct Triceratops {
+    current_movement: TriceratopsMovement,
+}
 
 #[derive(Component, Deref, DerefMut)]
-pub struct AnimationTimer(Timer);
+struct AnimationTimer(Timer);
 
 #[derive(Debug, Eq, PartialEq, Clone, Copy, Hash, Reflect)]
 pub enum TriceratopsMovement {
@@ -89,7 +91,7 @@ fn get_collider_shapes(y_mirror: bool) -> Vec<(Vec2, f32, Collider)> {
     }
 }
 
-pub fn setup_triceratops(
+fn setup_triceratops(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut texture_atlases: ResMut<Assets<TextureAtlasLayout>>,
@@ -112,91 +114,112 @@ pub fn setup_triceratops(
         None,
     );
     let texture_atlas_layout = texture_atlases.add(layout);
+    let mut level_triceratops_pos: HashMap<u8, Vec<Vec2>> = HashMap::new();
+    level_triceratops_pos.insert(
+        1,
+        vec![
+            level.map.tiled_to_bevy_coord(Vec2::new(2400.0, 480.0)),
+            level.map.tiled_to_bevy_coord(Vec2::new(6020.0, 1050.0)),
+        ],
+    );
 
-    commands.spawn((
-        SpriteSheetBundle {
-            texture,
-            sprite: Sprite { ..default() },
-            atlas: TextureAtlas {
-                layout: texture_atlas_layout,
-                index: 0,
-            },
-            transform: Transform {
-                scale: Vec3::splat(TRICERATOPS_SCALE_FACTOR),
-                translation: level
-                    .map
-                    .tiled_to_bevy_coord(Vec2::new(2400.0, 480.0))
-                    .extend(20.0),
+    let start_positions = match level_triceratops_pos.get(&current_level.id) {
+        Some(positions) => positions,
+        None => return,
+    };
+
+    for start_pos in start_positions {
+        commands.spawn((
+            SpriteSheetBundle {
+                texture: texture.clone(),
+                sprite: Sprite { ..default() },
+                atlas: TextureAtlas {
+                    layout: texture_atlas_layout.clone(),
+                    index: 0,
+                },
+                transform: Transform {
+                    scale: Vec3::splat(TRICERATOPS_SCALE_FACTOR),
+                    translation: start_pos.extend(20.0),
+                    ..default()
+                },
                 ..default()
             },
-            ..default()
-        },
-        RigidBody::KinematicPositionBased,
-        AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
-        Collider::compound(get_collider_shapes(false)),
-        KinematicCharacterController { ..default() },
-        Triceratops,
-    ));
+            RigidBody::KinematicPositionBased,
+            AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
+            Collider::compound(get_collider_shapes(false)),
+            KinematicCharacterController { ..default() },
+            Triceratops {
+                current_movement: TriceratopsMovement::Run(TriceratopsDirection::default()),
+            },
+        ));
+    }
 }
 
-pub fn move_triceratops(
+fn move_triceratops(
     time: Res<Time>,
     mut triceratops_query: Query<
-        (&mut Collider, &mut KinematicCharacterController),
+        (
+            Entity,
+            &mut Triceratops,
+            &mut Collider,
+            &mut KinematicCharacterController,
+        ),
         With<Triceratops>,
     >,
     mut animation_query: Query<(&mut AnimationTimer, &mut TextureAtlas, &mut Sprite)>,
     mut collision_event: EventReader<TriceratopsCollision>,
-    mut current_movement: Local<TriceratopsMovement>,
 ) {
-    let (mut triceratops_collider, mut triceratops_controller) = triceratops_query.single_mut();
-    let mut anim = |current_movement: TriceratopsMovement| match current_movement {
-        TriceratopsMovement::Run(triceratops_direction) => {
-            let (mut anim_timer, mut texture, mut sprite) = animation_query.single_mut();
-            anim_timer.tick(time.delta());
-            match triceratops_direction {
-                TriceratopsDirection::Left => {
-                    sprite.flip_x = true;
-                    *triceratops_collider = Collider::compound(get_collider_shapes(true));
+    let collided_triceratops_entities: Vec<Entity> =
+        collision_event.read().map(|ev| ev.id).collect();
+    for (triceratos_entity, mut triceratos, mut triceratops_collider, mut triceratops_controller) in
+        triceratops_query.iter_mut()
+    {
+        let mut anim = |current_movement: TriceratopsMovement| match current_movement {
+            TriceratopsMovement::Run(triceratops_direction) => {
+                let (mut anim_timer, mut texture, mut sprite) =
+                    animation_query.get_mut(triceratos_entity).unwrap();
+                anim_timer.tick(time.delta());
+                match triceratops_direction {
+                    TriceratopsDirection::Left => {
+                        sprite.flip_x = true;
+                        *triceratops_collider = Collider::compound(get_collider_shapes(true));
+                    }
+                    TriceratopsDirection::Right => {
+                        sprite.flip_x = false;
+                        *triceratops_collider = Collider::compound(get_collider_shapes(false));
+                    }
                 }
-                TriceratopsDirection::Right => {
-                    sprite.flip_x = false;
-                    *triceratops_collider = Collider::compound(get_collider_shapes(false));
+                if anim_timer.just_finished() {
+                    cycle_texture(&mut texture, 0..=4);
                 }
             }
-            if anim_timer.just_finished() {
-                cycle_texture(&mut texture, 0..=4);
-            }
-        }
-    };
+        };
 
-    *current_movement = match collision_event.is_empty() {
-        false => {
-            collision_event.clear();
-            if *current_movement == TriceratopsMovement::Run(TriceratopsDirection::Right) {
-                TriceratopsMovement::Run(TriceratopsDirection::Left)
+        if collided_triceratops_entities.contains(&triceratos_entity) {
+            if triceratos.current_movement == TriceratopsMovement::Run(TriceratopsDirection::Right)
+            {
+                triceratos.current_movement = TriceratopsMovement::Run(TriceratopsDirection::Left);
             } else {
-                TriceratopsMovement::Run(TriceratopsDirection::Right)
+                triceratos.current_movement = TriceratopsMovement::Run(TriceratopsDirection::Right);
             }
         }
-        true => *current_movement,
-    };
 
-    let direction_x = match *current_movement {
-        TriceratopsMovement::Run(triceratops_direction) => match triceratops_direction {
-            TriceratopsDirection::Left => -1.0,
-            TriceratopsDirection::Right => 1.0,
-        },
-    };
-    anim(*current_movement);
-    triceratops_controller.translation = Some(Vec2::new(
-        direction_x * TRICERATOPS_SPEED * time.delta_seconds(),
-        -TRICERATOPS_SPEED * time.delta_seconds(),
-    ));
+        let direction_x = match triceratos.current_movement {
+            TriceratopsMovement::Run(triceratops_direction) => match triceratops_direction {
+                TriceratopsDirection::Left => -1.0,
+                TriceratopsDirection::Right => 1.0,
+            },
+        };
+        anim(triceratos.current_movement);
+        triceratops_controller.translation = Some(Vec2::new(
+            direction_x * TRICERATOPS_SPEED * time.delta_seconds(),
+            -TRICERATOPS_SPEED * time.delta_seconds(),
+        ));
+    }
 }
 
 fn despawn_triceratops(mut commands: Commands, triceratops: Query<Entity, With<Triceratops>>) {
-    if let Ok(triceratops) = triceratops.get_single() {
+    for triceratops in triceratops.iter() {
         commands.entity(triceratops).despawn_recursive();
     }
 }

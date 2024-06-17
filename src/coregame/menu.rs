@@ -580,9 +580,6 @@ fn menu_input_system(
     } else {
         match state.get() {
             AppState::StartMenu => {
-                // if menu_action_state.just_pressed(&MenuAction::Accept) {
-                //     next_state.set(AppState::GameCreate);
-                // }
                 if menu_action_state.just_pressed(&MenuAction::Quit) {
                     app_exit_events.send(AppExit);
                 }

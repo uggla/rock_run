@@ -20,23 +20,24 @@ pub const BAT_HEIGHT: f32 = 57.0;
 #[derive(Component)]
 pub struct Bat {
     exit_pos: Vec2,
+    current_movement: BatMovement,
 }
 
 #[derive(Component, Deref, DerefMut)]
-pub struct AnimationTimer(Timer);
+struct AnimationTimer(Timer);
 
 #[derive(Component, Deref, DerefMut)]
 pub struct ChaseTimer(Timer);
 
 #[derive(Debug, Eq, PartialEq, Clone, Copy, Hash, Reflect)]
 pub enum BatMovement {
-    Run(BatDirection),
+    Fly(BatDirection),
     Crunch,
 }
 
 impl Default for BatMovement {
     fn default() -> Self {
-        Self::Run(BatDirection::default())
+        Self::Fly(BatDirection::default())
     }
 }
 
@@ -79,7 +80,7 @@ fn get_collider_shapes(y_mirror: bool) -> Vec<(Vec2, f32, Collider)> {
     }
 }
 
-pub fn spawn_bat(
+fn spawn_bat(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut texture_atlases: ResMut<Assets<TextureAtlasLayout>>,
@@ -117,13 +118,14 @@ pub fn spawn_bat(
             KinematicCharacterController { ..default() },
             Bat {
                 exit_pos: collision_event.exit_pos,
+                current_movement: BatMovement::Fly(BatDirection::default()),
             },
         ));
     }
 }
 
 #[allow(clippy::too_many_arguments)]
-pub fn move_bat(
+fn move_bat(
     mut commands: Commands,
     time: Res<Time>,
     mut bat_query: Query<
@@ -132,82 +134,86 @@ pub fn move_bat(
             &mut Collider,
             &mut KinematicCharacterController,
             &mut Transform,
-            &Bat,
+            &mut Bat,
         ),
         With<Bat>,
     >,
     mut animation_query: Query<(&mut AnimationTimer, &mut TextureAtlas, &mut Sprite)>,
-    mut current_movement: Local<BatMovement>,
+    // mut current_movement: Local<BatMovement>,
     player_query: Query<&mut Transform, (With<Player>, Without<Bat>)>,
     hit: EventReader<Hit>,
     mut chase_timer: Query<&mut ChaseTimer>,
 ) {
-    let (bat_entity, mut bat_collider, mut bat_controller, bat_pos, bat) =
-        match bat_query.get_single_mut() {
-            Ok(bat) => bat,
-            Err(_) => return,
+    // let (bat_entity, mut bat_collider, mut bat_controller, bat_pos, bat) =
+    //     match bat_query.get_single_mut() {
+    //         Ok(bat) => bat,
+    //         Err(_) => return,
+    //     };
+    for (bat_entity, mut bat_collider, mut bat_controller, bat_pos, mut bat) in bat_query.iter_mut()
+    {
+        let player = player_query.single();
+        let mut anim = |current_movement: BatMovement| match current_movement {
+            BatMovement::Fly(bat_direction) => {
+                let (mut anim_timer, mut texture, mut sprite) =
+                    animation_query.get_mut(bat_entity).unwrap();
+                anim_timer.tick(time.delta());
+                match bat_direction {
+                    BatDirection::Left => {
+                        sprite.flip_x = true;
+                        *bat_collider = Collider::compound(get_collider_shapes(true));
+                    }
+                    BatDirection::Right => {
+                        sprite.flip_x = false;
+                        *bat_collider = Collider::compound(get_collider_shapes(false));
+                    }
+                }
+                if anim_timer.just_finished() {
+                    cycle_texture(&mut texture, 0..=2);
+                }
+            }
+
+            BatMovement::Crunch => {
+                let (mut _anim_timer, mut texture, mut _sprite) =
+                    animation_query.get_mut(bat_entity).unwrap();
+                texture.index = 5;
+            }
         };
 
-    let player = player_query.single();
-    let mut anim = |current_movement: BatMovement| match current_movement {
-        BatMovement::Run(bat_direction) => {
-            let (mut anim_timer, mut texture, mut sprite) = animation_query.single_mut();
-            anim_timer.tick(time.delta());
-            match bat_direction {
-                BatDirection::Left => {
-                    sprite.flip_x = true;
-                    *bat_collider = Collider::compound(get_collider_shapes(true));
-                }
-                BatDirection::Right => {
-                    sprite.flip_x = false;
-                    *bat_collider = Collider::compound(get_collider_shapes(false));
-                }
-            }
-            if anim_timer.just_finished() {
-                cycle_texture(&mut texture, 0..=2);
-            }
+        if !hit.is_empty() {
+            bat.current_movement = BatMovement::Crunch;
+            anim(bat.current_movement);
+            return;
         }
 
-        BatMovement::Crunch => {
-            let (mut _anim_timer, mut texture, mut _sprite) = animation_query.single_mut();
-            texture.index = 5;
+        let mut chase_timer = chase_timer.get_mut(bat_entity).unwrap();
+        let bat_pos = bat_pos.translation.xy();
+        let player_pos = player.translation.xy();
+
+        chase_timer.tick(time.delta());
+
+        let direction = if chase_timer.finished() {
+            debug!("chase_timer finished");
+            debug!("bat_pos: {:?}", bat_pos);
+            bat_controller.filter_flags = QueryFilterFlags::ONLY_KINEMATIC;
+            (bat.exit_pos - bat_pos).normalize() * BAT_SPEED * time.delta_seconds()
+        } else {
+            (player_pos - bat_pos).normalize() * BAT_SPEED * time.delta_seconds()
+        };
+
+        if bat_pos.distance(bat.exit_pos) < 2.0 {
+            commands.entity(bat_entity).despawn_recursive();
+            return;
         }
-    };
 
-    if !hit.is_empty() {
-        *current_movement = BatMovement::Crunch;
-        anim(*current_movement);
-        return;
+        bat.current_movement = if direction.x >= 0.0 {
+            BatMovement::Fly(BatDirection::Right)
+        } else {
+            BatMovement::Fly(BatDirection::Left)
+        };
+
+        anim(bat.current_movement);
+        bat_controller.translation = Some(Vec2::new(direction.x, direction.y));
     }
-
-    let mut chase_timer = chase_timer.single_mut();
-    let bat_pos = bat_pos.translation.xy();
-    let player_pos = player.translation.xy();
-
-    chase_timer.tick(time.delta());
-
-    let direction = if chase_timer.finished() {
-        debug!("chase_timer finished");
-        debug!("bat_pos: {:?}", bat_pos);
-        bat_controller.filter_flags = QueryFilterFlags::ONLY_KINEMATIC;
-        (bat.exit_pos - bat_pos).normalize() * BAT_SPEED * time.delta_seconds()
-    } else {
-        (player_pos - bat_pos).normalize() * BAT_SPEED * time.delta_seconds()
-    };
-
-    if bat_pos.distance(bat.exit_pos) < 2.0 {
-        commands.entity(bat_entity).despawn_recursive();
-        return;
-    }
-
-    *current_movement = if direction.x >= 0.0 {
-        BatMovement::Run(BatDirection::Right)
-    } else {
-        BatMovement::Run(BatDirection::Left)
-    };
-
-    anim(*current_movement);
-    bat_controller.translation = Some(Vec2::new(direction.x, direction.y));
 }
 
 fn despawn_bat(mut commands: Commands, bats: Query<Entity, With<Bat>>) {

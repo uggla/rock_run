@@ -123,6 +123,7 @@ fn triceratops_collision(
     state: Res<State<PlayerState>>,
     mut triceratops_controller: Query<
         (
+            Entity,
             &KinematicCharacterControllerOutput,
             &mut KinematicCharacterController,
         ),
@@ -147,34 +148,32 @@ fn triceratops_collision(
         Err(_) => return,
     };
 
-    let (output, mut ctrl) = match triceratops_controller.get_single_mut() {
-        Ok(controller) => controller,
-        Err(_) => return,
-    };
-
-    // Maybe an event saying that the game start could be better than using a state here.
-    // The following code is used right after the end of the restart event
-    // It enable again the collision with the triceratops. The collision are disabled as soon as we
-    // detect a collision with the player to keep only one collision and avoid multiple collisions.
-    if state.get() == &PlayerState::Falling {
-        ctrl.filter_flags
-            .remove(QueryFilterFlags::EXCLUDE_KINEMATIC);
-        debug!("Re-enabling collision with triceratops");
-    }
-
-    for character_collision in output.collisions.iter() {
-        // triceratops hits player
-        if character_collision.entity == player_entity {
-            hit.send(Hit);
-            ctrl.filter_flags = QueryFilterFlags::EXCLUDE_KINEMATIC;
-            debug!("Triceratops hits player, disabling further collision with triceratops");
+    for (triceratops_entity, output, mut ctrl) in triceratops_controller.iter_mut() {
+        // Maybe an event saying that the game start could be better than using a state here.
+        // The following code is used right after the end of the restart event
+        // It enable again the collision with the triceratops. The collision are disabled as soon as we
+        // detect a collision with the player to keep only one collision and avoid multiple collisions.
+        if state.get() == &PlayerState::Falling {
+            ctrl.filter_flags
+                .remove(QueryFilterFlags::EXCLUDE_KINEMATIC);
+            debug!("Re-enabling collision with triceratops");
         }
-        // Triceratops collides with ground and can not move on x axis
-        if (character_collision.entity == ground_entity)
-            && output.grounded
-            && (output.effective_translation.x > -1.0 && output.effective_translation.x < 1.0)
-        {
-            collision_event.send(TriceratopsCollision);
+        for character_collision in output.collisions.iter() {
+            // triceratops hits player
+            if character_collision.entity == player_entity {
+                hit.send(Hit);
+                ctrl.filter_flags = QueryFilterFlags::EXCLUDE_KINEMATIC;
+                debug!("Triceratops hits player, disabling further collision with triceratops");
+            }
+            // Triceratops collides with ground and can not move on x axis
+            if (character_collision.entity == ground_entity)
+                && output.grounded
+                && (output.effective_translation.x > -2.0 && output.effective_translation.x < 2.0)
+            {
+                collision_event.send(TriceratopsCollision {
+                    id: triceratops_entity,
+                });
+            }
         }
     }
 }
@@ -320,23 +319,20 @@ fn bat_collision(
         Err(_) => return,
     };
 
-    let (output, mut ctrl) = match bat_controller.get_single_mut() {
-        Ok(controller) => controller,
-        Err(_) => return,
-    };
+    for (output, mut ctrl) in bat_controller.iter_mut() {
+        if state.get() == &PlayerState::Falling {
+            ctrl.filter_flags
+                .remove(QueryFilterFlags::EXCLUDE_KINEMATIC);
+            debug!("Re-enabling collision with bat");
+        }
 
-    if state.get() == &PlayerState::Falling {
-        ctrl.filter_flags
-            .remove(QueryFilterFlags::EXCLUDE_KINEMATIC);
-        debug!("Re-enabling collision with triceratops");
-    }
-
-    for character_collision in output.collisions.iter() {
-        // bat hits player
-        if character_collision.entity == player_entity {
-            hit.send(Hit);
-            ctrl.filter_flags = QueryFilterFlags::EXCLUDE_KINEMATIC;
-            debug!("Bat hits player, disabling further collision with bat");
+        for character_collision in output.collisions.iter() {
+            // bat hits player
+            if character_collision.entity == player_entity {
+                hit.send(Hit);
+                ctrl.filter_flags = QueryFilterFlags::EXCLUDE_KINEMATIC;
+                debug!("Bat hits player, disabling further collision with bat");
+            }
         }
     }
 }

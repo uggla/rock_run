@@ -23,10 +23,7 @@ pub struct LocaleHandles {
     handles: Vec<Handle<BundleAsset>>,
 }
 
-pub fn load_localization(
-    asset_server: Res<AssetServer>,
-    mut locale_handles: ResMut<LocaleHandles>,
-) {
+fn load_localization(asset_server: Res<AssetServer>, mut locale_handles: ResMut<LocaleHandles>) {
     info!("load_localisation");
     let locale_files = ["locales/en-US/main.ftl.ron", "locales/fr-FR/main.ftl.ron"];
 

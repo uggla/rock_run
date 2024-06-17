@@ -28,7 +28,9 @@ pub enum LifeEvent {
 }
 
 #[derive(Event)]
-pub struct TriceratopsCollision;
+pub struct TriceratopsCollision {
+    pub id: Entity,
+}
 
 #[derive(Event, Debug)]
 pub struct PositionSensorCollision {

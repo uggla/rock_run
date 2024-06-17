@@ -35,10 +35,10 @@ struct PlayerAudio {
 }
 
 #[derive(Component, Deref, DerefMut)]
-pub struct AnimationTimer(Timer);
+struct AnimationTimer(Timer);
 
 #[derive(Component, Deref, DerefMut)]
-pub struct JumpTimer(Timer);
+struct JumpTimer(Timer);
 
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States)]
 pub enum PlayerState {
@@ -83,7 +83,7 @@ impl Plugin for PlayerPlugin {
     }
 }
 
-pub fn setup_player(
+fn setup_player(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut texture_atlases: ResMut<Assets<TextureAtlasLayout>>,
