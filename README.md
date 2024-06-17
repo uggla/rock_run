@@ -23,6 +23,10 @@ be released.
 
 - [@Uggla](https://www.github.com/Uggla)
 
+## Screenshots
+
+![screenshot](images/screenshot-01.png)
+
 ## Run Locally (mainly for development purposes)
 
 1. Clone the project
@@ -73,7 +77,7 @@ or
 cargo run --release
 ```
 
-#### Wasm32 client
+### Wasm32 client
 
 1. Follow the above instruction of the native build.
 
@@ -92,3 +96,26 @@ or
 
 cargo build --target wasm32-unknown-unknown --release
 ```
+
+## Known bug
+
+1- Bad framerate and high cpu usage.
+
+This can be due to a driver with incomplete Vulkan support as show below.
+
+```bash
+2024-06-16T14:30:01.931071Z  INFO bevy_winit::system: Creating new window "RockRun: Rose's Odyssey" (0v1)
+2024-06-16T14:30:01.931597Z  INFO log: Guessed window scale factor: 1
+MESA-INTEL: warning: Haswell Vulkan support is incomplete
+2024-06-16T14:30:02.213994Z  INFO bevy_render::renderer: AdapterInfo { name: "llvmpipe (LLVM 18.1.6, 256 bits)", vendor: 65541, device: 0, device_type: Cpu, driver: "llvmpipe", driver_info: "Mesa 24.1.1 (LLVM 18.1.6)", backend: Vulkan }
+```
+
+This can be fixed by changing the backend from Vulkan to Gl using the following environment variable
+
+```bash
+export WGPU_BACKEND=gl
+```
+
+2- Menu UI is not rendered well.
+
+TODO: insert a screenshot, create a environment variable to change the UI settings.
