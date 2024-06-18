@@ -6,7 +6,7 @@ use crate::{
     WINDOW_HEIGHT, WINDOW_WIDTH,
 };
 
-pub const LIFE_SCALE_FACTOR: f32 = 2.0;
+const LIFE_SCALE_FACTOR: f32 = 2.0;
 
 #[derive(Resource, Default)]
 pub struct Life {

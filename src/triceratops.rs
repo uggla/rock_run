@@ -13,10 +13,10 @@ use crate::{
     helpers::texture::cycle_texture,
 };
 
-pub const TRICERATOPS_SPEED: f32 = 300.0;
-pub const TRICERATOPS_SCALE_FACTOR: f32 = 1.0;
-pub const TRICERATOPS_WIDTH: f32 = 175.0;
-pub const TRICERATOPS_HEIGHT: f32 = 120.0;
+const TRICERATOPS_SPEED: f32 = 300.0;
+const TRICERATOPS_SCALE_FACTOR: f32 = 1.0;
+const TRICERATOPS_WIDTH: f32 = 175.0;
+const TRICERATOPS_HEIGHT: f32 = 120.0;
 
 #[derive(Component)]
 pub struct Triceratops {

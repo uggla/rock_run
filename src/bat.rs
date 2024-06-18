@@ -12,10 +12,10 @@ use crate::{
     player::Player,
 };
 
-pub const BAT_SPEED: f32 = 100.0;
-pub const BAT_SCALE_FACTOR: f32 = 1.0;
-pub const BAT_WIDTH: f32 = 50.0;
-pub const BAT_HEIGHT: f32 = 57.0;
+const BAT_SPEED: f32 = 100.0;
+const BAT_SCALE_FACTOR: f32 = 1.0;
+const BAT_WIDTH: f32 = 50.0;
+const BAT_HEIGHT: f32 = 57.0;
 
 #[derive(Component)]
 pub struct Bat {
@@ -144,11 +144,6 @@ fn move_bat(
     hit: EventReader<Hit>,
     mut chase_timer: Query<&mut ChaseTimer>,
 ) {
-    // let (bat_entity, mut bat_collider, mut bat_controller, bat_pos, bat) =
-    //     match bat_query.get_single_mut() {
-    //         Ok(bat) => bat,
-    //         Err(_) => return,
-    //     };
     for (bat_entity, mut bat_collider, mut bat_controller, bat_pos, mut bat) in bat_query.iter_mut()
     {
         let player = player_query.single();
