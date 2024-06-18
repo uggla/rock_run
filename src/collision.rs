@@ -168,7 +168,7 @@ fn triceratops_collision(
             // Triceratops collides with ground and can not move on x axis
             if (character_collision.entity == ground_entity)
                 && output.grounded
-                && (output.effective_translation.x > -2.0 && output.effective_translation.x < 2.0)
+                && (output.effective_translation.x > -0.5 && output.effective_translation.x < 0.5)
             {
                 collision_event.send(TriceratopsCollision {
                     id: triceratops_entity,
