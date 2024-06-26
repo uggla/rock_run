@@ -13,7 +13,10 @@ use crate::{
         level::{CurrentLevel, Level},
         state::AppState,
     },
-    events::{Hit, LadderCollisionStart, LadderCollisionStop, LifeEvent, Restart},
+    events::{
+        Hit, LadderCollisionStart, LadderCollisionStop, LifeEvent, MovingPlatformDescending,
+        Restart,
+    },
     helpers::texture::{cycle_texture, swing_texture, IndexDirection},
 };
 
@@ -68,6 +71,9 @@ pub enum PlayerDirection {
 
 pub struct PlayerPlugin;
 
+#[derive(SystemSet, Clone, Hash, Debug, PartialEq, Eq)]
+pub struct PlayerSet;
+
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(InputManagerPlugin::<PlayerMovement>::default())
@@ -77,6 +83,7 @@ impl Plugin for PlayerPlugin {
             .add_systems(
                 Update,
                 (move_player, check_out_of_screen, check_hit, restart_level)
+                    .in_set(PlayerSet)
                     .after(CollisionSet)
                     .run_if(in_state(AppState::GameRunning)),
             );
@@ -149,9 +156,14 @@ fn setup_player(
                 scale: Vec3::splat(PLAYER_SCALE_FACTOR),
                 // translation: level.map.get_start_screen().get_center().extend(20.0)
                 //     + PLAYER_START_OFFSET,
+                // translation: level
+                //     .map
+                //     .tiled_to_bevy_coord(Vec2::new(3840.0, 1100.0))
+                //     .extend(20.0),
+                // ..default()
                 translation: level
                     .map
-                    .tiled_to_bevy_coord(Vec2::new(3840.0, 1100.0))
+                    .tiled_to_bevy_coord(Vec2::new(6160.0, 560.0))
                     .extend(20.0),
                 ..default()
             },
@@ -186,6 +198,7 @@ fn move_player(
     mut player_query: Query<
         (
             &mut Collider,
+            &mut Transform,
             &mut KinematicCharacterController,
             &PlayerAudio,
         ),
@@ -198,9 +211,11 @@ fn move_player(
     mut direction: Local<IndexDirection>,
     mut ladder_collision_start: EventReader<LadderCollisionStart>,
     mut ladder_collision_stop: EventReader<LadderCollisionStop>,
+    mut moving_platform_descending: EventReader<MovingPlatformDescending>,
     mut ladder_collision: Local<bool>,
 ) {
-    let (mut player_collider, mut player_controller, player_audio) = player_query.single_mut();
+    let (mut player_collider, mut player_pos, mut player_controller, player_audio) =
+        player_query.single_mut();
     let mut jump_timer = jump_timer.single_mut();
     let mut direction_x = 0.0;
     let mut direction_y = 0.0;
@@ -361,6 +376,18 @@ fn move_player(
             direction_y * PLAYER_SPEED * time.delta_seconds(),
         ));
     } else {
+        // Check if we are on a moving platform that goes down
+        let events: Vec<&MovingPlatformDescending> = moving_platform_descending.read().collect();
+
+        if let Some(event) = events.first() {
+            // Move the player alongside the moving platform
+            player_pos.translation += Vec3::new(event.movement.x, event.movement.y, 0.0);
+            // Add the player movement
+            player_pos.translation +=
+                Vec3::new(direction_x * PLAYER_SPEED * time.delta_seconds(), 0.0, 0.0);
+        }
+        // Normal movement, if the player is on a moving platform following line will not move the
+        // player but is required to detect collisions
         player_controller.translation = Some(Vec2::new(
             direction_x * PLAYER_SPEED * time.delta_seconds(),
             -PLAYER_SPEED * time.delta_seconds(),

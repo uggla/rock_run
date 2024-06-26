@@ -44,3 +44,13 @@ pub struct LadderCollisionStart;
 
 #[derive(Event)]
 pub struct LadderCollisionStop;
+
+#[derive(Event)]
+pub struct MovingPlatformCollision {
+    pub entity: Entity,
+}
+
+#[derive(Event)]
+pub struct MovingPlatformDescending {
+    pub movement: Vec2,
+}

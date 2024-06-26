@@ -14,10 +14,10 @@
         },
         "level01.tmx": {
             "scale": 0.75,
-            "selectedLayer": 6,
+            "selectedLayer": 3,
             "viewCenter": {
-                "x": 4158,
-                "y": 1318
+                "x": 5299.333333333333,
+                "y": 482
             }
         },
         "level01.tmx#backgrounds": {
@@ -37,6 +37,9 @@
         "level01.tmx#sky-1": {
             "dynamicWrapping": false,
             "scaleInDock": 0.25
+        },
+        "level01.tmx#sky-2": {
+            "scaleInDock": 1
         },
         "level01.tmx#tileset-1": {
             "dynamicWrapping": false,

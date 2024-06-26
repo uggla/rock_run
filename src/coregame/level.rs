@@ -48,7 +48,7 @@ fn setup_background(mut commands: Commands, asset_server: Res<AssetServer>) {
             id: 1,
             handle: map_handle.clone(),
             map: Map::new(
-                "SHFXO\nXOFOO",
+                "SHFXF\nXOFOO",
                 WINDOW_WIDTH as usize,
                 WINDOW_HEIGHT as usize,
             ),

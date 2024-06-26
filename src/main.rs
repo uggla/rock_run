@@ -7,6 +7,7 @@ mod external_plugins;
 mod helpers;
 mod life;
 mod localization;
+mod moving_platform;
 mod player;
 mod rock;
 mod screen_map;
@@ -27,6 +28,7 @@ use crate::{
     external_plugins::ExternalPlugins,
     life::LifePlugin,
     localization::LocalizationPlugin,
+    moving_platform::MovingPlatformPlugin,
     player::PlayerPlugin,
     rock::RockPlugin,
     triceratops::TriceratopsPlugin,
@@ -61,6 +63,7 @@ fn main() {
             BatPlugin,
             RockPlugin,
             LifePlugin,
+            MovingPlatformPlugin,
             CollisionPlugin,
             LocalizationPlugin,
             TextSyllablePlugin::default(),
@@ -122,9 +125,9 @@ fn update_text(
 
     if input_state.just_pressed(&player::PlayerMovement::Crouch) {
         debug!("open window to display messages");
-        for mut ext_impulse in ext_impulses.iter_mut() {
-            ext_impulse.impulse = Vec2::new(-100.0, 0.0);
-        }
+        // for mut ext_impulse in ext_impulses.iter_mut() {
+        //     ext_impulse.impulse = Vec2::new(-100.0, 0.0);
+        // }
         //     msg_event.send(StoryMessages::Display(vec![
         //         (
         //             "hello-world".to_string(),

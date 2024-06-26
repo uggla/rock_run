@@ -13,9 +13,10 @@ use crate::{
         state::AppState,
     },
     events::{
-        Hit, LadderCollisionStart, LadderCollisionStop, PositionSensorCollision, StoryMessages,
-        TriceratopsCollision,
+        Hit, LadderCollisionStart, LadderCollisionStop, MovingPlatformCollision,
+        PositionSensorCollision, StoryMessages, TriceratopsCollision,
     },
+    moving_platform::MovingPlatform,
     player::{self, Player, PlayerState, PLAYER_HEIGHT},
     rock::Rock,
     triceratops::Triceratops,
@@ -47,7 +48,8 @@ impl Plugin for CollisionPlugin {
         .add_event::<TriceratopsCollision>()
         .add_event::<PositionSensorCollision>()
         .add_event::<LadderCollisionStart>()
-        .add_event::<LadderCollisionStop>();
+        .add_event::<LadderCollisionStop>()
+        .add_event::<MovingPlatformCollision>();
     }
 }
 
@@ -59,8 +61,10 @@ fn player_collision(
     ground: Query<Entity, With<Ground>>,
     platforms: Query<Entity, With<Platform>>,
     spikes: Query<Entity, With<Spike>>,
+    moving_platforms: Query<Entity, With<MovingPlatform>>,
     rocks: Query<(Entity, &Velocity), With<Rock>>,
     mut hit: EventWriter<Hit>,
+    mut moving_platform_collision: EventWriter<MovingPlatformCollision>,
 ) {
     if state.get() == &PlayerState::Hit {
         return;
@@ -93,6 +97,17 @@ fn player_collision(
         // Player collides with spikes
         if spikes.contains(character_collision.entity) {
             hit.send(Hit);
+        }
+
+        // Player collides with moving platforms
+        for moving_platform in moving_platforms.iter() {
+            if character_collision.entity == moving_platform && state.get() != &PlayerState::Jumping
+            {
+                next_state.set(PlayerState::Idling);
+                moving_platform_collision.send(MovingPlatformCollision {
+                    entity: moving_platform,
+                });
+            }
         }
 
         // Player collides with fast moving rocks
@@ -156,7 +171,7 @@ fn triceratops_collision(
         if state.get() == &PlayerState::Falling {
             ctrl.filter_flags
                 .remove(QueryFilterFlags::EXCLUDE_KINEMATIC);
-            debug!("Re-enabling collision with triceratops");
+            // debug!("Re-enabling collision with triceratops");
         }
         for character_collision in output.collisions.iter() {
             // triceratops hits player
@@ -323,7 +338,7 @@ fn bat_collision(
         if state.get() == &PlayerState::Falling {
             ctrl.filter_flags
                 .remove(QueryFilterFlags::EXCLUDE_KINEMATIC);
-            debug!("Re-enabling collision with bat");
+            // debug!("Re-enabling collision with bat");
         }
 
         for character_collision in output.collisions.iter() {
