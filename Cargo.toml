@@ -19,7 +19,7 @@ raqote = { version = "0.8.4", default-features = false, features = [
   "pathfinder_geometry",
 ] }
 thiserror = "1.0.61"
-tiled = { version = "0.11.2", default-features = false }
+tiled = { version = "0.12.0", default-features = false }
 unic-langid = { version = "0.9.5", features = ["unic-langid-macros"] }
 
 [target.x86_64-unknown-linux-gnu.dependencies.bevy]
