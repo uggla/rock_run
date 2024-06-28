@@ -1,5 +1,7 @@
 use bevy::{prelude::*, utils::HashMap};
 
+use crate::text_syllable::SelectionDirection;
+
 pub type MessageArgs = Option<HashMap<String, String>>;
 pub type Message = String;
 
@@ -53,4 +55,9 @@ pub struct MovingPlatformCollision {
 #[derive(Event)]
 pub struct MovingPlatformDescending {
     pub movement: Vec2,
+}
+
+#[derive(Event)]
+pub struct SelectionChanged {
+    pub movement: SelectionDirection,
 }

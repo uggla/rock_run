@@ -277,6 +277,12 @@ fn display_story(
                     ("story02-02".to_string(), None),
                 ]));
             }
+            "story03" => {
+                msg_event.send(StoryMessages::Display(vec![(
+                    "story03-01".to_string(),
+                    None,
+                )]));
+            }
             _ => {}
         };
     }

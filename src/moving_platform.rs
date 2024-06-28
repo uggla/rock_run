@@ -102,14 +102,14 @@ fn setup_moving_platforms(
             MovingPlatform {
                 start_pos: level.map.tiled_to_bevy_coord(Vec2::new(5920.0, 576.0)),
                 movement: MovingPlatformMovement::Circle(CircleData {
-                    center: level.map.tiled_to_bevy_coord(Vec2::new(5920.0, 426.0)),
+                    center: level.map.tiled_to_bevy_coord(Vec2::new(5920.0, 451.0)),
                     direction: MovingPlatformDirection::Clockwise,
                 }),
             },
             MovingPlatform {
-                start_pos: level.map.tiled_to_bevy_coord(Vec2::new(5920.0, 276.0)),
+                start_pos: level.map.tiled_to_bevy_coord(Vec2::new(5920.0, 326.0)),
                 movement: MovingPlatformMovement::Circle(CircleData {
-                    center: level.map.tiled_to_bevy_coord(Vec2::new(5920.0, 426.0)),
+                    center: level.map.tiled_to_bevy_coord(Vec2::new(5920.0, 451.0)),
                     direction: MovingPlatformDirection::Clockwise,
                 }),
             },

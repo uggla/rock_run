@@ -11,8 +11,9 @@ use unic_langid::langid;
 
 use crate::{
     coregame::state::{AppState, ForState},
-    events::{LadderCollisionStop, NoMoreStoryMessages, StoryMessages},
+    events::{LadderCollisionStop, NoMoreStoryMessages, SelectionChanged, StoryMessages},
     localization::{get_translation, LocaleHandles},
+    text_syllable::SelectionDirection,
     WINDOW_WIDTH,
 };
 
@@ -43,6 +44,8 @@ pub enum MenuAction {
     Quit,
     Up,
     Down,
+    Right,
+    Left,
 }
 
 pub struct MenuPlugin;
@@ -69,6 +72,8 @@ fn setup(mut commands: Commands) {
         (MenuAction::ExitToMenu, KeyCode::Backspace),
         (MenuAction::Up, KeyCode::ArrowUp),
         (MenuAction::Down, KeyCode::ArrowDown),
+        (MenuAction::Right, KeyCode::ArrowRight),
+        (MenuAction::Left, KeyCode::ArrowLeft),
     ]);
     input_map.insert(MenuAction::ExitToMenu, GamepadButtonType::Select);
     input_map.insert(MenuAction::PauseUnpause, GamepadButtonType::Start);
@@ -80,6 +85,14 @@ fn setup(mut commands: Commands) {
     input_map.insert(
         MenuAction::Down,
         SingleAxis::negative_only(GamepadAxisType::LeftStickY, -0.4),
+    );
+    input_map.insert(
+        MenuAction::Right,
+        SingleAxis::positive_only(GamepadAxisType::LeftStickX, 0.4),
+    );
+    input_map.insert(
+        MenuAction::Left,
+        SingleAxis::negative_only(GamepadAxisType::LeftStickX, -0.4),
     );
 
     #[cfg(not(target_arch = "wasm32"))]
@@ -566,6 +579,7 @@ fn menu_input_system(
     mut app_exit_events: EventWriter<AppExit>,
     mut rapier_config: ResMut<RapierConfiguration>,
     mut msg_event: EventWriter<StoryMessages>,
+    mut selection_event: EventWriter<SelectionChanged>,
     mut no_more_msg_event: EventReader<NoMoreStoryMessages>,
     mut localization_asset_events: EventReader<AssetEvent<BundleAsset>>,
     mut ladder_collision_stop: EventWriter<LadderCollisionStop>,
@@ -612,6 +626,20 @@ fn menu_input_system(
                     // we still have messages to display
                     debug!("next message");
                     msg_event.send(StoryMessages::Next);
+                }
+                if menu_action_state.just_pressed(&MenuAction::Right) {
+                    // Selection to the right
+                    debug!("selection right");
+                    selection_event.send(SelectionChanged {
+                        movement: SelectionDirection::Right,
+                    });
+                }
+                if menu_action_state.just_pressed(&MenuAction::Left) {
+                    // Selection to the left
+                    debug!("selection left");
+                    selection_event.send(SelectionChanged {
+                        movement: SelectionDirection::Left,
+                    });
                 }
                 if menu_action_state.just_pressed(&MenuAction::PauseUnpause) {
                     // User request to close the messages window

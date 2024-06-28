@@ -13,11 +13,11 @@
             "scaleInDock": 1
         },
         "level01.tmx": {
-            "scale": 0.75,
-            "selectedLayer": 3,
+            "scale": 1,
+            "selectedLayer": 4,
             "viewCenter": {
-                "x": 5299.333333333333,
-                "y": 482
+                "x": 5487,
+                "y": 446.5
             }
         },
         "level01.tmx#backgrounds": {

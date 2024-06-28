@@ -11,8 +11,12 @@ use bevy::{
 };
 
 use raqote::{DrawOptions, DrawTarget, Gradient, GradientStop, PathBuilder, Point, Source, Spread};
+use serde::{Deserialize, Serialize};
 
-use crate::events::StoryMessages;
+use crate::{
+    coregame::state::AppState,
+    events::{SelectionChanged, StoryMessages},
+};
 
 const Z_VALUE: f32 = 10.0;
 
@@ -37,6 +41,7 @@ pub struct TextSyllablePlugin {
     pub box_filling: Source<'static>,
     pub style_a: SyllableStyle,
     pub style_b: SyllableStyle,
+    pub style_selected: SyllableStyle,
     pub text: String,
 }
 
@@ -45,6 +50,19 @@ struct TextSyllableBox;
 
 #[derive(Component)]
 struct TextSyllable;
+
+#[derive(Serialize, Deserialize, Debug)]
+struct UserSelection {
+    selection_items: Vec<String>,
+    selected_item: usize,
+}
+
+pub enum SelectionDirection {
+    Up,
+    Down,
+    Left,
+    Right,
+}
 
 #[derive(Resource)]
 pub struct TextSyllableValues {
@@ -55,9 +73,11 @@ pub struct TextSyllableValues {
     box_filling: Source<'static>,
     def_style_a: SyllableStyle,
     def_style_b: SyllableStyle,
+    def_style_selected: SyllableStyle,
     pub text: String,
     style_a: TextStyle,
     style_b: TextStyle,
+    style_selected: TextStyle,
 }
 
 impl Default for TextSyllablePlugin {
@@ -105,6 +125,10 @@ impl Default for TextSyllablePlugin {
                 font_size: 42.0,
                 color: Color::DARK_GREEN,
             },
+            style_selected: SyllableStyle {
+                font_size: 42.0,
+                color: Color::RED,
+            },
             text: "Hel-lo I am Rose, help me re-turn home.".into(),
         }
     }
@@ -120,14 +144,21 @@ impl Plugin for TextSyllablePlugin {
             box_filling: self.box_filling.clone(),
             def_style_a: self.style_a.clone(),
             def_style_b: self.style_b.clone(),
+            def_style_selected: self.style_selected.clone(),
             text: self.text.clone(),
             style_a: TextStyle::default(),
             style_b: TextStyle::default(),
+            style_selected: TextStyle::default(),
         };
         app.init_state::<TextSyllableState>()
             .insert_resource(text_params)
             .add_systems(Startup, setup)
-            .add_systems(Update, (toggle_visibility, display_or_hide_messages));
+            .add_systems(Update, (toggle_visibility, display_or_hide_messages))
+            .add_systems(
+                Update,
+                manage_selection.run_if(in_state(AppState::GameMessage)),
+            )
+            .add_event::<SelectionChanged>();
     }
 }
 
@@ -166,6 +197,11 @@ fn setup(
         font_size: params.def_style_b.font_size,
         color: params.def_style_b.color,
     };
+    params.style_selected = TextStyle {
+        font: font.clone(),
+        font_size: params.def_style_selected.font_size,
+        color: params.def_style_selected.color,
+    };
     commands
         .spawn((
             SpriteBundle {
@@ -185,10 +221,11 @@ fn setup(
             builder.spawn((
                 Text2dBundle {
                     text: Text {
-                        sections: build_text_sections_according_to_syllables(
+                        sections: build_text_sections(
                             &params.text,
                             params.style_a.clone(),
                             params.style_b.clone(),
+                            params.style_selected.clone(),
                         ),
                         justify: JustifyText::Left,
                         linebreak_behavior: BreakLineOn::WordBoundary,
@@ -301,6 +338,50 @@ fn build_text_sections_according_to_syllables(
     text_sections
 }
 
+fn build_text_sections(
+    text: &str,
+    style_a: TextStyle,
+    style_b: TextStyle,
+    style_selected: TextStyle,
+) -> Vec<TextSection> {
+    let text_sections = match text.split_once("\\(") {
+        Some((ltext, selection)) => {
+            let (selection, rtext) = match selection.split_once("\\)") {
+                Some((selection, rtext)) => (selection, rtext),
+                None => panic!("selection has no closing tag"),
+            };
+
+            let selection = format!("{{{}}}", selection);
+            let selection: UserSelection = serde_json::from_str(&selection).unwrap();
+            let selection = selection
+                .selection_items
+                .iter()
+                .enumerate()
+                .map(|item| {
+                    if item.0 == selection.selected_item {
+                        TextSection::new(item.1.to_string(), style_selected.clone())
+                    } else {
+                        TextSection::new(item.1.to_string(), style_a.clone())
+                    }
+                })
+                .collect::<Vec<TextSection>>();
+
+            let ltext =
+                build_text_sections_according_to_syllables(ltext, style_a.clone(), style_b.clone());
+            let rtext =
+                build_text_sections_according_to_syllables(rtext, style_a.clone(), style_b.clone());
+
+            ltext
+                .into_iter()
+                .chain(selection)
+                .chain(rtext)
+                .collect::<Vec<TextSection>>()
+        }
+        None => build_text_sections_according_to_syllables(text, style_a, style_b),
+    };
+    text_sections
+}
+
 fn toggle_visibility(
     camera: Query<&Transform, (With<Camera>, Without<TextSyllableBox>)>,
     mut text_syllable_box: Query<(&mut Transform, &mut Visibility), With<TextSyllableBox>>,
@@ -317,10 +398,11 @@ fn toggle_visibility(
                         + params.box_position;
 
                 if let Ok(mut text) = text_syllable.get_single_mut() {
-                    text.sections = build_text_sections_according_to_syllables(
+                    text.sections = build_text_sections(
                         params.text.as_str(),
                         params.style_a.clone(),
                         params.style_b.clone(),
+                        params.style_selected.clone(),
                     )
                 }
             }
@@ -347,13 +429,31 @@ fn display_or_hide_messages(
     }
 }
 
+fn manage_selection(
+    mut params: ResMut<TextSyllableValues>,
+    mut selection_event: EventReader<SelectionChanged>,
+) {
+    for ev in selection_event.read() {
+        match ev.movement {
+            SelectionDirection::Up => {}
+            SelectionDirection::Down => {}
+            SelectionDirection::Left => {
+                debug!("{}", params.text);
+            }
+            SelectionDirection::Right => {
+                debug!("{}", params.text);
+            }
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use pretty_assertions::assert_eq;
 
     #[test]
-    fn test_build_text_section() {
+    fn test_build_text_section_according_to_syllables() {
         let result = build_text_sections_according_to_syllables(
             "Hel-lo I am Rose, help me re-turn home.",
             TextStyle {
@@ -374,5 +474,75 @@ mod tests {
         assert_eq!(result[3].style.color, Color::BLUE);
         assert_eq!(result[4].style.color, Color::BLUE); // second space
         assert_eq!(result[5].style.color, Color::GREEN);
+    }
+
+    #[test]
+    fn test_build_text_section_01() {
+        let result = build_text_sections(
+            r###"Ceci est un test: \("selection_items":["sel1","sel2"],"selected_item":0\)."###,
+            TextStyle {
+                font: Handle::default(),
+                font_size: 42.0,
+                color: Color::BLUE,
+            },
+            TextStyle {
+                font: Handle::default(),
+                font_size: 42.0,
+                color: Color::GREEN,
+            },
+            TextStyle {
+                font: Handle::default(),
+                font_size: 42.0,
+                color: Color::RED,
+            },
+        );
+
+        dbg!(&result);
+        assert_eq!(result.len(), 10); // space counts as a section
+        assert_eq!(result[0].style.color, Color::BLUE);
+        assert_eq!(result[1].style.color, Color::BLUE);
+        assert_eq!(result[2].style.color, Color::GREEN);
+        assert_eq!(result[3].style.color, Color::BLUE);
+        assert_eq!(result[4].style.color, Color::BLUE);
+        assert_eq!(result[5].style.color, Color::BLUE);
+        assert_eq!(result[6].style.color, Color::GREEN);
+        assert_eq!(result[7].style.color, Color::RED);
+        assert_eq!(result[8].style.color, Color::BLUE);
+        assert_eq!(result[9].style.color, Color::BLUE);
+    }
+
+    #[test]
+    fn test_build_text_section_02() {
+        let result = build_text_sections(
+            r###"Ceci est un test: \("selection_items":["sel1","sel2"],"selected_item":1\)."###,
+            TextStyle {
+                font: Handle::default(),
+                font_size: 42.0,
+                color: Color::BLUE,
+            },
+            TextStyle {
+                font: Handle::default(),
+                font_size: 42.0,
+                color: Color::GREEN,
+            },
+            TextStyle {
+                font: Handle::default(),
+                font_size: 42.0,
+                color: Color::RED,
+            },
+        );
+
+        dbg!(&result);
+        assert_eq!(result.len(), 10); // space counts as a section
+        assert_eq!(result[0].style.color, Color::BLUE);
+        assert_eq!(result[1].style.color, Color::BLUE);
+        assert_eq!(result[2].style.color, Color::GREEN);
+        assert_eq!(result[3].style.color, Color::BLUE);
+        assert_eq!(result[4].style.color, Color::BLUE);
+        assert_eq!(result[5].style.color, Color::BLUE);
+        assert_eq!(result[6].style.color, Color::GREEN);
+        assert_eq!(result[7].style.color, Color::BLUE);
+        assert_eq!(result[8].style.color, Color::RED);
+        assert_eq!(result[9].style.color, Color::BLUE);
     }
 }
