@@ -1,15 +1,11 @@
 use bevy::prelude::*;
-use bevy_rapier2d::{
-    dynamics::{ExternalImpulse, GravityScale, RigidBody},
-    geometry::{ActiveCollisionTypes, ActiveEvents, Collider, Restitution, Sensor},
-};
+use bevy_rapier2d::geometry::{ActiveCollisionTypes, ActiveEvents, Collider, Sensor};
 use tiled::ObjectShape;
 
 use crate::{
     coregame::level::{CurrentLevel, Level},
     coregame::state::AppState,
     helpers::tiled::TiledMap,
-    player::PlayerState,
 };
 
 pub struct GroundAndPlatformsPlugin;
@@ -20,10 +16,6 @@ impl Plugin for GroundAndPlatformsPlugin {
             .add_systems(
                 OnEnter(AppState::StartMenu),
                 despawn_ground_platforms_spikes,
-            )
-            .add_systems(
-                Update,
-                (apply_forces).run_if(in_state(AppState::GameRunning)),
             );
     }
 }
@@ -264,33 +256,6 @@ fn setup_ground_platforms_spikes(
             let ladders = LayerComponentBridge::new("Ladders", Ladder, true);
             tiled_object_to_collider(&mut commands, tiled_map, level, ladders);
         });
-
-    // TODO: Remove this collider
-    // Simple ball collider for debugging
-    commands
-        .spawn((SpatialBundle::default(),))
-        .with_children(|parent| {
-            // Create 2 x test platforms
-            parent
-                .spawn(RigidBody::Dynamic)
-                .insert(GravityScale(20.0))
-                .insert(Collider::ball(20.0))
-                .insert(Restitution::coefficient(0.0))
-                // .insert(ColliderMassProperties::Density(20.0))
-                .insert(ExternalImpulse {
-                    // impulse: Vec2::new(100.0, 200.0),
-                    // torque_impulse: 14.0,
-                    ..default()
-                })
-                .insert(Platform)
-                // .insert(Damping {
-                //     linear_damping: 100.0,
-                //     angular_damping: 0.0,
-                // })
-                .insert(TransformBundle::from(Transform::from_xyz(
-                    -2000.0, 500.0, 0.0,
-                )));
-        });
 }
 
 fn despawn_ground_platforms_spikes(
@@ -319,27 +284,5 @@ fn despawn_ground_platforms_spikes(
 
     for (entity, _) in bat_sensors_query.iter() {
         commands.entity(entity).despawn_recursive();
-    }
-}
-
-/* Apply forces and impulses inside of a system. */
-fn apply_forces(
-    mut ext_impulses: Query<&mut ExternalImpulse>,
-    keyboard_input: Res<ButtonInput<KeyCode>>,
-    state: ResMut<State<PlayerState>>,
-) {
-    // Apply impulses.
-    if keyboard_input.just_pressed(KeyCode::ArrowUp) && state.get() != &PlayerState::Jumping {
-        for mut ext_impulse in ext_impulses.iter_mut() {
-            ext_impulse.impulse = Vec2::new(0.0, 250.0);
-            // ext_impulse.torque_impulse = 0.4;
-        }
-    }
-
-    if keyboard_input.just_pressed(KeyCode::ArrowDown) {
-        for mut ext_impulse in ext_impulses.iter_mut() {
-            ext_impulse.impulse = Vec2::new(20.0, 0.0);
-            // ext_impulse.torque_impulse = 0.4;
-        }
     }
 }
