@@ -247,7 +247,7 @@ fn display_story(
     mut commands: Commands,
     qm_entity: Query<(Entity, &StoryQM)>,
     mut msg_event: EventWriter<StoryMessages>,
-    mut enigmas: ResMut<Enigmas>,
+    enigmas: ResMut<Enigmas>,
     input: Query<
         &leafwing_input_manager::action_state::ActionState<player::PlayerMovement>,
         With<player::Player>,
