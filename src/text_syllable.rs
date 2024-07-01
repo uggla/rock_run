@@ -52,8 +52,8 @@ struct TextSyllableBox;
 struct TextSyllable;
 
 #[derive(Serialize, Deserialize, Debug)]
-struct UserSelection {
-    selection_items: Vec<String>,
+pub struct UserSelection {
+    pub selection_items: Vec<String>,
     selected_item: usize,
 }
 
@@ -338,7 +338,7 @@ fn build_text_sections_according_to_syllables(
     text_sections
 }
 
-fn decompose_selection_msg(text: &str) -> Option<(String, UserSelection, String)> {
+pub fn decompose_selection_msg(text: &str) -> Option<(String, UserSelection, String)> {
     match text.split_once("\\(") {
         Some((ltext, selection)) => {
             let (selection, rtext) = match selection.split_once("\\)") {

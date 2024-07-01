@@ -13,7 +13,9 @@ pub enum StoryMessages {
 }
 
 #[derive(Event)]
-pub struct NoMoreStoryMessages;
+pub struct NoMoreStoryMessages {
+    pub latest: Message,
+}
 
 #[derive(Event)]
 pub struct Hit;
@@ -60,4 +62,11 @@ pub struct MovingPlatformDescending {
 #[derive(Event)]
 pub struct SelectionChanged {
     pub movement: SelectionDirection,
+}
+
+#[allow(dead_code)]
+#[derive(Event, Debug)]
+pub enum EnigmaResult {
+    Correct(String),
+    Incorrect(String),
 }

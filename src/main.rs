@@ -2,6 +2,7 @@ mod bat;
 mod colliders;
 mod collision;
 mod coregame;
+mod enigma;
 mod events;
 mod external_plugins;
 mod helpers;
@@ -24,6 +25,7 @@ use crate::{
     colliders::GroundAndPlatformsPlugin,
     collision::CollisionPlugin,
     coregame::{plugins::CoreGamePlugins, state::AppState},
+    enigma::EnigmaPlugin,
     events::{NoMoreStoryMessages, StoryMessages},
     external_plugins::ExternalPlugins,
     life::LifePlugin,
@@ -67,6 +69,7 @@ fn main() {
             CollisionPlugin,
             LocalizationPlugin,
             TextSyllablePlugin::default(),
+            EnigmaPlugin,
         ))
         .add_systems(
             Update,

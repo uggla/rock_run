@@ -12,6 +12,7 @@ use crate::{
         level::{CurrentLevel, Level},
         state::AppState,
     },
+    enigma::{EnigmaKind, Enigmas},
     events::{
         Hit, LadderCollisionStart, LadderCollisionStop, MovingPlatformCollision,
         PositionSensorCollision, StoryMessages, TriceratopsCollision,
@@ -246,6 +247,7 @@ fn display_story(
     mut commands: Commands,
     qm_entity: Query<(Entity, &StoryQM)>,
     mut msg_event: EventWriter<StoryMessages>,
+    enigmas: ResMut<Enigmas>,
     input: Query<
         &leafwing_input_manager::action_state::ActionState<player::PlayerMovement>,
         With<player::Player>,
@@ -278,9 +280,20 @@ fn display_story(
                 ]));
             }
             "story03" => {
+                let numbers = enigmas
+                    .enigmas
+                    .iter()
+                    .filter(|e| e.associated_story == "story03-01")
+                    .map(|e| match e.kind.clone() {
+                        EnigmaKind::Numbers(n) => n,
+                        EnigmaKind::Qcm(_) => unreachable!(),
+                    })
+                    .last()
+                    .unwrap();
+
                 msg_event.send(StoryMessages::Display(vec![(
                     "story03-01".to_string(),
-                    None,
+                    Some(numbers),
                 )]));
             }
             _ => {}

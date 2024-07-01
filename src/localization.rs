@@ -84,6 +84,7 @@ pub fn get_translation(
     value.to_string().replace(['\u{2068}', '\u{2069}'], "")
 }
 
+#[allow(clippy::too_many_arguments)]
 fn localize_story_messages(
     mut msg_event_reader: EventReader<StoryMessages>,
     mut msg_event_writer: EventWriter<NoMoreStoryMessages>,
@@ -92,6 +93,7 @@ fn localize_story_messages(
     locale_handles: Res<LocaleHandles>,
     mut params: ResMut<TextSyllableValues>,
     mut messages: Local<Vec<(Message, MessageArgs)>>,
+    mut latest_message: Local<Message>,
 ) {
     for ev in msg_event_reader.read() {
         match ev {
@@ -107,6 +109,7 @@ fn localize_story_messages(
 
         match messages.pop() {
             Some((msg, args)) => {
+                latest_message.clone_from(&msg);
                 let translation_args = convert_to_fluent_args(args);
 
                 let value = get_translation(
@@ -121,7 +124,9 @@ fn localize_story_messages(
             None => {
                 // No more messages, so close the msg box
                 debug!("no more message");
-                msg_event_writer.send(NoMoreStoryMessages);
+                msg_event_writer.send(NoMoreStoryMessages {
+                    latest: latest_message.to_string(),
+                });
             }
         }
     }
