@@ -144,7 +144,7 @@ fn setup_moving_platforms(
                 sprite: Sprite { ..default() },
                 transform: Transform {
                     scale: Vec3::splat(MOVING_PLATFORM_SCALE_FACTOR),
-                    translation: moving_platform.start_pos.extend(20.0),
+                    translation: moving_platform.start_pos.extend(8.0),
                     ..default()
                 },
                 ..default()
