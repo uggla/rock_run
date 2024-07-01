@@ -15,6 +15,7 @@ enum-iterator = "2.1.0"
 fluent = "0.16.1"
 iyes_perf_ui = { version = "0.2.3" }
 leafwing-input-manager = "0.13.3"
+rand = "0.8.5"
 raqote = { version = "0.8.4", default-features = false, features = [
   "pathfinder_geometry",
 ] }

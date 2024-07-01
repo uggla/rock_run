@@ -7,4 +7,4 @@ story01-02 = Il com-men-ce à ê-tre tard, il faut que je ren-tre car la nuit c'
 story01-03 = Peux tu m'ai-der à ren-trer ?
 story02-01 = C'est é-tran-ge, j'ai l'im-pres-sion que ce di-no-sau-re a été é-cra-sé par quel-que cho-se.
 story02-02 = J'ai un mau-vais pré-sen-ti-ment.
-story03-01 = Ceci est un test: \("selection_items":["0","0"],"selected_item":0\)
+story03-01 = { $n1 } + { $n2 }=\("selection_items":["0","0"],"selected_item":0\)
