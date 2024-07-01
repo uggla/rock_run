@@ -641,6 +641,20 @@ fn menu_input_system(
                         movement: SelectionDirection::Left,
                     });
                 }
+                if menu_action_state.just_pressed(&MenuAction::Up) {
+                    // Selection up
+                    debug!("selection up");
+                    selection_event.send(SelectionChanged {
+                        movement: SelectionDirection::Up,
+                    });
+                }
+                if menu_action_state.just_pressed(&MenuAction::Down) {
+                    // Selection up
+                    debug!("selection down");
+                    selection_event.send(SelectionChanged {
+                        movement: SelectionDirection::Down,
+                    });
+                }
                 if menu_action_state.just_pressed(&MenuAction::PauseUnpause) {
                     // User request to close the messages window
                     next_state.set(AppState::GameRunning);

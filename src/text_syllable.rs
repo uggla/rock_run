@@ -338,13 +338,8 @@ fn build_text_sections_according_to_syllables(
     text_sections
 }
 
-fn build_text_sections(
-    text: &str,
-    style_a: TextStyle,
-    style_b: TextStyle,
-    style_selected: TextStyle,
-) -> Vec<TextSection> {
-    let text_sections = match text.split_once("\\(") {
+fn decompose_selection_msg(text: &str) -> Option<(String, UserSelection, String)> {
+    match text.split_once("\\(") {
         Some((ltext, selection)) => {
             let (selection, rtext) = match selection.split_once("\\)") {
                 Some((selection, rtext)) => (selection, rtext),
@@ -353,6 +348,26 @@ fn build_text_sections(
 
             let selection = format!("{{{}}}", selection);
             let selection: UserSelection = serde_json::from_str(&selection).unwrap();
+            Some((ltext.to_string(), selection, rtext.to_string()))
+        }
+        None => None,
+    }
+}
+
+fn compose_selection_msg(ltext: &str, selection: UserSelection, rtext: &str) -> String {
+    let selection = serde_json::to_string(&selection).unwrap();
+    let selection = selection.replace('{', "\\(").replace('}', "\\)");
+    format!("{}{}{}", ltext, selection, rtext)
+}
+
+fn build_text_sections(
+    text: &str,
+    style_a: TextStyle,
+    style_b: TextStyle,
+    style_selected: TextStyle,
+) -> Vec<TextSection> {
+    let text_sections = match decompose_selection_msg(text) {
+        Some((ltext, selection, rtext)) => {
             let selection = selection
                 .selection_items
                 .iter()
@@ -366,10 +381,16 @@ fn build_text_sections(
                 })
                 .collect::<Vec<TextSection>>();
 
-            let ltext =
-                build_text_sections_according_to_syllables(ltext, style_a.clone(), style_b.clone());
-            let rtext =
-                build_text_sections_according_to_syllables(rtext, style_a.clone(), style_b.clone());
+            let ltext = build_text_sections_according_to_syllables(
+                &ltext,
+                style_a.clone(),
+                style_b.clone(),
+            );
+            let rtext = build_text_sections_according_to_syllables(
+                &rtext,
+                style_a.clone(),
+                style_b.clone(),
+            );
 
             ltext
                 .into_iter()
@@ -435,12 +456,70 @@ fn manage_selection(
 ) {
     for ev in selection_event.read() {
         match ev.movement {
-            SelectionDirection::Up => {}
-            SelectionDirection::Down => {}
+            SelectionDirection::Up => {
+                let (ltext, mut selection, rtext) = match decompose_selection_msg(&params.text) {
+                    Some((ltext, selection, rtext)) => (ltext, selection, rtext),
+                    None => return,
+                };
+
+                let sel_item = match selection.selection_items.get_mut(selection.selected_item) {
+                    Some(item) => item,
+                    None => return,
+                };
+
+                if let Ok(mut selection_number) = sel_item.parse::<usize>() {
+                    selection_number += 1;
+                    if selection_number > 9 {
+                        *sel_item = "0".to_string();
+                    } else {
+                        *sel_item = selection_number.to_string();
+                    }
+                }
+
+                params.text = compose_selection_msg(&ltext, selection, &rtext);
+                debug!("{}", params.text);
+            }
+            SelectionDirection::Down => {
+                let (ltext, mut selection, rtext) = match decompose_selection_msg(&params.text) {
+                    Some((ltext, selection, rtext)) => (ltext, selection, rtext),
+                    None => return,
+                };
+
+                let sel_item = match selection.selection_items.get_mut(selection.selected_item) {
+                    Some(item) => item,
+                    None => return,
+                };
+
+                if let Ok(mut selection_number) = sel_item.parse::<usize>() {
+                    if selection_number == 0 {
+                        *sel_item = "9".to_string();
+                    } else {
+                        selection_number -= 1;
+                        *sel_item = selection_number.to_string();
+                    }
+                }
+
+                params.text = compose_selection_msg(&ltext, selection, &rtext);
+                debug!("{}", params.text);
+            }
             SelectionDirection::Left => {
+                if let Some((ltext, mut selection, rtext)) = decompose_selection_msg(&params.text) {
+                    if selection.selected_item == 0 {
+                        selection.selected_item = selection.selection_items.len();
+                    }
+                    selection.selected_item -= 1;
+                    params.text = compose_selection_msg(&ltext, selection, &rtext);
+                }
                 debug!("{}", params.text);
             }
             SelectionDirection::Right => {
+                if let Some((ltext, mut selection, rtext)) = decompose_selection_msg(&params.text) {
+                    selection.selected_item += 1;
+                    if selection.selected_item == selection.selection_items.len() {
+                        selection.selected_item = 0;
+                    }
+                    params.text = compose_selection_msg(&ltext, selection, &rtext);
+                }
                 debug!("{}", params.text);
             }
         }
