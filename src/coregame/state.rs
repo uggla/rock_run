@@ -18,6 +18,9 @@ pub enum AppState {
     GameRunning,
     GamePaused,
     GameOver,
+    FinishLevel,
+    NextLevel,
+    GameFinished,
 }
 
 #[allow(dead_code)]

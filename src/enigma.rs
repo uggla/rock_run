@@ -63,9 +63,14 @@ impl Plugin for EnigmaPlugin {
             }],
         };
         app.insert_resource(enigmas)
-            .add_systems(OnEnter(AppState::GameCreate), spawn_warrior)
+            .add_systems(OnEnter(AppState::GameCreate), spawn_enigma_materials)
+            .add_systems(OnEnter(AppState::NextLevel), spawn_enigma_materials)
             .add_systems(
                 OnEnter(AppState::StartMenu),
+                (despawn_warrior, despawn_gate),
+            )
+            .add_systems(
+                OnEnter(AppState::FinishLevel),
                 (despawn_warrior, despawn_gate),
             )
             .add_systems(
@@ -77,72 +82,75 @@ impl Plugin for EnigmaPlugin {
     }
 }
 
-fn spawn_warrior(
+fn spawn_enigma_materials(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut texture_atlases: ResMut<Assets<TextureAtlasLayout>>,
     current_level: Res<CurrentLevel>,
     levels: Query<&Level, With<Level>>,
 ) {
-    info!("setup_warrior");
+    info!("spawn_enigma_materials");
 
-    if current_level.id != 1 {
-        return;
+    if current_level.id == 2 {
+        let level = levels
+            .iter()
+            .find(|level| level.id == current_level.id)
+            .unwrap();
+
+        let texture = asset_server.load("warrior.png");
+        let layout = TextureAtlasLayout::from_grid(
+            Vec2::new(WARRIOR_WIDTH, WARRIOR_HEIGHT),
+            6,
+            1,
+            None,
+            None,
+        );
+        let texture_atlas_layout = texture_atlases.add(layout);
+
+        commands.spawn((
+            SpriteSheetBundle {
+                texture,
+                sprite: Sprite { ..default() },
+                atlas: TextureAtlas {
+                    layout: texture_atlas_layout,
+                    index: 0,
+                },
+                transform: Transform {
+                    scale: Vec3::splat(WARRIOR_SCALE_FACTOR),
+                    translation: level
+                        .map
+                        .tiled_to_bevy_coord(Vec2::new(5575.0, 608.0))
+                        .extend(2.0),
+                    ..default()
+                },
+                ..default()
+            },
+            AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
+            Warrior,
+        ));
+
+        let texture = asset_server.load("gate.png");
+        commands.spawn((
+            SpriteBundle {
+                texture,
+                sprite: Sprite { ..default() },
+                transform: Transform {
+                    scale: Vec3::splat(GATE_SCALE_FACTOR),
+                    translation: level
+                        .map
+                        .tiled_to_bevy_coord(Vec2::new(5488.0, 615.0))
+                        .extend(1.0),
+                    ..default()
+                },
+                ..default()
+            },
+            Collider::cuboid(GATE_WIDTH / 2.0, GATE_HEIGHT / 2.0),
+            AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
+            Gate {
+                associated_story: "story03-01".to_string(),
+            },
+        ));
     }
-
-    let level = levels
-        .iter()
-        .find(|level| level.id == current_level.id)
-        .unwrap();
-
-    let texture = asset_server.load("warrior.png");
-    let layout =
-        TextureAtlasLayout::from_grid(Vec2::new(WARRIOR_WIDTH, WARRIOR_HEIGHT), 6, 1, None, None);
-    let texture_atlas_layout = texture_atlases.add(layout);
-
-    commands.spawn((
-        SpriteSheetBundle {
-            texture,
-            sprite: Sprite { ..default() },
-            atlas: TextureAtlas {
-                layout: texture_atlas_layout,
-                index: 0,
-            },
-            transform: Transform {
-                scale: Vec3::splat(WARRIOR_SCALE_FACTOR),
-                translation: level
-                    .map
-                    .tiled_to_bevy_coord(Vec2::new(5575.0, 608.0))
-                    .extend(2.0),
-                ..default()
-            },
-            ..default()
-        },
-        AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
-        Warrior,
-    ));
-
-    let texture = asset_server.load("gate.png");
-    commands.spawn((
-        SpriteBundle {
-            texture,
-            sprite: Sprite { ..default() },
-            transform: Transform {
-                scale: Vec3::splat(GATE_SCALE_FACTOR),
-                translation: level
-                    .map
-                    .tiled_to_bevy_coord(Vec2::new(5488.0, 615.0))
-                    .extend(1.0),
-                ..default()
-            },
-            ..default()
-        },
-        Collider::cuboid(GATE_WIDTH / 2.0, GATE_HEIGHT / 2.0),
-        AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
-        Gate {
-            associated_story: "story03-01".to_string(),
-        },
-    ));
 }
 
 fn move_warrior(

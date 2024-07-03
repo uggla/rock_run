@@ -23,6 +23,9 @@ pub struct Hit;
 #[derive(Event)]
 pub struct Restart;
 
+#[derive(Event)]
+pub struct NextLevel;
+
 // TODO: remove dead code
 #[allow(dead_code)]
 #[derive(Event)]
@@ -37,10 +40,15 @@ pub struct TriceratopsCollision {
 }
 
 #[derive(Event, Debug)]
-pub struct PositionSensorCollision {
+pub struct PositionSensorCollisionStart {
     pub sensor_name: String,
     pub spawn_pos: Vec2,
     pub exit_pos: Vec2,
+}
+
+#[derive(Event, Debug)]
+pub struct PositionSensorCollisionStop {
+    pub sensor_name: String,
 }
 
 #[derive(Event)]

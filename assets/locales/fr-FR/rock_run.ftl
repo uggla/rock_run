@@ -1,6 +1,7 @@
 lang01 = Anglais
 lang02 = Francais
 start_game = Commencer le jeu
+current_level = Niveau { $current_level }
 hello-world = Salut monde { $name }.
 story01-01 = Sa-lut, je m'ap-pel-le Ro-se.
 story01-02 = Il com-men-ce à ê-tre tard, il faut que je ren-tre car la nuit c'est le do-mai-ne des pré-da-teurs.

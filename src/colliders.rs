@@ -13,8 +13,13 @@ pub struct GroundAndPlatformsPlugin;
 impl Plugin for GroundAndPlatformsPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(AppState::GameCreate), setup_ground_platforms_spikes)
+            .add_systems(OnEnter(AppState::NextLevel), setup_ground_platforms_spikes)
             .add_systems(
                 OnEnter(AppState::StartMenu),
+                despawn_ground_platforms_spikes,
+            )
+            .add_systems(
+                OnEnter(AppState::FinishLevel),
                 despawn_ground_platforms_spikes,
             );
     }

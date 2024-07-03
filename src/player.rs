@@ -79,7 +79,9 @@ impl Plugin for PlayerPlugin {
         app.add_plugins(InputManagerPlugin::<PlayerMovement>::default())
             .init_state::<PlayerState>()
             .add_systems(OnEnter(AppState::GameCreate), setup_player)
+            .add_systems(OnEnter(AppState::NextLevel), setup_player)
             .add_systems(OnEnter(AppState::StartMenu), despawn_player)
+            .add_systems(OnEnter(AppState::FinishLevel), despawn_player)
             .add_systems(
                 Update,
                 (move_player, check_out_of_screen, check_hit, restart_level)
@@ -154,17 +156,17 @@ fn setup_player(
             },
             transform: Transform {
                 scale: Vec3::splat(PLAYER_SCALE_FACTOR),
-                // translation: level.map.get_start_screen().get_center().extend(20.0)
-                //     + PLAYER_START_OFFSET,
+                translation: level.map.get_start_screen().get_center().extend(20.0)
+                    + PLAYER_START_OFFSET,
                 // translation: level
                 //     .map
                 //     .tiled_to_bevy_coord(Vec2::new(3840.0, 1100.0))
                 //     .extend(20.0),
                 // ..default()
-                translation: level
-                    .map
-                    .tiled_to_bevy_coord(Vec2::new(6160.0, 560.0))
-                    .extend(20.0),
+                // translation: level
+                //     .map
+                //     .tiled_to_bevy_coord(Vec2::new(6160.0, 560.0))
+                //     .extend(20.0),
                 ..default()
             },
             ..default()

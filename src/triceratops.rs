@@ -49,7 +49,9 @@ pub struct TriceratopsPlugin;
 impl Plugin for TriceratopsPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(AppState::GameCreate), setup_triceratops)
+            .add_systems(OnEnter(AppState::NextLevel), setup_triceratops)
             .add_systems(OnEnter(AppState::StartMenu), despawn_triceratops)
+            .add_systems(OnEnter(AppState::FinishLevel), despawn_triceratops)
             .add_systems(
                 Update,
                 move_triceratops
@@ -116,7 +118,7 @@ fn setup_triceratops(
     let texture_atlas_layout = texture_atlases.add(layout);
     let mut level_triceratops_pos: HashMap<u8, Vec<Vec2>> = HashMap::new();
     level_triceratops_pos.insert(
-        1,
+        2,
         vec![
             level.map.tiled_to_bevy_coord(Vec2::new(2400.0, 480.0)),
             level.map.tiled_to_bevy_coord(Vec2::new(6020.0, 1050.0)),

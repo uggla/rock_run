@@ -7,7 +7,7 @@ use bevy_rapier2d::{
 use crate::{
     collision::CollisionSet,
     coregame::state::AppState,
-    events::{Hit, PositionSensorCollision, Restart},
+    events::{Hit, PositionSensorCollisionStart, Restart},
     helpers::texture::cycle_texture,
     player::Player,
 };
@@ -53,6 +53,7 @@ pub struct BatPlugin;
 impl Plugin for BatPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(AppState::StartMenu), despawn_bat)
+            .add_systems(OnEnter(AppState::FinishLevel), despawn_bat)
             .add_systems(
                 Update,
                 (move_bat, spawn_bat, despawn_bat_on_restart)
@@ -84,7 +85,7 @@ fn spawn_bat(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut texture_atlases: ResMut<Assets<TextureAtlasLayout>>,
-    mut bat_sensor_collision: EventReader<PositionSensorCollision>,
+    mut bat_sensor_collision: EventReader<PositionSensorCollisionStart>,
 ) {
     for collision_event in bat_sensor_collision.read() {
         if !collision_event.sensor_name.contains("bat") {

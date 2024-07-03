@@ -132,7 +132,9 @@ fn localize_story_messages(
     }
 }
 
-fn convert_to_fluent_args(args: Option<HashMap<String, String>>) -> Option<FluentArgs<'static>> {
+pub fn convert_to_fluent_args(
+    args: Option<HashMap<String, String>>,
+) -> Option<FluentArgs<'static>> {
     match args {
         Some(args) => {
             let mut fluent_args = FluentArgs::new();

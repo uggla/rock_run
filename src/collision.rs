@@ -15,7 +15,8 @@ use crate::{
     enigma::{EnigmaKind, Enigmas},
     events::{
         Hit, LadderCollisionStart, LadderCollisionStop, MovingPlatformCollision,
-        PositionSensorCollision, StoryMessages, TriceratopsCollision,
+        PositionSensorCollisionStart, PositionSensorCollisionStop, StoryMessages,
+        TriceratopsCollision,
     },
     moving_platform::MovingPlatform,
     player::{self, Player, PlayerState, PLAYER_HEIGHT},
@@ -47,7 +48,8 @@ impl Plugin for CollisionPlugin {
         .add_systems(OnEnter(AppState::StartMenu), despawn_qm)
         .add_event::<Hit>()
         .add_event::<TriceratopsCollision>()
-        .add_event::<PositionSensorCollision>()
+        .add_event::<PositionSensorCollisionStart>()
+        .add_event::<PositionSensorCollisionStop>()
         .add_event::<LadderCollisionStart>()
         .add_event::<LadderCollisionStop>()
         .add_event::<MovingPlatformCollision>();
@@ -374,21 +376,26 @@ fn bat_collision(
 fn position_sensor_collision(
     position_sensors: Query<(Entity, &ColliderName), With<PositionSensor>>,
     collision_events: EventReader<CollisionEvent>,
-    event_to_send: EventWriter<PositionSensorCollision>,
+    mut event_start: EventWriter<PositionSensorCollisionStart>,
+    mut event_stop: EventWriter<PositionSensorCollisionStop>,
     levels: Query<&Level, With<Level>>,
     current_level: Res<CurrentLevel>,
 ) {
     let mut collision_events = collision_events;
-    let mut event_to_send = event_to_send;
     for collision_event in collision_events.read() {
         let level = levels
             .iter()
             .find(|level| level.id == current_level.id)
             .unwrap();
 
-        let mut level_bat_pos: HashMap<u8, HashMap<String, [Vec2; 2]>> = HashMap::new();
-        level_bat_pos.insert(
+        let mut level_sensor_pos: HashMap<u8, HashMap<String, [Vec2; 2]>> = HashMap::new();
+        level_sensor_pos.insert(
             1,
+            HashMap::from([("exit01".to_string(), [Vec2::ZERO, Vec2::ZERO])]),
+        );
+
+        level_sensor_pos.insert(
+            2,
             HashMap::from([
                 (
                     "bat01".to_string(),
@@ -418,6 +425,7 @@ fn position_sensor_collision(
                         level.map.tiled_to_bevy_coord(Vec2::new(5300.0, 600.0)),
                     ],
                 ),
+                ("exit01".to_string(), [Vec2::ZERO, Vec2::ZERO]),
             ]),
         );
 
@@ -433,9 +441,9 @@ fn position_sensor_collision(
                         collision_event, collider_name
                     );
 
-                    if let Some(collider) = level_bat_pos.get(&current_level.id) {
+                    if let Some(collider) = level_sensor_pos.get(&current_level.id) {
                         if let Some(pos) = collider.get(&collider_name.0) {
-                            event_to_send.send(PositionSensorCollision {
+                            event_start.send(PositionSensorCollisionStart {
                                 sensor_name: collider_name.0.clone(),
                                 spawn_pos: pos[0],
                                 exit_pos: pos[1],
@@ -445,9 +453,20 @@ fn position_sensor_collision(
                 };
             }
             CollisionEvent::Stopped(e1, e2, _cf) => {
-                if position_sensors.contains(*e1) || position_sensors.contains(*e2) {
-                    debug!("Received collision event: {:?}", collision_event);
-                }
+                // Warning, e1 and e2 can be swapped.
+                if let Some((_entity, collider_name)) = position_sensors
+                    .iter()
+                    .find(|(entity, _collider_name)| entity == e1 || entity == e2)
+                {
+                    debug!(
+                        "Received collision event: {:?}, collider name: {:?}",
+                        collision_event, collider_name
+                    );
+
+                    event_stop.send(PositionSensorCollisionStop {
+                        sensor_name: collider_name.0.clone(),
+                    });
+                };
             }
         }
     }

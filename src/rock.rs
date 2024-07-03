@@ -7,7 +7,7 @@ use bevy_rapier2d::{
 use crate::{
     collision::CollisionSet,
     coregame::state::AppState,
-    events::{PositionSensorCollision, Restart},
+    events::{PositionSensorCollisionStart, Restart},
 };
 
 const ROCK_SCALE_FACTOR: f32 = 1.0;
@@ -43,6 +43,7 @@ pub struct RockPlugin;
 impl Plugin for RockPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(AppState::StartMenu), despawn_rock)
+            .add_systems(OnEnter(AppState::FinishLevel), despawn_rock)
             .add_systems(
                 Update,
                 (spawn_rock, despawn_rock_on_restart)
@@ -73,7 +74,7 @@ fn get_collider_shapes(y_mirror: bool) -> Vec<(Vec2, f32, Collider)> {
 fn spawn_rock(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    mut rock_sensor_collision: EventReader<PositionSensorCollision>,
+    mut rock_sensor_collision: EventReader<PositionSensorCollisionStart>,
 ) {
     for collision_event in rock_sensor_collision.read() {
         if !collision_event.sensor_name.contains("rock") {

@@ -70,7 +70,9 @@ pub struct MovingPlatformPlugin;
 impl Plugin for MovingPlatformPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(AppState::StartMenu), despawn_moving_platform)
+            .add_systems(OnEnter(AppState::FinishLevel), despawn_moving_platform)
             .add_systems(OnEnter(AppState::GameCreate), setup_moving_platforms)
+            .add_systems(OnEnter(AppState::NextLevel), setup_moving_platforms)
             .add_systems(
                 Update,
                 (move_moving_platform)
@@ -97,7 +99,7 @@ fn setup_moving_platforms(
     let texture = asset_server.load("moving_platform.png");
     let mut level_moving_platforms: HashMap<u8, Vec<MovingPlatform>> = HashMap::new();
     level_moving_platforms.insert(
-        1,
+        2,
         vec![
             MovingPlatform {
                 start_pos: level.map.tiled_to_bevy_coord(Vec2::new(5920.0, 576.0)),

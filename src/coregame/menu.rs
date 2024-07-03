@@ -10,12 +10,17 @@ use leafwing_input_manager::{
 use unic_langid::langid;
 
 use crate::{
-    coregame::state::{AppState, ForState},
+    coregame::{
+        level::CurrentLevel,
+        state::{AppState, ForState},
+    },
     events::{LadderCollisionStop, NoMoreStoryMessages, SelectionChanged, StoryMessages},
     localization::{get_translation, LocaleHandles},
     text_syllable::SelectionDirection,
     WINDOW_WIDTH,
 };
+
+const LAST_LEVEL: u8 = 2;
 
 #[derive(Component)]
 pub struct DrawBlinkTimer(pub Timer);
@@ -55,6 +60,7 @@ impl Plugin for MenuPlugin {
             .add_systems(OnEnter(AppState::StartMenu), start_menu)
             .add_systems(OnEnter(AppState::GamePaused), pause_menu)
             .add_systems(OnEnter(AppState::GameOver), gameover_menu)
+            .add_systems(OnEnter(AppState::GameFinished), gamefinished_menu)
             .add_systems(
                 Update,
                 (menu_input_system, menu_blink_system, game_messages),
@@ -475,6 +481,39 @@ fn refresh_menu_items(
     sel2.sections[0].value = get_translation(locale, &assets, &locale_handles, "lang01", None);
 }
 
+fn gamefinished_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
+    commands
+        .spawn((
+            NodeBundle {
+                style: Style {
+                    width: Val::Percent(100.0),
+                    height: Val::Percent(100.0),
+                    justify_content: JustifyContent::Center,
+                    flex_direction: FlexDirection::Row,
+                    ..default()
+                },
+                background_color: Color::BLACK.into(),
+                ..default()
+            },
+            ForState {
+                states: vec![AppState::GameOver],
+            },
+        ))
+        .with_children(|parent| {
+            parent.spawn((
+                NodeBundle {
+                    style: Style {
+                        width: Val::Px(720.0),
+                        ..default()
+                    },
+                    background_color: Color::WHITE.into(),
+                    ..default()
+                },
+                UiImage::new(asset_server.load("victory.jpg")),
+            ));
+        });
+}
+
 fn gameover_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn((
@@ -583,11 +622,13 @@ fn menu_input_system(
     mut no_more_msg_event: EventReader<NoMoreStoryMessages>,
     mut localization_asset_events: EventReader<AssetEvent<BundleAsset>>,
     mut ladder_collision_stop: EventWriter<LadderCollisionStop>,
+    mut current_level: ResMut<CurrentLevel>,
 ) {
     if state.get() != &AppState::StartMenu
         && menu_action_state.just_pressed(&MenuAction::ExitToMenu)
     {
         next_state.set(AppState::StartMenu);
+        current_level.id = 1;
         rapier_config.physics_pipeline_active = true;
         msg_event.send(StoryMessages::Hide);
         ladder_collision_stop.send(LadderCollisionStop);
@@ -675,6 +716,24 @@ fn menu_input_system(
                         debug!("Localization asset id: {:?}", id);
                         next_state.set(AppState::StartMenu);
                     }
+                }
+            }
+            AppState::FinishLevel => {
+                // Mostly used to despawn stuff
+                if current_level.id == LAST_LEVEL {
+                    current_level.id = 1;
+                    next_state.set(AppState::GameFinished);
+                } else {
+                    current_level.id += 1;
+                    next_state.set(AppState::NextLevel);
+                }
+            }
+            AppState::NextLevel => {
+                next_state.set(AppState::GameRunning);
+            }
+            AppState::GameFinished => {
+                if menu_action_state.just_pressed(&MenuAction::Accept) {
+                    next_state.set(AppState::StartMenu);
                 }
             }
         }
