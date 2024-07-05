@@ -37,7 +37,7 @@ impl Plugin for LifePlugin {
                 OnEnter(AppState::StartMenu),
                 (despawn_life, despawn_extralife),
             )
-            .add_systems(OnEnter(AppState::FinishLevel), despawn_life)
+            .add_systems(OnEnter(AppState::FinishLevel), despawn_extralife)
             .add_systems(Update, life_management)
             .insert_resource(Life::default())
             .add_systems(
