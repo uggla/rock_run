@@ -635,6 +635,7 @@ fn menu_input_system(
     } else {
         match state.get() {
             AppState::StartMenu => {
+                current_level.id = 1;
                 if menu_action_state.just_pressed(&MenuAction::Quit) {
                     app_exit_events.send(AppExit);
                 }
@@ -721,7 +722,6 @@ fn menu_input_system(
             AppState::FinishLevel => {
                 // Mostly used to despawn stuff
                 if current_level.id == LAST_LEVEL {
-                    current_level.id = 1;
                     next_state.set(AppState::GameFinished);
                 } else {
                     current_level.id += 1;
