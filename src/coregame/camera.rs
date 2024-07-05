@@ -1,4 +1,4 @@
-use crate::{coregame::state::AppState, screen_map::Transition};
+use crate::{coregame::state::AppState, player::PlayerSet, screen_map::Transition};
 use bevy::prelude::*;
 
 use crate::{
@@ -22,6 +22,7 @@ impl Plugin for CameraPlugin {
             Update,
             camera_follows_player
                 .in_set(CameraSet)
+                .after(PlayerSet)
                 .run_if(in_state(AppState::GameRunning)),
         );
     }
@@ -155,7 +156,7 @@ fn camera_follows_player(
 
             camera.translation = level
                 .map
-                .move_camera(camera.translation.xy(), new_camera_pos)
+                .move_camera(&time, camera.translation.xy(), new_camera_pos)
                 .extend(0.0);
         })
 }

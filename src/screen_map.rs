@@ -2,6 +2,16 @@
 use bevy::prelude::*;
 use std::ops::Range;
 
+#[cfg(test)]
+const SMOOTH_FACTOR_X: f32 = 1.0;
+#[cfg(test)]
+const SMOOTH_FACTOR_Y: f32 = 1.0;
+
+#[cfg(not(test))]
+const SMOOTH_FACTOR_X: f32 = 3.0;
+#[cfg(not(test))]
+const SMOOTH_FACTOR_Y: f32 = 20.0;
+
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Default)]
 pub enum Transition {
     #[default]
@@ -280,7 +290,7 @@ impl Map {
         vec![p0, p1, p2, p3]
     }
 
-    pub fn move_camera(&self, old_pos: Vec2, new_pos: Vec2) -> Vec2 {
+    pub fn move_camera(&self, time: &Res<Time>, old_pos: Vec2, new_pos: Vec2) -> Vec2 {
         let mut camera_pos = old_pos;
         let direction = new_pos - old_pos;
 
@@ -354,6 +364,17 @@ impl Map {
                 camera_pos.y = screen_center.y;
             }
         }
+
+        // Smooth camera transition on x axis.
+        // TODO: review to enable on y axis
+        let smooth_factor = Vec2::new(SMOOTH_FACTOR_X, SMOOTH_FACTOR_Y);
+
+        camera_pos.x = old_pos
+            .x
+            .lerp(camera_pos.x, smooth_factor.x * time.delta_seconds());
+        // camera_pos.y = old_pos
+        //     .y
+        //     .lerp(camera_pos.y, smooth_factor.y * time.delta_seconds());
 
         camera_pos
     }
@@ -649,37 +670,43 @@ mod tests {
 
         let map = Map::new(screen_map, screen_width, screen_height);
 
+        let mut world = World::default();
+        let mut time: Time = Time::default();
+        time.advance_by(std::time::Duration::from_secs(1));
+        world.insert_resource(time);
+        let time = world.resource_ref::<Time>();
+
         // From middle screen
         // Move to right
         assert_eq!(
-            map.move_camera(Vec2::new(0.0, 0.0), Vec2::new(10.0, 0.0)),
+            map.move_camera(&time, Vec2::new(0.0, 0.0), Vec2::new(10.0, 0.0)),
             Vec2::new(10.0, 0.0)
         );
         // Move to left
         assert_eq!(
-            map.move_camera(Vec2::new(0.0, 0.0), Vec2::new(-10.0, 0.0)),
+            map.move_camera(&time, Vec2::new(0.0, 0.0), Vec2::new(-10.0, 0.0)),
             Vec2::new(-10.0, 0.0)
         );
         // Move up is not possible so the camera should not move
         assert_eq!(
-            map.move_camera(Vec2::new(0.0, 0.0), Vec2::new(0.0, 10.0)),
+            map.move_camera(&time, Vec2::new(0.0, 0.0), Vec2::new(0.0, 10.0)),
             Vec2::new(0.0, 0.0)
         );
         // Move down is not possible so the camera should not move
         assert_eq!(
-            map.move_camera(Vec2::new(0.0, 0.0), Vec2::new(0.0, -10.0)),
+            map.move_camera(&time, Vec2::new(0.0, 0.0), Vec2::new(0.0, -10.0)),
             Vec2::new(0.0, 0.0)
         );
         // Move up and move right
         // Camera should only move on x
         assert_eq!(
-            map.move_camera(Vec2::new(0.0, 0.0), Vec2::new(100.0, 10.0)),
+            map.move_camera(&time, Vec2::new(0.0, 0.0), Vec2::new(100.0, 10.0)),
             Vec2::new(100.0, 0.0)
         );
         // Move down and move left
         // Camera should only move on x
         assert_eq!(
-            map.move_camera(Vec2::new(0.0, 0.0), Vec2::new(-100.0, -10.0)),
+            map.move_camera(&time, Vec2::new(0.0, 0.0), Vec2::new(-100.0, -10.0)),
             Vec2::new(-100.0, 0.0)
         );
 
@@ -687,41 +714,41 @@ mod tests {
         // Move to right
         // Move right is not possible so the camera should not move
         assert_eq!(
-            map.move_camera(Vec2::new(1280.0, 0.0), Vec2::new(1300.0, 0.0)),
+            map.move_camera(&time, Vec2::new(1280.0, 0.0), Vec2::new(1300.0, 0.0)),
             Vec2::new(1280.0, 0.0)
         );
         // Move to left
         assert_eq!(
-            map.move_camera(Vec2::new(1280.0, 0.0), Vec2::new(1260.0, 0.0)),
+            map.move_camera(&time, Vec2::new(1280.0, 0.0), Vec2::new(1260.0, 0.0)),
             Vec2::new(1260.0, 0.0)
         );
         // Move up
         assert_eq!(
-            map.move_camera(Vec2::new(1280.0, 0.0), Vec2::new(1280.0, 100.0)),
+            map.move_camera(&time, Vec2::new(1280.0, 0.0), Vec2::new(1280.0, 100.0)),
             Vec2::new(1280.0, 100.0)
         );
         // Move down
         // Move down is not possible so the camera should not move
         assert_eq!(
-            map.move_camera(Vec2::new(1280.0, 0.0), Vec2::new(1280.0, -100.0)),
+            map.move_camera(&time, Vec2::new(1280.0, 0.0), Vec2::new(1280.0, -100.0)),
             Vec2::new(1280.0, 0.0)
         );
         // Move up and move right
         // Camera should only move on y and x must be at the screen center
         assert_eq!(
-            map.move_camera(Vec2::new(1290.0, 0.0), Vec2::new(1300.0, 150.0)),
+            map.move_camera(&time, Vec2::new(1290.0, 0.0), Vec2::new(1300.0, 150.0)),
             Vec2::new(1280.0, 150.0)
         );
         // Move down and move left
         // Camera should only move on x
         assert_eq!(
-            map.move_camera(Vec2::new(1280.0, 0.0), Vec2::new(1200.0, -120.0)),
+            map.move_camera(&time, Vec2::new(1280.0, 0.0), Vec2::new(1200.0, -120.0)),
             Vec2::new(1200.0, 0.0)
         );
         // Move down and move left
         // Camera should be clipped to the screen center
         assert_eq!(
-            map.move_camera(Vec2::new(1380.0, 0.0), Vec2::new(1300.0, -120.0)),
+            map.move_camera(&time, Vec2::new(1380.0, 0.0), Vec2::new(1300.0, -120.0)),
             Vec2::new(1300.0, 0.0)
         );
     }
@@ -756,29 +783,36 @@ mod tests {
 
         let map = Map::new(screen_map, screen_width, screen_height);
 
+        let mut world = World::default();
+        let mut time: Time = Time::default();
+
+        time.advance_by(std::time::Duration::from_secs(1));
+        world.insert_resource(time);
+        let time = world.resource_ref::<Time>();
+
         assert_eq!(map.get_start_screen().get_center(), Vec2::new(-1280.0, 0.0));
 
         // From middle screen
         // Move to right
         assert_eq!(
-            map.move_camera(Vec2::new(-1280.0, 0.0), Vec2::new(-1240.0, 0.0)),
+            map.move_camera(&time, Vec2::new(-1280.0, 0.0), Vec2::new(-1240.0, 0.0)),
             Vec2::new(-1240.0, 0.0)
         );
         // Move to left
         assert_eq!(
-            map.move_camera(Vec2::new(-1280.0, 0.0), Vec2::new(-1300.0, 0.0)),
+            map.move_camera(&time, Vec2::new(-1280.0, 0.0), Vec2::new(-1300.0, 0.0)),
             Vec2::new(-1280.0, 0.0)
         );
         // Move up and left
         // Camera should not move and remain at the screen center
         assert_eq!(
-            map.move_camera(Vec2::new(-1290.0, 0.0), Vec2::new(-1300.0, 100.0)),
+            map.move_camera(&time, Vec2::new(-1290.0, 0.0), Vec2::new(-1300.0, 100.0)),
             Vec2::new(-1280.0, 0.0)
         );
         // Move down and left
         // Camera should move only on y and x must be at the screen center
         assert_eq!(
-            map.move_camera(Vec2::new(-1290.0, 0.0), Vec2::new(-1300.0, -250.0)),
+            map.move_camera(&time, Vec2::new(-1290.0, 0.0), Vec2::new(-1300.0, -250.0)),
             Vec2::new(-1280.0, -250.0)
         );
     }
