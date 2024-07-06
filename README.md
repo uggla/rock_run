@@ -70,11 +70,11 @@ No dependencies are required for Windows or MacOS
 3. Run
 
 ```bash
-cargo run
+cargo rd
 
 or
 
-cargo run --release
+cargo rr  # for release mode
 ```
 
 ### Wasm32 client
@@ -90,11 +90,11 @@ rustup target add wasm32-unknown-unknown
 3. Run
 
 ```bash
-cargo build --target wasm32-unknown-unknown
+cargo rwd
 
 or
 
-cargo build --target wasm32-unknown-unknown --release
+cargo rwr  # for release mode
 ```
 
 ## Known bug
