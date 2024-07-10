@@ -72,7 +72,7 @@ fn camera_follows_player(
         .filter(|level| level.id == current_level.id)
         .for_each(|level| {
             let (screen_center, screen_is_fixed, screen_transition) =
-                match level.map.get_screen(player.translation.xy()) {
+                match level.map.get_screen(player.translation.xy(), 0.0, 0.0) {
                     Some(screen) => (
                         screen.get_center(),
                         screen.is_fixed_screen(),

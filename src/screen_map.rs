@@ -235,15 +235,16 @@ impl Map {
         )
     }
 
-    pub fn get_screen(&self, point: Vec2) -> Option<&Screen> {
-        self.data
-            .iter()
-            .flatten()
-            .find(|screen| screen.x_range.contains(&point.x) && screen.y_range.contains(&point.y))
+    pub fn get_screen(&self, point: Vec2, margin_x: f32, margin_y: f32) -> Option<&Screen> {
+        self.data.iter().flatten().find(|screen| {
+            let x_range_margin = screen.x_range.start - margin_x..screen.x_range.end + margin_x;
+            let y_range_margin = screen.y_range.start - margin_y..screen.y_range.end + margin_y;
+            x_range_margin.contains(&point.x) && y_range_margin.contains(&point.y)
+        })
     }
 
     pub fn get_above_screen(&self, point: Vec2) -> Option<&Screen> {
-        let screen = match self.get_screen(point) {
+        let screen = match self.get_screen(point, 0.0, 0.0) {
             Some(screen) => screen,
             None => return None,
         };
@@ -333,7 +334,7 @@ impl Map {
             camera_pos.x = new_pos.x;
         } else {
             // Stick the camera horizontally to the center of the screen
-            if let Some(screen) = self.get_screen(new_pos) {
+            if let Some(screen) = self.get_screen(new_pos, 0.0, 0.0) {
                 let screen_center = screen.get_center();
                 camera_pos.x = screen_center.x;
             }
@@ -359,7 +360,7 @@ impl Map {
             camera_pos.y = new_pos.y;
         } else {
             // Stick the camera vertically to the center of the screen
-            if let Some(screen) = self.get_screen(new_pos) {
+            if let Some(screen) = self.get_screen(new_pos, 0.0, 0.0) {
                 let screen_center = screen.get_center();
                 camera_pos.y = screen_center.y;
             }
@@ -380,10 +381,16 @@ impl Map {
     }
 
     fn check_points(&self, camera_points: &[Vec2], (p1, p2): (usize, usize)) -> bool {
-        self.get_screen(camera_points[p1]).is_some()
-            && self.get_screen(camera_points[p2]).is_some()
-            && self.get_screen(camera_points[p1]).unwrap().allowed_screen
-            && self.get_screen(camera_points[p2]).unwrap().allowed_screen
+        self.get_screen(camera_points[p1], 0.0, 0.0).is_some()
+            && self.get_screen(camera_points[p2], 0.0, 0.0).is_some()
+            && self
+                .get_screen(camera_points[p1], 0.0, 0.0)
+                .unwrap()
+                .allowed_screen
+            && self
+                .get_screen(camera_points[p2], 0.0, 0.0)
+                .unwrap()
+                .allowed_screen
     }
 
     /// Returns the start screen
@@ -629,7 +636,7 @@ mod tests {
         let map = Map::new(screen_map, screen_width, screen_height);
 
         assert_eq!(
-            map.get_screen(Vec2::new(0.0, 0.0)),
+            map.get_screen(Vec2::new(0.0, 0.0), 0.0, 0.0),
             Some(&Screen {
                 x_range: -640.0..640.0,
                 y_range: -359.0..361.0,
@@ -762,13 +769,15 @@ mod tests {
         let map = Map::new(screen_map, screen_width, screen_height);
         dbg!(&map);
 
-        dbg!(map.get_screen(Vec2::new(0.0, 0.0)).unwrap());
+        dbg!(map.get_screen(Vec2::new(0.0, 0.0), 0.0, 0.0).unwrap());
         assert_eq!(
-            map.get_screen(Vec2::new(0.0, 0.0)).unwrap().get_center(),
+            map.get_screen(Vec2::new(0.0, 0.0), 0.0, 0.0)
+                .unwrap()
+                .get_center(),
             Vec2::new(0.0, 0.0)
         );
         assert_eq!(
-            map.get_screen(Vec2::new(-1900.0, 400.0))
+            map.get_screen(Vec2::new(-1900.0, 400.0), 0.0, 0.0)
                 .unwrap()
                 .get_center(),
             Vec2::new(-1280.0, 720.0)

@@ -3,7 +3,7 @@
         "height": 4300,
         "width": 2
     },
-    "activeFile": "level01.tmx",
+    "activeFile": "level02.tmx",
     "expandedProjectPaths": [
         "."
     ],
@@ -14,15 +14,15 @@
         },
         "level01.tmx": {
             "expandedObjectLayers": [
-                6,
+                4,
                 5,
-                4
+                6
             ],
-            "scale": 0.75,
-            "selectedLayer": 7,
+            "scale": 1.5,
+            "selectedLayer": 6,
             "viewCenter": {
-                "x": 1048.6666666666667,
-                "y": 348.66666666666663
+                "x": 6401.333333333333,
+                "y": 359.66666666666663
             }
         },
         "level01.tmx#backgrounds": {
@@ -61,14 +61,15 @@
         },
         "level02.tmx": {
             "expandedObjectLayers": [
-                8,
-                4
+                4,
+                5,
+                8
             ],
             "scale": 1,
-            "selectedLayer": 7,
+            "selectedLayer": 2,
             "viewCenter": {
-                "x": 6289.5,
-                "y": 762.5
+                "x": 3402,
+                "y": 333.5
             }
         },
         "level02.tmx#grad-1": {
@@ -114,8 +115,8 @@
     ],
     "project": "rockrun.tiled-project",
     "recentFiles": [
-        "level02.tmx",
         "level01.tmx",
+        "level02.tmx",
         "menu.tmx"
     ],
     "tileset.embedInMap": true,

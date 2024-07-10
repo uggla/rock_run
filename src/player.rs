@@ -412,7 +412,11 @@ fn check_out_of_screen(
 
     if level
         .map
-        .get_screen((player.translation.x, player.translation.y + PLAYER_HEIGHT).into())
+        .get_screen(
+            (player.translation.x, player.translation.y).into(),
+            0.0,
+            2.0 * PLAYER_HEIGHT,
+        )
         .is_none()
     {
         restart.send(Restart);

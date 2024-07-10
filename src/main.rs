@@ -10,6 +10,7 @@ mod life;
 mod localization;
 mod moving_platform;
 mod player;
+mod pterodactyl;
 mod rock;
 mod screen_map;
 mod text_syllable;
@@ -32,6 +33,7 @@ use crate::{
     localization::LocalizationPlugin,
     moving_platform::MovingPlatformPlugin,
     player::PlayerPlugin,
+    pterodactyl::PterodactylPlugin,
     rock::RockPlugin,
     triceratops::TriceratopsPlugin,
 };
@@ -62,7 +64,8 @@ fn main() {
             GroundAndPlatformsPlugin,
             PlayerPlugin,
             TriceratopsPlugin,
-            BatPlugin,
+            // BatPlugin,
+            PterodactylPlugin,
             RockPlugin,
             LifePlugin,
             MovingPlatformPlugin,

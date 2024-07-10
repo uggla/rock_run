@@ -2,6 +2,7 @@ use bevy::{prelude::*, utils::HashMap};
 use bevy_rapier2d::{
     control::{KinematicCharacterController, KinematicCharacterControllerOutput},
     dynamics::Velocity,
+    geometry::ActiveCollisionTypes,
     pipeline::{CollisionEvent, QueryFilterFlags},
 };
 
@@ -16,16 +17,26 @@ use crate::{
     events::{
         ExtraLifeCollision, Hit, LadderCollisionStart, LadderCollisionStop,
         MovingPlatformCollision, PositionSensorCollisionStart, PositionSensorCollisionStop,
-        StoryMessages, TriceratopsCollision,
+        Restart, StoryMessages, TriceratopsCollision,
     },
     life::ExtraLife,
     moving_platform::MovingPlatform,
     player::{self, Player, PlayerState, PLAYER_HEIGHT},
+    pterodactyl::Pterodactyl,
     rock::Rock,
     triceratops::Triceratops,
 };
 
 pub struct CollisionPlugin;
+
+struct SensorValues {
+    start_pos: Vec2,
+    end_pos: Vec2,
+    disable_next_collision: bool,
+}
+
+#[derive(Debug, Component)]
+pub struct StoryQM(String);
 
 #[derive(SystemSet, Clone, Hash, Debug, PartialEq, Eq)]
 pub struct CollisionSet;
@@ -38,6 +49,7 @@ impl Plugin for CollisionPlugin {
                 player_collision,
                 triceratops_collision,
                 bat_collision,
+                pterodactyl_collision,
                 story_collision,
                 display_story,
                 position_sensor_collision,
@@ -199,9 +211,6 @@ fn triceratops_collision(
     }
 }
 
-#[derive(Debug, Component)]
-pub struct StoryQM(String);
-
 fn story_collision(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
@@ -209,14 +218,22 @@ fn story_collision(
     mut collision_events: EventReader<CollisionEvent>,
     entity_pos: Query<&Transform>,
     qm_entity: Query<(Entity, &StoryQM)>,
+    player: Query<Entity, With<Player>>,
 ) {
+    let player_entity = match player.get_single() {
+        Ok(entity) => entity,
+        Err(_) => return,
+    };
+
     for collision_event in collision_events.read() {
         match collision_event {
             CollisionEvent::Started(e1, e2, _cf) => {
                 // Warning, e1 and e2 can be swapped.
-                if let Some((entity, collider_name)) = stories
-                    .iter()
-                    .find(|(entity, _collider_name)| entity == e1 || entity == e2)
+                if let Some((entity, collider_name)) =
+                    stories.iter().find(|(entity, _collider_name)| {
+                        (entity == e1 && player_entity == *e2)
+                            || (entity == e2 && player_entity == *e1)
+                    })
                 {
                     debug!("Received collision event: {:?}", collision_event);
 
@@ -237,8 +254,18 @@ fn story_collision(
                 };
             }
             CollisionEvent::Stopped(e1, e2, _cf) => {
-                if stories.contains(*e1) || stories.contains(*e2) {
-                    debug!("Received collision event: {:?}", collision_event);
+                // Warning, e1 and e2 can be swapped.
+                if let Some((_entity, collider_name)) =
+                    stories.iter().find(|(entity, _collider_name)| {
+                        (entity == e1 && player_entity == *e2)
+                            || (entity == e2 && player_entity == *e1)
+                    })
+                {
+                    debug!(
+                        "Received collision event: {:?}, collider name: {:?}",
+                        collision_event, collider_name
+                    );
+
                     for (entity, _) in qm_entity.iter() {
                         commands.entity(entity).despawn_recursive();
                     }
@@ -311,14 +338,22 @@ fn ladder_collision(
     mut collision_events: EventReader<CollisionEvent>,
     mut ladder_collision_start: EventWriter<LadderCollisionStart>,
     mut ladder_collision_stop: EventWriter<LadderCollisionStop>,
+    player: Query<Entity, With<Player>>,
 ) {
+    let player_entity = match player.get_single() {
+        Ok(entity) => entity,
+        Err(_) => return,
+    };
+
     for collision_event in collision_events.read() {
         match collision_event {
             CollisionEvent::Started(e1, e2, _cf) => {
                 // Warning, e1 and e2 can be swapped.
-                if let Some((_entity, collider_name)) = ladders
-                    .iter()
-                    .find(|(entity, _collider_name)| entity == e1 || entity == e2)
+                if let Some((_entity, collider_name)) =
+                    ladders.iter().find(|(entity, _collider_name)| {
+                        (entity == e1 && player_entity == *e2)
+                            || (entity == e2 && player_entity == *e1)
+                    })
                 {
                     debug!(
                         "Received collision event: {:?}, collider name: {:?}",
@@ -328,10 +363,20 @@ fn ladder_collision(
                 };
             }
             CollisionEvent::Stopped(e1, e2, _cf) => {
-                if ladders.contains(*e1) || ladders.contains(*e2) {
-                    debug!("Received collision event: {:?}", collision_event);
+                // Warning, e1 and e2 can be swapped.
+                if let Some((_entity, collider_name)) =
+                    ladders.iter().find(|(entity, _collider_name)| {
+                        (entity == e1 && player_entity == *e2)
+                            || (entity == e2 && player_entity == *e1)
+                    })
+                {
+                    debug!(
+                        "Received collision event: {:?}, collider name: {:?}",
+                        collision_event, collider_name
+                    );
+
                     ladder_collision_stop.send(LadderCollisionStop);
-                }
+                };
             }
         }
     }
@@ -376,25 +421,100 @@ fn bat_collision(
     }
 }
 
+fn pterodactyl_collision(
+    state: Res<State<PlayerState>>,
+    mut pterodactyl_controller: Query<
+        (
+            &KinematicCharacterControllerOutput,
+            &mut KinematicCharacterController,
+        ),
+        With<Pterodactyl>,
+    >,
+    player: Query<Entity, With<Player>>,
+    mut hit: EventWriter<Hit>,
+) {
+    if state.get() == &PlayerState::Hit {
+        return;
+    }
+
+    let player_entity = match player.get_single() {
+        Ok(entity) => entity,
+        Err(_) => return,
+    };
+
+    for (output, mut ctrl) in pterodactyl_controller.iter_mut() {
+        if state.get() == &PlayerState::Falling {
+            ctrl.filter_flags
+                .remove(QueryFilterFlags::EXCLUDE_KINEMATIC);
+            // debug!("Re-enabling collision with pterodactyl");
+        }
+
+        for character_collision in output.collisions.iter() {
+            // pterodactyl hits player
+            if character_collision.entity == player_entity {
+                hit.send(Hit);
+                ctrl.filter_flags = QueryFilterFlags::EXCLUDE_KINEMATIC;
+                debug!("Pterodactyl hits player, disabling further collision with pterodactyl");
+            }
+        }
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
 fn position_sensor_collision(
-    position_sensors: Query<(Entity, &ColliderName), With<PositionSensor>>,
-    collision_events: EventReader<CollisionEvent>,
+    mut position_sensors: Query<
+        (Entity, &ColliderName, &mut ActiveCollisionTypes),
+        With<PositionSensor>,
+    >,
+    mut collision_events: EventReader<CollisionEvent>,
     mut event_start: EventWriter<PositionSensorCollisionStart>,
     mut event_stop: EventWriter<PositionSensorCollisionStop>,
     levels: Query<&Level, With<Level>>,
     current_level: Res<CurrentLevel>,
+    mut restart_event: EventReader<Restart>,
+    player: Query<Entity, With<Player>>,
 ) {
-    let mut collision_events = collision_events;
+    if !restart_event.is_empty() {
+        for (_position_sensor, _collider_name, mut active_collision_type) in
+            position_sensors.iter_mut()
+        {
+            *active_collision_type = ActiveCollisionTypes::KINEMATIC_STATIC;
+        }
+        restart_event.clear();
+    }
+
+    let player_entity = match player.get_single() {
+        Ok(player_entity) => player_entity,
+        Err(_) => return,
+    };
+
     for collision_event in collision_events.read() {
         let level = levels
             .iter()
             .find(|level| level.id == current_level.id)
             .unwrap();
 
-        let mut level_sensor_pos: HashMap<u8, HashMap<String, [Vec2; 2]>> = HashMap::new();
+        let mut level_sensor_pos: HashMap<u8, HashMap<String, SensorValues>> = HashMap::new();
         level_sensor_pos.insert(
             1,
-            HashMap::from([("exit01".to_string(), [Vec2::ZERO, Vec2::ZERO])]),
+            HashMap::from([
+                (
+                    "exit01".to_string(),
+                    SensorValues {
+                        start_pos: Vec2::ZERO,
+                        end_pos: Vec2::ZERO,
+                        disable_next_collision: false,
+                    },
+                ),
+                (
+                    "pterodactyl_attack01".to_string(),
+                    SensorValues {
+                        start_pos: level.map.tiled_to_bevy_coord(Vec2::new(1596.0, 455.0)),
+                        end_pos: level.map.tiled_to_bevy_coord(Vec2::new(0.0, 455.0)),
+                        disable_next_collision: true,
+                    },
+                ),
+            ]),
         );
 
         level_sensor_pos.insert(
@@ -402,42 +522,56 @@ fn position_sensor_collision(
             HashMap::from([
                 (
                     "bat01".to_string(),
-                    [
-                        level.map.tiled_to_bevy_coord(Vec2::new(3940.0, 850.0)),
-                        level.map.tiled_to_bevy_coord(Vec2::new(3060.0, 1460.0)),
-                    ],
+                    SensorValues {
+                        start_pos: level.map.tiled_to_bevy_coord(Vec2::new(3940.0, 850.0)),
+                        end_pos: level.map.tiled_to_bevy_coord(Vec2::new(3060.0, 1460.0)),
+                        disable_next_collision: false,
+                    },
                 ),
                 (
                     "rock01".to_string(),
-                    [
-                        level.map.tiled_to_bevy_coord(Vec2::new(5300.0, 800.0)),
-                        level.map.tiled_to_bevy_coord(Vec2::new(5300.0, 600.0)),
-                    ],
+                    SensorValues {
+                        start_pos: level.map.tiled_to_bevy_coord(Vec2::new(5300.0, 800.0)),
+                        end_pos: level.map.tiled_to_bevy_coord(Vec2::new(5300.0, 600.0)),
+                        disable_next_collision: false,
+                    },
                 ),
                 (
                     "rock02".to_string(),
-                    [
-                        level.map.tiled_to_bevy_coord(Vec2::new(5300.0, 800.0)),
-                        level.map.tiled_to_bevy_coord(Vec2::new(5300.0, 600.0)),
-                    ],
+                    SensorValues {
+                        start_pos: level.map.tiled_to_bevy_coord(Vec2::new(5300.0, 800.0)),
+                        end_pos: level.map.tiled_to_bevy_coord(Vec2::new(5300.0, 600.0)),
+                        disable_next_collision: false,
+                    },
                 ),
                 (
                     "rock03".to_string(),
-                    [
-                        level.map.tiled_to_bevy_coord(Vec2::new(5300.0, 800.0)),
-                        level.map.tiled_to_bevy_coord(Vec2::new(5300.0, 600.0)),
-                    ],
+                    SensorValues {
+                        start_pos: level.map.tiled_to_bevy_coord(Vec2::new(5300.0, 800.0)),
+                        end_pos: level.map.tiled_to_bevy_coord(Vec2::new(5300.0, 600.0)),
+                        disable_next_collision: false,
+                    },
                 ),
-                ("exit01".to_string(), [Vec2::ZERO, Vec2::ZERO]),
+                (
+                    "exit01".to_string(),
+                    SensorValues {
+                        start_pos: Vec2::ZERO,
+                        end_pos: Vec2::ZERO,
+                        disable_next_collision: false,
+                    },
+                ),
             ]),
         );
 
         match collision_event {
             CollisionEvent::Started(e1, e2, _cf) => {
                 // Warning, e1 and e2 can be swapped.
-                if let Some((_entity, collider_name)) = position_sensors
-                    .iter()
-                    .find(|(entity, _collider_name)| entity == e1 || entity == e2)
+                if let Some((_entity, collider_name, mut active_collision_type)) = position_sensors
+                    .iter_mut()
+                    .find(|(entity, _collider_name, _active_collision_type)| {
+                        (entity == e1 && player_entity == *e2)
+                            || (entity == e2 && player_entity == *e1)
+                    })
                 {
                     debug!(
                         "Received collision event: {:?}, collider name: {:?}",
@@ -445,11 +579,14 @@ fn position_sensor_collision(
                     );
 
                     if let Some(collider) = level_sensor_pos.get(&current_level.id) {
-                        if let Some(pos) = collider.get(&collider_name.0) {
+                        if let Some(sensor_values) = collider.get(&collider_name.0) {
+                            if sensor_values.disable_next_collision {
+                                *active_collision_type = ActiveCollisionTypes::STATIC_STATIC;
+                            }
                             event_start.send(PositionSensorCollisionStart {
                                 sensor_name: collider_name.0.clone(),
-                                spawn_pos: pos[0],
-                                exit_pos: pos[1],
+                                spawn_pos: sensor_values.start_pos,
+                                exit_pos: sensor_values.end_pos,
                             });
                         }
                     }
@@ -457,9 +594,12 @@ fn position_sensor_collision(
             }
             CollisionEvent::Stopped(e1, e2, _cf) => {
                 // Warning, e1 and e2 can be swapped.
-                if let Some((_entity, collider_name)) = position_sensors
+                if let Some((_entity, collider_name, _active_collision_type)) = position_sensors
                     .iter()
-                    .find(|(entity, _collider_name)| entity == e1 || entity == e2)
+                    .find(|(entity, _collider_name, _active_collision_type)| {
+                        (entity == e1 && player_entity == *e2)
+                            || (entity == e2 && player_entity == *e1)
+                    })
                 {
                     debug!(
                         "Received collision event: {:?}, collider name: {:?}",
@@ -479,14 +619,21 @@ fn extra_life_collision(
     extralifes: Query<(Entity, &ColliderName), With<ExtraLife>>,
     mut collision_events: EventReader<CollisionEvent>,
     mut extralife_collision: EventWriter<ExtraLifeCollision>,
+    player: Query<Entity, With<Player>>,
 ) {
+    let player_entity = match player.get_single() {
+        Ok(player_entity) => player_entity,
+        Err(_) => return,
+    };
     for collision_event in collision_events.read() {
         match collision_event {
             CollisionEvent::Started(e1, e2, _cf) => {
                 // Warning, e1 and e2 can be swapped.
-                if let Some((entity, collider_name)) = extralifes
-                    .iter()
-                    .find(|(entity, _collider_name)| entity == e1 || entity == e2)
+                if let Some((entity, collider_name)) =
+                    extralifes.iter().find(|(entity, _collider_name)| {
+                        (entity == e1 && player_entity == *e2)
+                            || (entity == e2 && player_entity == *e1)
+                    })
                 {
                     debug!(
                         "Received collision event: {:?}, collider name: {:?}",
@@ -498,9 +645,11 @@ fn extra_life_collision(
             }
             CollisionEvent::Stopped(e1, e2, _cf) => {
                 // Warning, e1 and e2 can be swapped.
-                if let Some((_entity, collider_name)) = extralifes
-                    .iter()
-                    .find(|(entity, _collider_name)| entity == e1 || entity == e2)
+                if let Some((_entity, collider_name)) =
+                    extralifes.iter().find(|(entity, _collider_name)| {
+                        (entity == e1 && player_entity == *e2)
+                            || (entity == e2 && player_entity == *e1)
+                    })
                 {
                     debug!(
                         "Received collision event: {:?}, collider name: {:?}",

@@ -169,7 +169,7 @@ fn setup_extralife(
     let mut extra_life_pos: HashMap<u8, Vec<Vec2>> = HashMap::new();
     extra_life_pos.insert(
         1,
-        vec![level.map.tiled_to_bevy_coord(Vec2::new(1056.0, 304.0))],
+        vec![level.map.tiled_to_bevy_coord(Vec2::new(1056.0, 112.0))],
     );
 
     let start_positions = match extra_life_pos.get(&current_level.id) {
