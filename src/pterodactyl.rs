@@ -7,7 +7,7 @@ use bevy_rapier2d::{
 };
 
 use crate::{
-    collision::CollisionSet,
+    collisions::CollisionSet,
     coregame::state::AppState,
     events::{PositionSensorCollisionStart, Restart},
     helpers::texture::cycle_texture,

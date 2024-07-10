@@ -8,7 +8,7 @@ use leafwing_input_manager::{
 };
 
 use crate::{
-    collision::CollisionSet,
+    collisions::CollisionSet,
     coregame::{
         level::{CurrentLevel, Level},
         state::AppState,

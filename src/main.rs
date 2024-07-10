@@ -1,6 +1,6 @@
 mod bat;
 mod colliders;
-mod collision;
+mod collisions;
 mod coregame;
 mod enigma;
 mod events;
@@ -23,8 +23,8 @@ use text_syllable::TextSyllablePlugin;
 
 use crate::{
     bat::BatPlugin,
-    colliders::GroundAndPlatformsPlugin,
-    collision::CollisionPlugin,
+    colliders::CollidersPlugin,
+    collisions::CollisionsPlugin,
     coregame::{plugins::CoreGamePlugins, state::AppState},
     enigma::EnigmaPlugin,
     events::{NoMoreStoryMessages, StoryMessages},
@@ -61,7 +61,7 @@ fn main() {
             CoreGamePlugins,
             ExternalPlugins,
             helpers::tiled::TiledMapPlugin,
-            GroundAndPlatformsPlugin,
+            CollidersPlugin,
             PlayerPlugin,
             TriceratopsPlugin,
             // BatPlugin,
@@ -69,7 +69,7 @@ fn main() {
             RockPlugin,
             LifePlugin,
             MovingPlatformPlugin,
-            CollisionPlugin,
+            CollisionsPlugin,
             LocalizationPlugin,
             TextSyllablePlugin::default(),
             EnigmaPlugin,

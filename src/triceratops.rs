@@ -4,7 +4,7 @@ use bevy_rapier2d::{
 };
 
 use crate::{
-    collision::CollisionSet,
+    collisions::CollisionSet,
     coregame::{
         level::{CurrentLevel, Level},
         state::AppState,

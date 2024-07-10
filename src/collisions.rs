@@ -27,7 +27,7 @@ use crate::{
     triceratops::Triceratops,
 };
 
-pub struct CollisionPlugin;
+pub struct CollisionsPlugin;
 
 struct SensorValues {
     start_pos: Vec2,
@@ -41,20 +41,20 @@ pub struct StoryQM(String);
 #[derive(SystemSet, Clone, Hash, Debug, PartialEq, Eq)]
 pub struct CollisionSet;
 
-impl Plugin for CollisionPlugin {
+impl Plugin for CollisionsPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
             Update,
             (
-                player_collision,
-                triceratops_collision,
-                bat_collision,
-                pterodactyl_collision,
-                story_collision,
+                player_collisions,
+                triceratops_collisions,
+                bat_collisions,
+                pterodactyl_collisions,
+                story_collisions,
                 display_story,
-                position_sensor_collision,
-                ladder_collision,
-                extra_life_collision,
+                position_sensor_collisions,
+                ladder_collisions,
+                extra_life_collisions,
             )
                 .in_set(CollisionSet)
                 .run_if(in_state(AppState::GameRunning)),
@@ -72,7 +72,7 @@ impl Plugin for CollisionPlugin {
 }
 
 #[allow(clippy::too_many_arguments)]
-fn player_collision(
+fn player_collisions(
     player_controller: Query<(Entity, &KinematicCharacterControllerOutput), With<Player>>,
     state: Res<State<PlayerState>>,
     mut next_state: ResMut<NextState<PlayerState>>,
@@ -152,7 +152,7 @@ fn player_collision(
     }
 }
 
-fn triceratops_collision(
+fn triceratops_collisions(
     state: Res<State<PlayerState>>,
     mut triceratops_controller: Query<
         (
@@ -211,7 +211,7 @@ fn triceratops_collision(
     }
 }
 
-fn story_collision(
+fn story_collisions(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     stories: Query<(Entity, &ColliderName), With<Story>>,
@@ -333,7 +333,7 @@ fn display_story(
     }
 }
 
-fn ladder_collision(
+fn ladder_collisions(
     ladders: Query<(Entity, &ColliderName), With<Ladder>>,
     mut collision_events: EventReader<CollisionEvent>,
     mut ladder_collision_start: EventWriter<LadderCollisionStart>,
@@ -382,7 +382,7 @@ fn ladder_collision(
     }
 }
 
-fn bat_collision(
+fn bat_collisions(
     state: Res<State<PlayerState>>,
     mut bat_controller: Query<
         (
@@ -421,7 +421,7 @@ fn bat_collision(
     }
 }
 
-fn pterodactyl_collision(
+fn pterodactyl_collisions(
     state: Res<State<PlayerState>>,
     mut pterodactyl_controller: Query<
         (
@@ -461,7 +461,7 @@ fn pterodactyl_collision(
 }
 
 #[allow(clippy::too_many_arguments)]
-fn position_sensor_collision(
+fn position_sensor_collisions(
     mut position_sensors: Query<
         (Entity, &ColliderName, &mut ActiveCollisionTypes),
         With<PositionSensor>,
@@ -615,7 +615,7 @@ fn position_sensor_collision(
     }
 }
 
-fn extra_life_collision(
+fn extra_life_collisions(
     extralifes: Query<(Entity, &ColliderName), With<ExtraLife>>,
     mut collision_events: EventReader<CollisionEvent>,
     mut extralife_collision: EventWriter<ExtraLifeCollision>,

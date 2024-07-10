@@ -8,20 +8,14 @@ use crate::{
     helpers::tiled::TiledMap,
 };
 
-pub struct GroundAndPlatformsPlugin;
+pub struct CollidersPlugin;
 
-impl Plugin for GroundAndPlatformsPlugin {
+impl Plugin for CollidersPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(AppState::GameCreate), setup_ground_platforms_spikes)
-            .add_systems(OnEnter(AppState::NextLevel), setup_ground_platforms_spikes)
-            .add_systems(
-                OnEnter(AppState::StartMenu),
-                despawn_ground_platforms_spikes,
-            )
-            .add_systems(
-                OnEnter(AppState::FinishLevel),
-                despawn_ground_platforms_spikes,
-            );
+        app.add_systems(OnEnter(AppState::GameCreate), setup_colliders)
+            .add_systems(OnEnter(AppState::NextLevel), setup_colliders)
+            .add_systems(OnEnter(AppState::StartMenu), despawn_colliders)
+            .add_systems(OnEnter(AppState::FinishLevel), despawn_colliders);
     }
 }
 
@@ -222,7 +216,7 @@ impl<'a, T: Component + Clone> LayerComponentBridge<'a, T> {
     }
 }
 
-fn setup_ground_platforms_spikes(
+fn setup_colliders(
     mut commands: Commands,
     assets: Res<Assets<TiledMap>>,
     current_level: Res<CurrentLevel>,
@@ -263,7 +257,7 @@ fn setup_ground_platforms_spikes(
         });
 }
 
-fn despawn_ground_platforms_spikes(
+fn despawn_colliders(
     mut commands: Commands,
     ground_query: Query<(Entity, &Collider), With<Ground>>,
     platforms_query: Query<(Entity, &Collider), With<Platform>>,
