@@ -11,6 +11,7 @@
 - [ ] Test on MacOS.
 - [ ] Add more enigmas.
 - [ ] Add a envvar to enable fixing menu position.
+- [ ] Review camera smoothing especially y axis.
 - [ ] Add trex.
 - [ ] Add more sound effects.
 - [ ] Add a volcano that throws rocks.
