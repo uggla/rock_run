@@ -8,11 +8,9 @@ mod helpers;
 mod life;
 mod moving_platform;
 mod player;
-mod pterodactyl;
 mod rock;
 mod screen_map;
 mod story;
-mod triceratops;
 
 use bevy::prelude::*;
 use bevy::window::WindowResolution;
@@ -29,9 +27,7 @@ use crate::{
     life::LifePlugin,
     moving_platform::MovingPlatformPlugin,
     player::PlayerPlugin,
-    pterodactyl::PterodactylPlugin,
     rock::RockPlugin,
-    triceratops::TriceratopsPlugin,
 };
 
 // 16/9 1280x720
@@ -59,8 +55,6 @@ fn main() {
             BeastsPlugins,
             helpers::tiled::TiledMapPlugin,
             PlayerPlugin,
-            TriceratopsPlugin,
-            PterodactylPlugin,
             RockPlugin,
             LifePlugin,
             MovingPlatformPlugin,

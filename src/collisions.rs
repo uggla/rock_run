@@ -8,6 +8,8 @@ use bevy_rapier2d::{
 
 use crate::{
     beasts::bat::Bat,
+    beasts::pterodactyl::Pterodactyl,
+    beasts::triceratops::Triceratops,
     coregame::{
         colliders::{ColliderName, Ground, Ladder, Platform, PositionSensor, Spike, Story},
         level::{CurrentLevel, Level},
@@ -22,9 +24,7 @@ use crate::{
     life::ExtraLife,
     moving_platform::MovingPlatform,
     player::{self, Player, PlayerState, PLAYER_HEIGHT},
-    pterodactyl::Pterodactyl,
     rock::Rock,
-    triceratops::Triceratops,
 };
 
 pub struct CollisionsPlugin;
