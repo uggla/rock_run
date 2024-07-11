@@ -3,9 +3,9 @@ use crate::{
         level::{CurrentLevel, Level},
         state::AppState,
     },
+    elements::story::{decompose_selection_msg, TextSyllableValues},
     events::{EnigmaResult, NoMoreStoryMessages},
     helpers::texture::cycle_texture,
-    story::{decompose_selection_msg, TextSyllableValues},
 };
 use bevy::{prelude::*, utils::HashMap};
 use bevy_rapier2d::geometry::Collider;

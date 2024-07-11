@@ -15,8 +15,8 @@ use crate::{
         level::CurrentLevel,
         state::{AppState, ForState},
     },
+    elements::story::SelectionDirection,
     events::{LadderCollisionStop, NoMoreStoryMessages, SelectionChanged, StoryMessages},
-    story::SelectionDirection,
     WINDOW_WIDTH,
 };
 

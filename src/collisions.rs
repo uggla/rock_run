@@ -15,16 +15,16 @@ use crate::{
         level::{CurrentLevel, Level},
         state::AppState,
     },
-    enigma::{EnigmaKind, Enigmas},
+    elements::enigma::{EnigmaKind, Enigmas},
+    elements::moving_platform::MovingPlatform,
+    elements::rock::Rock,
     events::{
         ExtraLifeCollision, Hit, LadderCollisionStart, LadderCollisionStop,
         MovingPlatformCollision, PositionSensorCollisionStart, PositionSensorCollisionStop,
         Restart, StoryMessages, TriceratopsCollision,
     },
     life::ExtraLife,
-    moving_platform::MovingPlatform,
     player::{self, Player, PlayerState, PLAYER_HEIGHT},
-    rock::Rock,
 };
 
 pub struct CollisionsPlugin;

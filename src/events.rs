@@ -1,6 +1,6 @@
 use bevy::{prelude::*, utils::HashMap};
 
-use crate::story::SelectionDirection;
+use crate::elements::story::SelectionDirection;
 
 pub type MessageArgs = Option<HashMap<String, String>>;
 pub type Message = String;

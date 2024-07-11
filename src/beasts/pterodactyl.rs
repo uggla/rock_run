@@ -9,10 +9,10 @@ use bevy_rapier2d::{
 use crate::{
     collisions::CollisionSet,
     coregame::state::AppState,
+    elements::rock::Rock,
     events::{PositionSensorCollisionStart, Restart},
     helpers::texture::cycle_texture,
     player::Player,
-    rock::Rock,
     WINDOW_HEIGHT, WINDOW_WIDTH,
 };
 

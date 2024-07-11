@@ -1,33 +1,26 @@
 mod beasts;
 mod collisions;
 mod coregame;
-mod enigma;
+mod elements;
 mod events;
 mod external_plugins;
 mod helpers;
 mod life;
-mod moving_platform;
 mod player;
-mod rock;
 mod screen_map;
-mod story;
 
 use bevy::prelude::*;
 use bevy::window::WindowResolution;
-
-use story::StoryPlugin;
 
 use crate::{
     beasts::plugins::BeastsPlugins,
     collisions::CollisionsPlugin,
     coregame::{plugins::CoreGamePlugins, state::AppState},
-    enigma::EnigmaPlugin,
+    elements::plugins::ElementsPlugins,
     events::{NoMoreStoryMessages, StoryMessages},
     external_plugins::ExternalPlugins,
     life::LifePlugin,
-    moving_platform::MovingPlatformPlugin,
     player::PlayerPlugin,
-    rock::RockPlugin,
 };
 
 // 16/9 1280x720
@@ -53,14 +46,11 @@ fn main() {
             CoreGamePlugins,
             ExternalPlugins,
             BeastsPlugins,
+            ElementsPlugins,
             helpers::tiled::TiledMapPlugin,
             PlayerPlugin,
-            RockPlugin,
             LifePlugin,
-            MovingPlatformPlugin,
             CollisionsPlugin,
-            StoryPlugin::default(),
-            EnigmaPlugin,
         ))
         .add_systems(
             Update,
@@ -105,12 +95,10 @@ fn toggle_perf_ui(
 #[allow(unused)]
 fn update_text(
     mut msg_event: EventWriter<StoryMessages>,
-    // mut life_event: EventWriter<events::LifeEvent>,
     input: Query<
         &leafwing_input_manager::action_state::ActionState<player::PlayerMovement>,
         With<player::Player>,
     >,
-    mut ext_impulses: Query<&mut bevy_rapier2d::dynamics::ExternalImpulse, With<rock::Rock>>,
 ) {
     let input_state = match input.get_single() {
         Ok(state) => state,
@@ -118,7 +106,7 @@ fn update_text(
     };
 
     if input_state.just_pressed(&player::PlayerMovement::Crouch) {
-        debug!("open window to display messages");
+        debug!("debugging you press crouch(down array key)");
         // for mut ext_impulse in ext_impulses.iter_mut() {
         //     ext_impulse.impulse = Vec2::new(-100.0, 0.0);
         // }
