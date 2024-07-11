@@ -1,8 +1,10 @@
 use crate::{
+    assets::RockRunAssets,
+    coregame::state::AppState,
     elements::story::TextSyllableValues,
     events::{Message, MessageArgs, NoMoreStoryMessages, StoryMessages},
 };
-use bevy::{asset::LoadState, prelude::*, utils::HashMap};
+use bevy::{prelude::*, utils::HashMap};
 use bevy_fluent::{BundleAsset, Locale};
 use fluent::{FluentArgs, FluentValue};
 use unic_langid::langid;
@@ -12,63 +14,26 @@ pub struct LocalizationPlugin;
 impl Plugin for LocalizationPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(Locale::new(langid!("fr-FR")))
-            .insert_resource(LocaleHandles::default())
-            .add_systems(Startup, load_localization)
-            .add_systems(Update, (check_localization_loaded, localize_story_messages));
-    }
-}
-
-#[derive(Resource, Default)]
-pub struct LocaleHandles {
-    handles: Vec<Handle<BundleAsset>>,
-}
-
-fn load_localization(asset_server: Res<AssetServer>, mut locale_handles: ResMut<LocaleHandles>) {
-    info!("load_localisation");
-    let locale_files = ["locales/en-US/main.ftl.ron", "locales/fr-FR/main.ftl.ron"];
-
-    for file in locale_files {
-        locale_handles.handles.push(asset_server.load(file));
-    }
-}
-
-fn check_localization_loaded(
-    asset_server: Res<AssetServer>,
-    locale_handles: Res<LocaleHandles>,
-    mut already_run: Local<bool>,
-) {
-    if *already_run {
-        return;
-    }
-    info!("check_localization_loadded");
-    let loading_status = locale_handles
-        .handles
-        .iter()
-        .map(|handle| asset_server.get_load_state(handle))
-        .collect::<Vec<_>>();
-
-    if loading_status
-        .iter()
-        .all(|status| matches!(status, Some(LoadState::Loaded)))
-    {
-        info!("All localisation loaded");
-        *already_run = true;
+            .add_systems(
+                Update,
+                localize_story_messages.run_if(not(in_state(AppState::Loading))),
+            );
     }
 }
 
 pub fn get_translation(
     locale: &Locale,
     assets: &Res<Assets<BundleAsset>>,
-    locale_handles: &Res<LocaleHandles>,
+    rock_run_assets: &Res<RockRunAssets>,
     message: &str,
     args: Option<&FluentArgs>,
 ) -> String {
     let handle = if locale.requested == langid!("fr-FR") {
         debug!("Lang: fr-FR");
-        &locale_handles.handles[1]
+        &rock_run_assets.french_locale
     } else {
         debug!("Lang: en-US");
-        &locale_handles.handles[0]
+        &rock_run_assets.english_locale
     };
 
     let bundle = match assets.get(handle) {
@@ -90,7 +55,7 @@ fn localize_story_messages(
     mut msg_event_writer: EventWriter<NoMoreStoryMessages>,
     assets: Res<Assets<BundleAsset>>,
     locale: Res<Locale>,
-    locale_handles: Res<LocaleHandles>,
+    rock_run_assets: Res<RockRunAssets>,
     mut params: ResMut<TextSyllableValues>,
     mut messages: Local<Vec<(Message, MessageArgs)>>,
     mut latest_message: Local<Message>,
@@ -115,7 +80,7 @@ fn localize_story_messages(
                 let value = get_translation(
                     &locale,
                     &assets,
-                    &locale_handles,
+                    &rock_run_assets,
                     &msg,
                     translation_args.as_ref(),
                 );

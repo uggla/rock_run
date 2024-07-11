@@ -8,6 +8,7 @@ edition = "2021"
 
 [dependencies]
 bevy = { version = "0.13.2", features = ["jpeg"] }
+bevy_asset_loader = { version = "0.20.0", features = ["2d"] }
 bevy_ecs_tilemap = { git = "https://github.com/StarArawn/bevy_ecs_tilemap.git" }
 bevy_fluent = "0.9.0"
 bevy_rapier2d = "0.26.0"

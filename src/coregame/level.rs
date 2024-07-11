@@ -3,8 +3,11 @@ use bevy_ecs_tilemap::tiles::{TileStorage, TileVisible};
 use bevy_fluent::{BundleAsset, Locale};
 
 use crate::{
-    coregame::localization::{convert_to_fluent_args, get_translation, LocaleHandles},
-    coregame::state::AppState,
+    assets::RockRunAssets,
+    coregame::{
+        localization::{convert_to_fluent_args, get_translation},
+        state::AppState,
+    },
     events::{NextLevel, PositionSensorCollisionStart, PositionSensorCollisionStop, Restart},
     helpers::{
         self,
@@ -102,7 +105,7 @@ fn show_current_level(
     asset_server: Res<AssetServer>,
     locale: Res<Locale>,
     assets: Res<Assets<BundleAsset>>,
-    locale_handles: Res<LocaleHandles>,
+    rock_run_assets: Res<RockRunAssets>,
 ) {
     info!("show_current_level {:?}", current_level.id);
     commands
@@ -130,7 +133,7 @@ fn show_current_level(
                         get_translation(
                             &locale,
                             &assets,
-                            &locale_handles,
+                            &rock_run_assets,
                             "current_level",
                             convert_to_fluent_args(Some(HashMap::from([(
                                 "current_level".to_string(),

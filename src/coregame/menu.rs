@@ -10,9 +10,10 @@ use leafwing_input_manager::{
 use unic_langid::langid;
 
 use crate::{
-    coregame::localization::{get_translation, LocaleHandles},
+    assets::RockRunAssets,
     coregame::{
         level::CurrentLevel,
+        localization::get_translation,
         state::{AppState, ForState},
     },
     elements::story::SelectionDirection,
@@ -116,7 +117,7 @@ fn start_menu(
     asset_server: Res<AssetServer>,
     locale: Res<Locale>,
     assets: Res<Assets<BundleAsset>>,
-    locale_handles: Res<LocaleHandles>,
+    rock_run_assets: Res<RockRunAssets>,
 ) {
     info!("start_menu");
     #[cfg(not(target_arch = "wasm32"))]
@@ -226,7 +227,7 @@ fn start_menu(
                                         get_translation(
                                             &locale,
                                             &assets,
-                                            &locale_handles,
+                                            &rock_run_assets,
                                             "lang01",
                                             None,
                                         ),
@@ -302,7 +303,7 @@ fn start_menu(
                                         get_translation(
                                             &locale,
                                             &assets,
-                                            &locale_handles,
+                                            &rock_run_assets,
                                             "lang02",
                                             None,
                                         ),
@@ -331,7 +332,7 @@ fn start_menu(
                                 get_translation(
                                     &locale,
                                     &assets,
-                                    &locale_handles,
+                                    &rock_run_assets,
                                     "start_game",
                                     None,
                                 ),
@@ -363,7 +364,7 @@ fn update_menu(
     mut query1: Query<&mut Text, Select1>,
     mut query2: Query<&mut Text, Select2>,
     assets: Res<Assets<BundleAsset>>,
-    locale_handles: Res<LocaleHandles>,
+    rock_run_assets: Res<RockRunAssets>,
 ) {
     enum MenuColor {
         Selected,
@@ -410,7 +411,7 @@ fn update_menu(
                 refresh_menu_items(
                     &locale,
                     assets,
-                    locale_handles,
+                    rock_run_assets,
                     &mut sel0,
                     &mut sel1,
                     &mut sel2,
@@ -422,7 +423,7 @@ fn update_menu(
                 refresh_menu_items(
                     &locale,
                     assets,
-                    locale_handles,
+                    rock_run_assets,
                     &mut sel0,
                     &mut sel1,
                     &mut sel2,
@@ -470,15 +471,15 @@ fn update_menu(
 fn refresh_menu_items(
     locale: &ResMut<Locale>,
     assets: Res<Assets<BundleAsset>>,
-    locale_handles: Res<LocaleHandles>,
+    rock_run_assets: Res<RockRunAssets>,
     sel0: &mut Mut<Text>,
     sel1: &mut Mut<Text>,
     sel2: &mut Mut<Text>,
 ) {
     // Refresh menu items in case we has just changed the locale
-    sel0.sections[0].value = get_translation(locale, &assets, &locale_handles, "start_game", None);
-    sel1.sections[0].value = get_translation(locale, &assets, &locale_handles, "lang02", None);
-    sel2.sections[0].value = get_translation(locale, &assets, &locale_handles, "lang01", None);
+    sel0.sections[0].value = get_translation(locale, &assets, &rock_run_assets, "start_game", None);
+    sel1.sections[0].value = get_translation(locale, &assets, &rock_run_assets, "lang02", None);
+    sel2.sections[0].value = get_translation(locale, &assets, &rock_run_assets, "lang01", None);
 }
 
 fn gamefinished_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -620,7 +621,6 @@ fn menu_input_system(
     mut msg_event: EventWriter<StoryMessages>,
     mut selection_event: EventWriter<SelectionChanged>,
     mut no_more_msg_event: EventReader<NoMoreStoryMessages>,
-    mut localization_asset_events: EventReader<AssetEvent<BundleAsset>>,
     mut ladder_collision_stop: EventWriter<LadderCollisionStop>,
     mut current_level: ResMut<CurrentLevel>,
 ) {
@@ -711,13 +711,7 @@ fn menu_input_system(
                 }
             }
             AppState::Loading => {
-                // Wait for the localization assets to be fully loaded...
-                for event in localization_asset_events.read() {
-                    if let AssetEvent::LoadedWithDependencies { id } = event {
-                        debug!("Localization asset id: {:?}", id);
-                        next_state.set(AppState::StartMenu);
-                    }
-                }
+                // This state is used to load assets.
             }
             AppState::FinishLevel => {
                 // Mostly used to despawn stuff

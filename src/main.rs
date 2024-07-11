@@ -1,3 +1,4 @@
+mod assets;
 mod beasts;
 mod collisions;
 mod coregame;
@@ -13,6 +14,7 @@ use bevy::prelude::*;
 use bevy::window::WindowResolution;
 
 use crate::{
+    assets::RockRunAssets,
     beasts::plugins::BeastsPlugins,
     collisions::CollisionsPlugin,
     coregame::{plugins::CoreGamePlugins, state::AppState},
@@ -22,6 +24,8 @@ use crate::{
     life::LifePlugin,
     player::PlayerPlugin,
 };
+
+use bevy_asset_loader::prelude::*;
 
 // 16/9 1280x720
 pub const WINDOW_WIDTH: f32 = 1280.0;
@@ -52,6 +56,11 @@ fn main() {
             LifePlugin,
             CollisionsPlugin,
         ))
+        .add_loading_state(
+            LoadingState::new(AppState::Loading)
+                .continue_to_state(AppState::StartMenu)
+                .load_collection::<RockRunAssets>(),
+        )
         .add_systems(
             Update,
             (
