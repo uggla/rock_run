@@ -13,13 +13,13 @@ mod player;
 mod pterodactyl;
 mod rock;
 mod screen_map;
-mod text_syllable;
+mod story;
 mod triceratops;
 
 use bevy::prelude::*;
 use bevy::window::WindowResolution;
 
-use text_syllable::TextSyllablePlugin;
+use story::StoryPlugin;
 
 use crate::{
     bat::BatPlugin,
@@ -71,7 +71,7 @@ fn main() {
             MovingPlatformPlugin,
             CollisionsPlugin,
             LocalizationPlugin,
-            TextSyllablePlugin::default(),
+            StoryPlugin::default(),
             EnigmaPlugin,
         ))
         .add_systems(

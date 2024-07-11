@@ -16,7 +16,7 @@ use crate::{
     },
     events::{LadderCollisionStop, NoMoreStoryMessages, SelectionChanged, StoryMessages},
     localization::{get_translation, LocaleHandles},
-    text_syllable::SelectionDirection,
+    story::SelectionDirection,
     WINDOW_WIDTH,
 };
 

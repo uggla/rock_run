@@ -5,7 +5,7 @@ use crate::{
     },
     events::{EnigmaResult, NoMoreStoryMessages},
     helpers::texture::cycle_texture,
-    text_syllable::{decompose_selection_msg, TextSyllableValues},
+    story::{decompose_selection_msg, TextSyllableValues},
 };
 use bevy::{prelude::*, utils::HashMap};
 use bevy_rapier2d::geometry::Collider;

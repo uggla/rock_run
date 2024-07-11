@@ -33,7 +33,7 @@ pub struct SyllableStyle {
     pub color: Color,
 }
 
-pub struct TextSyllablePlugin {
+pub struct StoryPlugin {
     pub font: AssetPath<'static>,
     pub radius: f32,
     pub box_position: Vec3,
@@ -80,7 +80,7 @@ pub struct TextSyllableValues {
     style_selected: TextStyle,
 }
 
-impl Default for TextSyllablePlugin {
+impl Default for StoryPlugin {
     fn default() -> Self {
         let box_size = Vec2::new(500.0, 200.0);
 
@@ -134,7 +134,7 @@ impl Default for TextSyllablePlugin {
     }
 }
 
-impl Plugin for TextSyllablePlugin {
+impl Plugin for StoryPlugin {
     fn build(&self, app: &mut App) {
         let text_params = TextSyllableValues {
             font: self.font.clone(),

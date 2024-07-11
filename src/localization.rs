@@ -1,6 +1,6 @@
 use crate::{
     events::{Message, MessageArgs, NoMoreStoryMessages, StoryMessages},
-    text_syllable::TextSyllableValues,
+    story::TextSyllableValues,
 };
 use bevy::{asset::LoadState, prelude::*, utils::HashMap};
 use bevy_fluent::{BundleAsset, Locale};
