@@ -1,5 +1,4 @@
-mod bat;
-mod colliders;
+mod beasts;
 mod collisions;
 mod coregame;
 mod enigma;
@@ -7,7 +6,6 @@ mod events;
 mod external_plugins;
 mod helpers;
 mod life;
-mod localization;
 mod moving_platform;
 mod player;
 mod pterodactyl;
@@ -22,15 +20,13 @@ use bevy::window::WindowResolution;
 use story::StoryPlugin;
 
 use crate::{
-    bat::BatPlugin,
-    colliders::CollidersPlugin,
+    beasts::plugins::BeastsPlugins,
     collisions::CollisionsPlugin,
     coregame::{plugins::CoreGamePlugins, state::AppState},
     enigma::EnigmaPlugin,
     events::{NoMoreStoryMessages, StoryMessages},
     external_plugins::ExternalPlugins,
     life::LifePlugin,
-    localization::LocalizationPlugin,
     moving_platform::MovingPlatformPlugin,
     player::PlayerPlugin,
     pterodactyl::PterodactylPlugin,
@@ -60,17 +56,15 @@ fn main() {
                 .set(ImagePlugin::default_nearest()),
             CoreGamePlugins,
             ExternalPlugins,
+            BeastsPlugins,
             helpers::tiled::TiledMapPlugin,
-            CollidersPlugin,
             PlayerPlugin,
             TriceratopsPlugin,
-            // BatPlugin,
             PterodactylPlugin,
             RockPlugin,
             LifePlugin,
             MovingPlatformPlugin,
             CollisionsPlugin,
-            LocalizationPlugin,
             StoryPlugin::default(),
             EnigmaPlugin,
         ))

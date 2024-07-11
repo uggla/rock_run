@@ -10,12 +10,12 @@ use leafwing_input_manager::{
 use unic_langid::langid;
 
 use crate::{
+    coregame::localization::{get_translation, LocaleHandles},
     coregame::{
         level::CurrentLevel,
         state::{AppState, ForState},
     },
     events::{LadderCollisionStop, NoMoreStoryMessages, SelectionChanged, StoryMessages},
-    localization::{get_translation, LocaleHandles},
     story::SelectionDirection,
     WINDOW_WIDTH,
 };

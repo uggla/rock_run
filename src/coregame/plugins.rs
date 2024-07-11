@@ -1,6 +1,6 @@
 use bevy::{app::PluginGroupBuilder, prelude::*};
 
-use crate::coregame::{camera, level, menu, state};
+use crate::coregame::{camera, colliders, level, localization, menu, state};
 
 pub struct CoreGamePlugins;
 
@@ -11,5 +11,7 @@ impl PluginGroup for CoreGamePlugins {
             .add(camera::CameraPlugin)
             .add(menu::MenuPlugin)
             .add(level::LevelPlugin)
+            .add(colliders::CollidersPlugin)
+            .add(localization::LocalizationPlugin)
     }
 }

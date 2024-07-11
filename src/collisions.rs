@@ -7,9 +7,9 @@ use bevy_rapier2d::{
 };
 
 use crate::{
-    bat::Bat,
-    colliders::{ColliderName, Ground, Ladder, Platform, PositionSensor, Spike, Story},
+    beasts::bat::Bat,
     coregame::{
+        colliders::{ColliderName, Ground, Ladder, Platform, PositionSensor, Spike, Story},
         level::{CurrentLevel, Level},
         state::AppState,
     },

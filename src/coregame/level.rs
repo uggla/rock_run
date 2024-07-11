@@ -3,13 +3,13 @@ use bevy_ecs_tilemap::tiles::{TileStorage, TileVisible};
 use bevy_fluent::{BundleAsset, Locale};
 
 use crate::{
+    coregame::localization::{convert_to_fluent_args, get_translation, LocaleHandles},
     coregame::state::AppState,
     events::{NextLevel, PositionSensorCollisionStart, PositionSensorCollisionStop, Restart},
     helpers::{
         self,
         tiled::{TiledMap, TilesetLayerToStorageEntity},
     },
-    localization::{convert_to_fluent_args, get_translation, LocaleHandles},
     player, WINDOW_HEIGHT, WINDOW_WIDTH,
 };
 

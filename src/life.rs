@@ -2,9 +2,9 @@ use bevy::{prelude::*, utils::HashMap};
 use bevy_rapier2d::geometry::{ActiveCollisionTypes, ActiveEvents, Collider, Sensor};
 
 use crate::{
-    colliders::ColliderName,
     coregame::{
         camera::CameraSet,
+        colliders::ColliderName,
         level::{CurrentLevel, Level},
         state::AppState,
     },
