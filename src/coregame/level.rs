@@ -105,19 +105,22 @@ fn show_current_level(
     rock_run_assets: Res<RockRunAssets>,
     locale: Res<Locale>,
     assets: Res<Assets<BundleAsset>>,
+    levels: Query<&Level, With<Level>>,
 ) {
     info!("show_current_level {:?}", current_level.id);
+
+    let level = levels
+        .iter()
+        .find(|level| level.id == current_level.id)
+        .unwrap();
+
     commands
         .spawn((
-            NodeBundle {
-                style: Style {
-                    width: Val::Percent(100.0),
-                    height: Val::Percent(100.0),
-                    flex_direction: FlexDirection::Column,
-                    justify_content: JustifyContent::Center,
-                    align_items: AlignItems::Center,
-                    ..default()
-                },
+            SpriteBundle {
+                sprite: Sprite { ..default() },
+                transform: Transform::from_translation(
+                    level.map.get_start_screen().get_center().xy().extend(10.0),
+                ),
                 ..default()
             },
             DisplayLevel,
@@ -126,8 +129,8 @@ fn show_current_level(
         // right column
         .with_children(|parent| {
             parent.spawn((
-                TextBundle {
-                    style: Style { ..default() },
+                Text2dBundle {
+                    transform: Transform::from_xyz(0.0, 0.0, 1.0),
                     text: Text::from_section(
                         get_translation(
                             &locale,

@@ -18,7 +18,7 @@ use crate::{
     events::{SelectionChanged, StoryMessages},
 };
 
-const Z_VALUE: f32 = 10.0;
+const Z_VALUE: f32 = 15.0;
 
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States)]
 pub enum TextSyllableState {
