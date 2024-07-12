@@ -8,6 +8,7 @@ use leafwing_input_manager::{
 };
 
 use crate::{
+    assets::RockRunAssets,
     collisions::CollisionSet,
     coregame::{
         level::{CurrentLevel, Level},
@@ -94,7 +95,7 @@ impl Plugin for PlayerPlugin {
 
 fn setup_player(
     mut commands: Commands,
-    asset_server: Res<AssetServer>,
+    rock_run_assets: Res<RockRunAssets>,
     mut texture_atlases: ResMut<Assets<TextureAtlasLayout>>,
     levels: Query<&Level, With<Level>>,
     current_level: Res<CurrentLevel>,
@@ -106,9 +107,7 @@ fn setup_player(
         .find(|level| level.id == current_level.id)
         .unwrap();
 
-    let texture = asset_server.load("girl.png");
-    let jump_sound = asset_server.load("sounds/jump.ogg");
-    let hit_sound = asset_server.load("sounds/hit.ogg");
+    let texture = rock_run_assets.player.clone();
 
     let layout =
         TextureAtlasLayout::from_grid(Vec2::new(PLAYER_WIDTH, PLAYER_HEIGHT), 6, 7, None, None);
@@ -186,8 +185,8 @@ fn setup_player(
         InputManagerBundle::with_map(input_map),
         Player,
         PlayerAudio {
-            jump_sound: jump_sound.clone(),
-            hit_sound,
+            jump_sound: rock_run_assets.jump_sound.clone(),
+            hit_sound: rock_run_assets.hit_sound.clone(),
         },
     ));
 }

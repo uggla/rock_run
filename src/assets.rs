@@ -23,6 +23,14 @@ pub struct RockRunAssets {
     pub cute_dino_font: Handle<Font>,
 
     // Sprites
+    #[asset(path = "sprites/girl.png")]
+    pub player: Handle<Image>,
     #[asset(path = "sprites/life.png")]
     pub life: Handle<Image>,
+
+    // Sounds
+    #[asset(path = "sounds/jump.ogg")]
+    pub jump_sound: Handle<AudioSource>,
+    #[asset(path = "sounds/hit.ogg")]
+    pub hit_sound: Handle<AudioSource>,
 }
