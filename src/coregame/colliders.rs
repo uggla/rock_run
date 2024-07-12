@@ -263,7 +263,8 @@ fn despawn_colliders(
     platforms_query: Query<(Entity, &Collider), With<Platform>>,
     spikes_query: Query<(Entity, &Collider), With<Spike>>,
     stories_query: Query<(Entity, &Collider), With<Story>>,
-    bat_sensors_query: Query<(Entity, &Collider), With<PositionSensor>>,
+    position_sensors_query: Query<(Entity, &Collider), With<PositionSensor>>,
+    ladders_query: Query<(Entity, &Collider), With<Ladder>>,
 ) {
     for (entity, _) in ground_query.iter() {
         commands.entity(entity).despawn_recursive();
@@ -281,7 +282,11 @@ fn despawn_colliders(
         commands.entity(entity).despawn_recursive();
     }
 
-    for (entity, _) in bat_sensors_query.iter() {
+    for (entity, _) in position_sensors_query.iter() {
+        commands.entity(entity).despawn_recursive();
+    }
+
+    for (entity, _) in ladders_query.iter() {
         commands.entity(entity).despawn_recursive();
     }
 }
