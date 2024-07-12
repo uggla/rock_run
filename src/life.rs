@@ -2,6 +2,7 @@ use bevy::{prelude::*, utils::HashMap};
 use bevy_rapier2d::geometry::{ActiveCollisionTypes, ActiveEvents, Collider, Sensor};
 
 use crate::{
+    assets::RockRunAssets,
     coregame::{
         camera::CameraSet,
         colliders::ColliderName,
@@ -50,15 +51,15 @@ impl Plugin for LifePlugin {
     }
 }
 
-fn setup_life(mut commands: Commands, asset_server: Res<AssetServer>, mut life: ResMut<Life>) {
-    let texture = asset_server.load("life.png");
+fn setup_life(mut commands: Commands, rock_run_assets: Res<RockRunAssets>, mut life: ResMut<Life>) {
+    let texture = &rock_run_assets.life;
 
-    let parent = spawn_life_entity(&mut commands, &life, &texture);
+    let parent = spawn_life_entity(&mut commands, &life, texture);
     commands.entity(parent).insert(LifeUI);
     life.entities.push(parent);
 
     for _ in 0..2 {
-        let child = spawn_life_entity(&mut commands, &life, &texture);
+        let child = spawn_life_entity(&mut commands, &life, texture);
         commands.entity(parent).add_child(child);
         life.entities.push(child);
     }
@@ -154,7 +155,7 @@ fn despawn_life(
 
 fn setup_extralife(
     mut commands: Commands,
-    asset_server: Res<AssetServer>,
+    rock_run_assets: Res<RockRunAssets>,
     levels: Query<&Level, With<Level>>,
     current_level: Res<CurrentLevel>,
 ) {
@@ -165,7 +166,7 @@ fn setup_extralife(
         .find(|level| level.id == current_level.id)
         .unwrap();
 
-    let texture = asset_server.load("life.png");
+    let texture = &rock_run_assets.life;
     let mut extra_life_pos: HashMap<u8, Vec<Vec2>> = HashMap::new();
     extra_life_pos.insert(
         1,

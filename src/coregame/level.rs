@@ -43,7 +43,7 @@ pub struct LevelPlugin;
 
 impl Plugin for LevelPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, setup_background)
+        app.add_systems(OnExit(AppState::Loading), setup_background)
             .add_systems(
                 OnEnter(AppState::GameCreate),
                 (show_level_background, show_current_level),
@@ -67,8 +67,8 @@ impl Plugin for LevelPlugin {
     }
 }
 
-fn setup_background(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let map_handle: Handle<helpers::tiled::TiledMap> = asset_server.load("level01.tmx");
+fn setup_background(mut commands: Commands, rock_run_assets: Res<RockRunAssets>) {
+    let map_handle: Handle<helpers::tiled::TiledMap> = rock_run_assets.level01.clone();
     commands.spawn((
         helpers::tiled::TiledMapBundle {
             tiled_map: map_handle.clone(),
@@ -81,7 +81,7 @@ fn setup_background(mut commands: Commands, asset_server: Res<AssetServer>) {
         },
     ));
 
-    let map_handle: Handle<helpers::tiled::TiledMap> = asset_server.load("level02.tmx");
+    let map_handle: Handle<helpers::tiled::TiledMap> = rock_run_assets.level02.clone();
     commands.spawn((
         helpers::tiled::TiledMapBundle {
             tiled_map: map_handle.clone(),
@@ -102,10 +102,9 @@ fn setup_background(mut commands: Commands, asset_server: Res<AssetServer>) {
 fn show_current_level(
     mut commands: Commands,
     current_level: Res<CurrentLevel>,
-    asset_server: Res<AssetServer>,
+    rock_run_assets: Res<RockRunAssets>,
     locale: Res<Locale>,
     assets: Res<Assets<BundleAsset>>,
-    rock_run_assets: Res<RockRunAssets>,
 ) {
     info!("show_current_level {:?}", current_level.id);
     commands
@@ -142,7 +141,7 @@ fn show_current_level(
                             .as_ref(),
                         ),
                         TextStyle {
-                            font: asset_server.load("fonts/Cute_Dino.ttf"),
+                            font: rock_run_assets.cute_dino_font.clone(),
                             font_size: 60.0,
                             color: Color::rgb_u8(0xF4, 0x78, 0x04),
                         },
