@@ -1,4 +1,5 @@
 use crate::{
+    assets::RockRunAssets,
     coregame::{
         level::{CurrentLevel, Level},
         state::AppState,
@@ -84,7 +85,7 @@ impl Plugin for EnigmaPlugin {
 
 fn spawn_enigma_materials(
     mut commands: Commands,
-    asset_server: Res<AssetServer>,
+    rock_run_assets: Res<RockRunAssets>,
     mut texture_atlases: ResMut<Assets<TextureAtlasLayout>>,
     current_level: Res<CurrentLevel>,
     levels: Query<&Level, With<Level>>,
@@ -97,7 +98,7 @@ fn spawn_enigma_materials(
             .find(|level| level.id == current_level.id)
             .unwrap();
 
-        let texture = asset_server.load("warrior.png");
+        let texture = rock_run_assets.warrior.clone();
         let layout = TextureAtlasLayout::from_grid(
             Vec2::new(WARRIOR_WIDTH, WARRIOR_HEIGHT),
             6,
@@ -129,7 +130,7 @@ fn spawn_enigma_materials(
             Warrior,
         ));
 
-        let texture = asset_server.load("gate.png");
+        let texture = rock_run_assets.gate.clone();
         commands.spawn((
             SpriteBundle {
                 texture,

@@ -29,6 +29,14 @@ pub struct RockRunAssets {
     pub life: Handle<Image>,
     #[asset(path = "sprites/story_qm.png")]
     pub story_qm: Handle<Image>,
+    #[asset(path = "sprites/rock_ball.png")]
+    pub rock_ball: Handle<Image>,
+    #[asset(path = "sprites/moving_platform.png")]
+    pub moving_platform: Handle<Image>,
+    #[asset(path = "sprites/warrior.png")]
+    pub warrior: Handle<Image>,
+    #[asset(path = "sprites/gate.png")]
+    pub gate: Handle<Image>,
 
     // Images
     #[asset(path = "images/menu.jpg")]

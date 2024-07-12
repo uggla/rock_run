@@ -5,6 +5,7 @@ use bevy_rapier2d::{
 };
 
 use crate::{
+    assets::RockRunAssets,
     collisions::CollisionSet,
     coregame::state::AppState,
     events::{PositionSensorCollisionStart, Restart},
@@ -73,7 +74,7 @@ fn get_collider_shapes(y_mirror: bool) -> Vec<(Vec2, f32, Collider)> {
 
 fn spawn_rock(
     mut commands: Commands,
-    asset_server: Res<AssetServer>,
+    rock_run_assets: Res<RockRunAssets>,
     mut rock_sensor_collision: EventReader<PositionSensorCollisionStart>,
 ) {
     for collision_event in rock_sensor_collision.read() {
@@ -81,7 +82,7 @@ fn spawn_rock(
             return;
         }
 
-        let texture = asset_server.load("rock_ball.png");
+        let texture = rock_run_assets.rock_ball.clone();
 
         commands
             .spawn((

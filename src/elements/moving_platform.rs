@@ -7,6 +7,7 @@ use bevy_rapier2d::{
 };
 
 use crate::{
+    assets::RockRunAssets,
     coregame::{
         level::{CurrentLevel, Level},
         state::AppState,
@@ -85,7 +86,7 @@ impl Plugin for MovingPlatformPlugin {
 
 fn setup_moving_platforms(
     mut commands: Commands,
-    asset_server: Res<AssetServer>,
+    rock_run_assets: Res<RockRunAssets>,
     levels: Query<&Level, With<Level>>,
     current_level: Res<CurrentLevel>,
 ) {
@@ -96,7 +97,7 @@ fn setup_moving_platforms(
         .find(|level| level.id == current_level.id)
         .unwrap();
 
-    let texture = asset_server.load("moving_platform.png");
+    let texture = rock_run_assets.moving_platform.clone();
     let mut level_moving_platforms: HashMap<u8, Vec<MovingPlatform>> = HashMap::new();
     level_moving_platforms.insert(
         1,
