@@ -7,6 +7,7 @@ use bevy_rapier2d::{
 };
 
 use crate::{
+    assets::RockRunAssets,
     collisions::CollisionSet,
     coregame::state::AppState,
     elements::rock::Rock,
@@ -97,7 +98,7 @@ fn get_collider_shapes(y_mirror: bool) -> Vec<(Vec2, f32, Collider)> {
 
 fn spawn_pterodactyl(
     mut commands: Commands,
-    asset_server: Res<AssetServer>,
+    rock_run_assets: Res<RockRunAssets>,
     mut texture_atlases: ResMut<Assets<TextureAtlasLayout>>,
     mut pterodactyl_sensor_collision: EventReader<PositionSensorCollisionStart>,
 ) {
@@ -106,7 +107,7 @@ fn spawn_pterodactyl(
             return;
         }
 
-        let texture = asset_server.load("pterodactyl-1.png");
+        let texture = rock_run_assets.pterodactyl.clone();
         let layout = TextureAtlasLayout::from_grid(
             Vec2::new(PTERODACTYL_WIDTH, PTERODACTYL_HEIGHT),
             4,
@@ -176,7 +177,7 @@ fn move_pterodactyl(
     player_query: Query<&mut Transform, (With<Player>, Without<Pterodactyl>)>,
     mut chase_timer: Query<&mut ChaseTimer>,
     mut throw_timer: Query<&mut ThrowTimer>,
-    asset_server: Res<AssetServer>,
+    rock_run_assets: Res<RockRunAssets>,
 ) {
     for (
         pterodactyl_entity,
@@ -267,7 +268,7 @@ fn move_pterodactyl(
             && !pterodactyl.attack
         {
             if throw_timer.just_finished() {
-                spawn_little_rock(&mut commands, pterodactyl_pos, &asset_server);
+                spawn_little_rock(&mut commands, pterodactyl_pos, &rock_run_assets);
                 anim(pterodactyl.current_movement);
                 pterodactyl_controller.translation = Some(Vec2::new(direction.x, direction.y));
                 throw_timer.reset();
@@ -284,8 +285,12 @@ fn move_pterodactyl(
     }
 }
 
-fn spawn_little_rock(commands: &mut Commands, current_pos: Vec2, asset_server: &Res<AssetServer>) {
-    let texture = asset_server.load("rock_small.png");
+fn spawn_little_rock(
+    commands: &mut Commands,
+    current_pos: Vec2,
+    rock_run_assets: &Res<RockRunAssets>,
+) {
+    let texture = rock_run_assets.rock_small.clone();
 
     commands.spawn((
         SpriteSheetBundle {

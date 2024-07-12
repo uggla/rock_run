@@ -37,6 +37,12 @@ pub struct RockRunAssets {
     pub warrior: Handle<Image>,
     #[asset(path = "sprites/gate.png")]
     pub gate: Handle<Image>,
+    #[asset(path = "sprites/triceratops.png")]
+    pub triceratops: Handle<Image>,
+    #[asset(path = "sprites/pterodactyl.png")]
+    pub pterodactyl: Handle<Image>,
+    #[asset(path = "sprites/rock_small.png")]
+    pub rock_small: Handle<Image>,
 
     // Images
     #[asset(path = "images/menu.jpg")]

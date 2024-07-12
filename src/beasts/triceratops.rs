@@ -4,6 +4,7 @@ use bevy_rapier2d::{
 };
 
 use crate::{
+    assets::RockRunAssets,
     collisions::CollisionSet,
     coregame::{
         level::{CurrentLevel, Level},
@@ -95,7 +96,7 @@ fn get_collider_shapes(y_mirror: bool) -> Vec<(Vec2, f32, Collider)> {
 
 fn setup_triceratops(
     mut commands: Commands,
-    asset_server: Res<AssetServer>,
+    rock_run_assets: Res<RockRunAssets>,
     mut texture_atlases: ResMut<Assets<TextureAtlasLayout>>,
     levels: Query<&Level, With<Level>>,
     current_level: Res<CurrentLevel>,
@@ -107,7 +108,7 @@ fn setup_triceratops(
         .find(|level| level.id == current_level.id)
         .unwrap();
 
-    let texture = asset_server.load("triceratops-1.png");
+    let texture = rock_run_assets.triceratops.clone();
     let layout = TextureAtlasLayout::from_grid(
         Vec2::new(TRICERATOPS_WIDTH, TRICERATOPS_HEIGHT),
         5,
