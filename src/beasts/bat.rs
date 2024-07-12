@@ -5,6 +5,7 @@ use bevy_rapier2d::{
 };
 
 use crate::{
+    assets::RockRunAssets,
     collisions::CollisionSet,
     coregame::state::AppState,
     events::{Hit, PositionSensorCollisionStart, Restart},
@@ -83,7 +84,7 @@ fn get_collider_shapes(y_mirror: bool) -> Vec<(Vec2, f32, Collider)> {
 
 fn spawn_bat(
     mut commands: Commands,
-    asset_server: Res<AssetServer>,
+    rock_run_assets: Res<RockRunAssets>,
     mut texture_atlases: ResMut<Assets<TextureAtlasLayout>>,
     mut bat_sensor_collision: EventReader<PositionSensorCollisionStart>,
 ) {
@@ -92,7 +93,7 @@ fn spawn_bat(
             return;
         }
 
-        let texture = asset_server.load("bat-1.png");
+        let texture = rock_run_assets.bat.clone();
         let layout =
             TextureAtlasLayout::from_grid(Vec2::new(BAT_WIDTH, BAT_HEIGHT), 7, 2, None, None);
         let texture_atlas_layout = texture_atlases.add(layout);

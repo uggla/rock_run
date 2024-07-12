@@ -1,7 +1,7 @@
 # TODO list
 
-- [x] Refactor to use PluginGroup.
-- [ ] Refactor to use [bevy_asset_loader](https://github.com/NiklasEi/bevy_asset_loader).
+- [X] Refactor to use PluginGroup.
+- [X] Refactor to use [bevy_asset_loader](https://github.com/NiklasEi/bevy_asset_loader).
 - [ ] Bump to bevy 0.14.
 - [ ] Add background musics.
 - [ ] Remove remaining debugging stuffs especially on main.rs.
