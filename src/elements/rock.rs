@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_rapier2d::{
-    dynamics::{ExternalImpulse, GravityScale, RigidBody, Velocity},
+    dynamics::{Ccd, ExternalImpulse, GravityScale, RigidBody, Velocity},
     geometry::{ActiveCollisionTypes, Collider},
 };
 
@@ -101,10 +101,11 @@ fn spawn_rock(
                 Velocity::zero(),
                 Collider::compound(get_collider_shapes(false)),
                 ActiveCollisionTypes::DYNAMIC_KINEMATIC | ActiveCollisionTypes::DYNAMIC_DYNAMIC,
+                Ccd::enabled(),
                 Rock,
             ))
             .insert(ExternalImpulse {
-                impulse: Vec2::new(-4096.0 * 100.0, 0.0),
+                impulse: Vec2::new(-4096.0 * 120.0, 0.0),
                 ..default()
             });
     }
