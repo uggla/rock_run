@@ -114,7 +114,6 @@ fn setup(mut commands: Commands) {
 
 fn start_menu(
     mut commands: Commands,
-    asset_server: Res<AssetServer>,
     locale: Res<Locale>,
     assets: Res<Assets<BundleAsset>>,
     rock_run_assets: Res<RockRunAssets>,
@@ -152,7 +151,7 @@ fn start_menu(
                     background_color: Color::WHITE.into(),
                     ..default()
                 },
-                UiImage::new(asset_server.load("menu.jpg")),
+                UiImage::new(rock_run_assets.menu.clone()),
             ));
         })
         // Left column
@@ -169,7 +168,7 @@ fn start_menu(
                         background_color: Color::WHITE.into(),
                         ..default()
                     },
-                    UiImage::new(asset_server.load("menu2.jpg")),
+                    UiImage::new(rock_run_assets.menu2.clone()),
                 ))
                 .with_children(|parent| {
                     parent.spawn(TextBundle {
@@ -181,7 +180,7 @@ fn start_menu(
                         text: Text::from_section(
                             "Menu",
                             TextStyle {
-                                font: asset_server.load("fonts/Cute_Dino.ttf"),
+                                font: rock_run_assets.cute_dino_font.clone(),
                                 font_size: 55.0,
                                 color: Color::rgb_u8(0x54, 0x2E, 0x0A),
                             },
@@ -213,7 +212,7 @@ fn start_menu(
                                     background_color: Color::WHITE.into(),
                                     ..default()
                                 },
-                                UiImage::new(asset_server.load("en.png")),
+                                UiImage::new(rock_run_assets.en_flag.clone()),
                             ));
 
                             // lang01 text
@@ -232,7 +231,7 @@ fn start_menu(
                                             None,
                                         ),
                                         TextStyle {
-                                            font: asset_server.load("fonts/Cute_Dino.ttf"),
+                                            font: rock_run_assets.cute_dino_font.clone(),
                                             font_size: 40.0,
                                             color: Color::rgb_u8(0x54, 0x2E, 0x0A),
                                         },
@@ -292,7 +291,7 @@ fn start_menu(
                                     background_color: Color::WHITE.into(),
                                     ..default()
                                 },
-                                UiImage::new(asset_server.load("fr.png")),
+                                UiImage::new(rock_run_assets.fr_flag.clone()),
                             ));
 
                             // lang02 text
@@ -308,7 +307,7 @@ fn start_menu(
                                             None,
                                         ),
                                         TextStyle {
-                                            font: asset_server.load("fonts/Cute_Dino.ttf"),
+                                            font: rock_run_assets.cute_dino_font.clone(),
                                             font_size: 40.0,
                                             color: Color::rgb_u8(0x54, 0x2E, 0x0A),
                                         },
@@ -337,7 +336,7 @@ fn start_menu(
                                     None,
                                 ),
                                 TextStyle {
-                                    font: asset_server.load("fonts/Cute_Dino.ttf"),
+                                    font: rock_run_assets.cute_dino_font.clone(),
                                     font_size: 30.0,
                                     color: Color::rgb_u8(0x54, 0x2E, 0x0A),
                                 },
@@ -482,7 +481,7 @@ fn refresh_menu_items(
     sel2.sections[0].value = get_translation(locale, &assets, &rock_run_assets, "lang01", None);
 }
 
-fn gamefinished_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn gamefinished_menu(mut commands: Commands, rock_run_assets: Res<RockRunAssets>) {
     commands
         .spawn((
             NodeBundle {
@@ -510,12 +509,12 @@ fn gamefinished_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
                     background_color: Color::WHITE.into(),
                     ..default()
                 },
-                UiImage::new(asset_server.load("victory.jpg")),
+                UiImage::new(rock_run_assets.victory.clone()),
             ));
         });
 }
 
-fn gameover_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn gameover_menu(mut commands: Commands, rock_run_assets: Res<RockRunAssets>) {
     commands
         .spawn((
             NodeBundle {
@@ -543,12 +542,12 @@ fn gameover_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
                     background_color: Color::WHITE.into(),
                     ..default()
                 },
-                UiImage::new(asset_server.load("game_over.jpg")),
+                UiImage::new(rock_run_assets.gameover.clone()),
             ));
         });
 
     commands.spawn(AudioBundle {
-        source: asset_server.load("sounds/loose.ogg"),
+        source: rock_run_assets.loose_sound.clone(),
         settings: PlaybackSettings {
             mode: PlaybackMode::Despawn,
             ..default()
@@ -556,7 +555,7 @@ fn gameover_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
     });
 }
 
-fn pause_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn pause_menu(mut commands: Commands, rock_run_assets: Res<RockRunAssets>) {
     commands
         .spawn((
             NodeBundle {
@@ -581,7 +580,7 @@ fn pause_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
                     text: Text::from_section(
                         "Pause",
                         TextStyle {
-                            font: asset_server.load("fonts/Cute_Dino.ttf"),
+                            font: rock_run_assets.cute_dino_font.clone(),
                             font_size: 100.0,
                             color: Color::rgb_u8(0xF8, 0xE4, 0x73),
                         },

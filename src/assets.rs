@@ -28,9 +28,25 @@ pub struct RockRunAssets {
     #[asset(path = "sprites/life.png")]
     pub life: Handle<Image>,
 
+    // Images
+    #[asset(path = "images/menu.jpg")]
+    pub menu: Handle<Image>,
+    #[asset(path = "images/menu2.jpg")]
+    pub menu2: Handle<Image>,
+    #[asset(path = "images/en.png")]
+    pub en_flag: Handle<Image>,
+    #[asset(path = "images/fr.png")]
+    pub fr_flag: Handle<Image>,
+    #[asset(path = "images/victory.jpg")]
+    pub victory: Handle<Image>,
+    #[asset(path = "images/gameover.jpg")]
+    pub gameover: Handle<Image>,
+
     // Sounds
     #[asset(path = "sounds/jump.ogg")]
     pub jump_sound: Handle<AudioSource>,
     #[asset(path = "sounds/hit.ogg")]
     pub hit_sound: Handle<AudioSource>,
+    #[asset(path = "sounds/loose.ogg")]
+    pub loose_sound: Handle<AudioSource>,
 }
