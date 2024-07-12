@@ -7,17 +7,18 @@ use bevy_rapier2d::{
 };
 
 use crate::{
-    beasts::bat::Bat,
-    beasts::pterodactyl::Pterodactyl,
-    beasts::triceratops::Triceratops,
+    assets::RockRunAssets,
+    beasts::{bat::Bat, pterodactyl::Pterodactyl, triceratops::Triceratops},
     coregame::{
         colliders::{ColliderName, Ground, Ladder, Platform, PositionSensor, Spike, Story},
         level::{CurrentLevel, Level},
         state::AppState,
     },
-    elements::enigma::{EnigmaKind, Enigmas},
-    elements::moving_platform::MovingPlatform,
-    elements::rock::Rock,
+    elements::{
+        enigma::{EnigmaKind, Enigmas},
+        moving_platform::MovingPlatform,
+        rock::Rock,
+    },
     events::{
         ExtraLifeCollision, Hit, LadderCollisionStart, LadderCollisionStop,
         MovingPlatformCollision, PositionSensorCollisionStart, PositionSensorCollisionStop,
@@ -213,7 +214,7 @@ fn triceratops_collisions(
 
 fn story_collisions(
     mut commands: Commands,
-    asset_server: Res<AssetServer>,
+    rock_run_assets: Res<RockRunAssets>,
     stories: Query<(Entity, &ColliderName), With<Story>>,
     mut collision_events: EventReader<CollisionEvent>,
     entity_pos: Query<&Transform>,
@@ -241,7 +242,7 @@ fn story_collisions(
                     debug!("Collision: {:?}", pos);
                     commands
                         .spawn(SpriteBundle {
-                            texture: asset_server.load("qm.png"),
+                            texture: rock_run_assets.story_qm.clone(),
                             transform: Transform {
                                 translation: pos.translation
                                     + Vec3::new(0.0, PLAYER_HEIGHT / 2.0 + 20.0, 20.0),

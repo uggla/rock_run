@@ -27,6 +27,8 @@ pub struct RockRunAssets {
     pub player: Handle<Image>,
     #[asset(path = "sprites/life.png")]
     pub life: Handle<Image>,
+    #[asset(path = "sprites/story_qm.png")]
+    pub story_qm: Handle<Image>,
 
     // Images
     #[asset(path = "images/menu.jpg")]
