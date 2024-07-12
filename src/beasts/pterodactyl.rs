@@ -109,7 +109,7 @@ fn spawn_pterodactyl(
 
         let texture = rock_run_assets.pterodactyl.clone();
         let layout = TextureAtlasLayout::from_grid(
-            Vec2::new(PTERODACTYL_WIDTH, PTERODACTYL_HEIGHT),
+            UVec2::new(PTERODACTYL_WIDTH as u32, PTERODACTYL_HEIGHT as u32),
             4,
             4,
             None,
@@ -131,19 +131,19 @@ fn spawn_pterodactyl(
         };
 
         commands.spawn((
-            SpriteSheetBundle {
+            SpriteBundle {
                 texture,
                 sprite: Sprite { ..default() },
-                atlas: TextureAtlas {
-                    layout: texture_atlas_layout,
-                    index: 0,
-                },
                 transform: Transform {
                     scale: Vec3::splat(PTERODACTYL_SCALE_FACTOR),
                     translation: collision_event.spawn_pos.extend(20.0),
                     ..default()
                 },
                 ..default()
+            },
+            TextureAtlas {
+                layout: texture_atlas_layout,
+                index: 0,
             },
             RigidBody::KinematicPositionBased,
             AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
@@ -293,7 +293,7 @@ fn spawn_little_rock(
     let texture = rock_run_assets.rock_small.clone();
 
     commands.spawn((
-        SpriteSheetBundle {
+        SpriteBundle {
             texture,
             sprite: Sprite { ..default() },
             transform: Transform {

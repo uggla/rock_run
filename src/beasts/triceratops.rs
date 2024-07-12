@@ -110,7 +110,7 @@ fn setup_triceratops(
 
     let texture = rock_run_assets.triceratops.clone();
     let layout = TextureAtlasLayout::from_grid(
-        Vec2::new(TRICERATOPS_WIDTH, TRICERATOPS_HEIGHT),
+        UVec2::new(TRICERATOPS_WIDTH as u32, TRICERATOPS_HEIGHT as u32),
         5,
         1,
         None,
@@ -133,19 +133,19 @@ fn setup_triceratops(
 
     for start_pos in start_positions {
         commands.spawn((
-            SpriteSheetBundle {
+            SpriteBundle {
                 texture: texture.clone(),
                 sprite: Sprite { ..default() },
-                atlas: TextureAtlas {
-                    layout: texture_atlas_layout.clone(),
-                    index: 0,
-                },
                 transform: Transform {
                     scale: Vec3::splat(TRICERATOPS_SCALE_FACTOR),
                     translation: start_pos.extend(20.0),
                     ..default()
                 },
                 ..default()
+            },
+            TextureAtlas {
+                layout: texture_atlas_layout.clone(),
+                index: 0,
             },
             RigidBody::KinematicPositionBased,
             AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),

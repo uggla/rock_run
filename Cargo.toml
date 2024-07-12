@@ -7,15 +7,15 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bevy = { version = "0.13.2", features = ["jpeg"] }
-bevy_asset_loader = { version = "0.20.0" }
+bevy = { version = "0.14.0", features = ["jpeg"] }
+bevy_asset_loader = { version = "0.21.0" }
 bevy_ecs_tilemap = { git = "https://github.com/StarArawn/bevy_ecs_tilemap.git" }
-bevy_fluent = "0.9.0"
-bevy_rapier2d = "0.26.0"
+bevy_fluent = "0.10.0"
+bevy_rapier2d = "0.27.0"
 enum-iterator = "2.1.0"
 fluent = "0.16.1"
-iyes_perf_ui = { version = "0.2.3" }
-leafwing-input-manager = "0.13.3"
+iyes_perf_ui = { version = "0.3.0" }
+leafwing-input-manager = "0.14.0"
 rand = "0.8.5"
 raqote = { version = "0.8.4", default-features = false, features = [
   "pathfinder_geometry",
@@ -27,7 +27,7 @@ tiled = { version = "0.12.0", default-features = false }
 unic-langid = { version = "0.9.5", features = ["unic-langid-macros"] }
 
 [target.x86_64-unknown-linux-gnu.dependencies.bevy]
-version = "0.13.2"
+version = "0.14.0"
 features = ["wayland"]
 # dynamic linking must be removed for release builds
 # this is handled by aliases in .cargo/config.toml

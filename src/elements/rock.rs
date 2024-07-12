@@ -86,7 +86,7 @@ fn spawn_rock(
 
         commands
             .spawn((
-                SpriteSheetBundle {
+                SpriteBundle {
                     texture,
                     sprite: Sprite { ..default() },
                     transform: Transform {

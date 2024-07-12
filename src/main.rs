@@ -33,45 +33,47 @@ pub const WINDOW_HEIGHT: f32 = 720.0;
 
 fn main() {
     let mut app = App::new();
-    app.init_state::<AppState>()
-        .add_plugins((
-            DefaultPlugins
-                .set(WindowPlugin {
-                    primary_window: Some(Window {
-                        title: "RockRun: Rose's Odyssey".to_string(),
-                        resizable: false,
-                        resolution: WindowResolution::new(WINDOW_WIDTH, WINDOW_HEIGHT),
-                        ..default()
-                    }),
+    app.add_plugins((
+        DefaultPlugins
+            .set(WindowPlugin {
+                primary_window: Some(Window {
+                    title: "RockRun: Rose's Odyssey".to_string(),
+                    resizable: false,
+                    resolution: WindowResolution::new(WINDOW_WIDTH, WINDOW_HEIGHT),
                     ..default()
-                })
-                // prevents blurry sprites
-                .set(ImagePlugin::default_nearest()),
-            CoreGamePlugins,
-            ExternalPlugins,
-            BeastsPlugins,
-            ElementsPlugins,
-            helpers::tiled::TiledMapPlugin,
-            PlayerPlugin,
-            LifePlugin,
-            CollisionsPlugin,
-        ))
-        .add_loading_state(
-            LoadingState::new(AppState::Loading)
-                .continue_to_state(AppState::StartMenu)
-                .load_collection::<RockRunAssets>(),
-        )
-        .add_systems(
-            Update,
-            (
-                update_text,
-                // bevy::window::close_on_esc,
-                #[cfg(debug_assertions)]
-                helpers::camera::movement,
-            ),
-        )
-        .add_event::<StoryMessages>()
-        .add_event::<NoMoreStoryMessages>();
+                }),
+                ..default()
+            })
+            // prevents blurry sprites
+            .set(ImagePlugin::default_nearest()),
+        CoreGamePlugins,
+        ExternalPlugins,
+        BeastsPlugins,
+        ElementsPlugins,
+        helpers::tiled::TiledMapPlugin,
+        PlayerPlugin,
+        LifePlugin,
+        CollisionsPlugin,
+    ))
+    // with 0.14, init_state needs to be declared after plugins
+    // https://github.com/bevyengine/bevy/issues/14154
+    .init_state::<AppState>()
+    .add_loading_state(
+        LoadingState::new(AppState::Loading)
+            .continue_to_state(AppState::StartMenu)
+            .load_collection::<RockRunAssets>(),
+    )
+    .add_systems(
+        Update,
+        (
+            update_text,
+            // bevy::window::close_on_esc,
+            #[cfg(debug_assertions)]
+            helpers::camera::movement,
+        ),
+    )
+    .add_event::<StoryMessages>()
+    .add_event::<NoMoreStoryMessages>();
 
     #[cfg(all(debug_assertions, not(target_arch = "wasm32")))]
     app.add_systems(
@@ -79,13 +81,13 @@ fn main() {
         toggle_perf_ui.before(iyes_perf_ui::PerfUiSet::Setup),
     );
 
-    app.run()
+    app.run();
 }
 
 #[allow(dead_code)]
 fn toggle_perf_ui(
     mut commands: Commands,
-    q_root: Query<Entity, With<iyes_perf_ui::PerfUiRoot>>,
+    q_root: Query<Entity, With<iyes_perf_ui::ui::root::PerfUiRoot>>,
     kbd: Res<ButtonInput<KeyCode>>,
 ) {
     if kbd.just_pressed(KeyCode::F12) {
@@ -95,7 +97,7 @@ fn toggle_perf_ui(
         } else {
             // create a simple Perf UI with default settings
             // and all entries provided by the crate:
-            commands.spawn(iyes_perf_ui::PerfUiCompleteBundle::default());
+            commands.spawn(iyes_perf_ui::prelude::PerfUiCompleteBundle::default());
         }
     }
 }

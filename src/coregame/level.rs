@@ -146,7 +146,7 @@ fn show_current_level(
                         TextStyle {
                             font: rock_run_assets.cute_dino_font.clone(),
                             font_size: 60.0,
-                            color: Color::rgb_u8(0xF4, 0x78, 0x04),
+                            color: Color::srgb_u8(0xF4, 0x78, 0x04),
                         },
                     ),
                     ..default()
@@ -168,10 +168,10 @@ fn fade_display_level(
 
         if display_level_timer.finished() {
             let mut text = display_level_text.single_mut();
-            let transparency = text.sections[0].style.color.a();
-            let color = Color::rgb_u8(0xF4, 0x78, 0x04).as_rgba();
+            let transparency = text.sections[0].style.color.alpha();
+            let color: Srgba = Color::srgb_u8(0xF4, 0x78, 0x04).into();
             text.sections[0].style.color =
-                Color::rgba(color.r(), color.g(), color.b(), transparency - 0.02);
+                Color::srgba(color.red, color.green, color.blue, transparency - 0.02);
 
             if transparency < 0.0 {
                 commands

@@ -17,3 +17,4 @@
 - [ ] Add a volcano that throws rocks.
 - [ ] Add more levels.
 - [ ] Add more beasts.
+- [ ] Check for compilation optimization.

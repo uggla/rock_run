@@ -12,7 +12,7 @@ pub struct CameraSet;
 
 impl Plugin for CameraPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, setup_camera);
+        app.add_systems(OnEnter(AppState::Loading), setup_camera);
         app.add_systems(
             OnEnter(AppState::GameCreate),
             move_camera_to_level_start_screen,

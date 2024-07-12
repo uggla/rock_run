@@ -2,6 +2,7 @@ use std::f32::consts::PI;
 
 use bevy::{
     asset::AssetPath,
+    color::palettes::css::{BLUE, DARK_GREEN, RED},
     prelude::*,
     render::{
         render_asset::RenderAssetUsages,
@@ -119,15 +120,15 @@ impl Default for StoryPlugin {
             // }),
             style_a: SyllableStyle {
                 font_size: 42.0,
-                color: Color::BLUE,
+                color: BLUE.into(),
             },
             style_b: SyllableStyle {
                 font_size: 42.0,
-                color: Color::DARK_GREEN,
+                color: DARK_GREEN.into(),
             },
             style_selected: SyllableStyle {
                 font_size: 42.0,
-                color: Color::RED,
+                color: RED.into(),
             },
             text: "Hel-lo I am Rose, help me re-turn home.".into(),
         }
@@ -152,7 +153,7 @@ impl Plugin for StoryPlugin {
         };
         app.init_state::<TextSyllableState>()
             .insert_resource(text_params)
-            .add_systems(Startup, setup)
+            .add_systems(OnEnter(AppState::Loading), setup)
             .add_systems(Update, (toggle_visibility, display_or_hide_messages))
             .add_systems(
                 Update,
@@ -529,6 +530,7 @@ fn manage_selection(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use bevy::color::palettes::css::GREEN;
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -538,21 +540,21 @@ mod tests {
             TextStyle {
                 font: Handle::default(),
                 font_size: 42.0,
-                color: Color::BLUE,
+                color: BLUE.into(),
             },
             TextStyle {
                 font: Handle::default(),
                 font_size: 42.0,
-                color: Color::GREEN,
+                color: GREEN.into(),
             },
         );
         assert_eq!(result.len(), 17); // space counts as a section
-        assert_eq!(result[0].style.color, Color::BLUE);
-        assert_eq!(result[1].style.color, Color::GREEN);
-        assert_eq!(result[2].style.color, Color::BLUE); // first space
-        assert_eq!(result[3].style.color, Color::BLUE);
-        assert_eq!(result[4].style.color, Color::BLUE); // second space
-        assert_eq!(result[5].style.color, Color::GREEN);
+        assert_eq!(result[0].style.color, BLUE.into());
+        assert_eq!(result[1].style.color, GREEN.into());
+        assert_eq!(result[2].style.color, BLUE.into()); // first space
+        assert_eq!(result[3].style.color, BLUE.into());
+        assert_eq!(result[4].style.color, BLUE.into()); // second space
+        assert_eq!(result[5].style.color, GREEN.into());
     }
 
     #[test]
@@ -562,32 +564,32 @@ mod tests {
             TextStyle {
                 font: Handle::default(),
                 font_size: 42.0,
-                color: Color::BLUE,
+                color: BLUE.into(),
             },
             TextStyle {
                 font: Handle::default(),
                 font_size: 42.0,
-                color: Color::GREEN,
+                color: GREEN.into(),
             },
             TextStyle {
                 font: Handle::default(),
                 font_size: 42.0,
-                color: Color::RED,
+                color: RED.into(),
             },
         );
 
         dbg!(&result);
         assert_eq!(result.len(), 10); // space counts as a section
-        assert_eq!(result[0].style.color, Color::BLUE);
-        assert_eq!(result[1].style.color, Color::BLUE);
-        assert_eq!(result[2].style.color, Color::GREEN);
-        assert_eq!(result[3].style.color, Color::BLUE);
-        assert_eq!(result[4].style.color, Color::BLUE);
-        assert_eq!(result[5].style.color, Color::BLUE);
-        assert_eq!(result[6].style.color, Color::GREEN);
-        assert_eq!(result[7].style.color, Color::RED);
-        assert_eq!(result[8].style.color, Color::BLUE);
-        assert_eq!(result[9].style.color, Color::BLUE);
+        assert_eq!(result[0].style.color, BLUE.into());
+        assert_eq!(result[1].style.color, BLUE.into());
+        assert_eq!(result[2].style.color, GREEN.into());
+        assert_eq!(result[3].style.color, BLUE.into());
+        assert_eq!(result[4].style.color, BLUE.into());
+        assert_eq!(result[5].style.color, BLUE.into());
+        assert_eq!(result[6].style.color, GREEN.into());
+        assert_eq!(result[7].style.color, RED.into());
+        assert_eq!(result[8].style.color, BLUE.into());
+        assert_eq!(result[9].style.color, BLUE.into());
     }
 
     #[test]
@@ -597,31 +599,31 @@ mod tests {
             TextStyle {
                 font: Handle::default(),
                 font_size: 42.0,
-                color: Color::BLUE,
+                color: BLUE.into(),
             },
             TextStyle {
                 font: Handle::default(),
                 font_size: 42.0,
-                color: Color::GREEN,
+                color: GREEN.into(),
             },
             TextStyle {
                 font: Handle::default(),
                 font_size: 42.0,
-                color: Color::RED,
+                color: RED.into(),
             },
         );
 
         dbg!(&result);
         assert_eq!(result.len(), 10); // space counts as a section
-        assert_eq!(result[0].style.color, Color::BLUE);
-        assert_eq!(result[1].style.color, Color::BLUE);
-        assert_eq!(result[2].style.color, Color::GREEN);
-        assert_eq!(result[3].style.color, Color::BLUE);
-        assert_eq!(result[4].style.color, Color::BLUE);
-        assert_eq!(result[5].style.color, Color::BLUE);
-        assert_eq!(result[6].style.color, Color::GREEN);
-        assert_eq!(result[7].style.color, Color::BLUE);
-        assert_eq!(result[8].style.color, Color::RED);
-        assert_eq!(result[9].style.color, Color::BLUE);
+        assert_eq!(result[0].style.color, BLUE.into());
+        assert_eq!(result[1].style.color, BLUE.into());
+        assert_eq!(result[2].style.color, GREEN.into());
+        assert_eq!(result[3].style.color, BLUE.into());
+        assert_eq!(result[4].style.color, BLUE.into());
+        assert_eq!(result[5].style.color, BLUE.into());
+        assert_eq!(result[6].style.color, GREEN.into());
+        assert_eq!(result[7].style.color, BLUE.into());
+        assert_eq!(result[8].style.color, RED.into());
+        assert_eq!(result[9].style.color, BLUE.into());
     }
 }

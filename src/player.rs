@@ -109,8 +109,13 @@ fn setup_player(
 
     let texture = rock_run_assets.player.clone();
 
-    let layout =
-        TextureAtlasLayout::from_grid(Vec2::new(PLAYER_WIDTH, PLAYER_HEIGHT), 6, 7, None, None);
+    let layout = TextureAtlasLayout::from_grid(
+        UVec2::new(PLAYER_WIDTH as u32, PLAYER_HEIGHT as u32),
+        6,
+        7,
+        None,
+        None,
+    );
     let texture_atlas_layout = texture_atlases.add(layout);
 
     let mut input_map = InputMap::new([
@@ -146,13 +151,9 @@ fn setup_player(
     );
 
     commands.spawn((
-        SpriteSheetBundle {
+        SpriteBundle {
             texture,
             sprite: Sprite { ..default() },
-            atlas: TextureAtlas {
-                layout: texture_atlas_layout,
-                index: 0,
-            },
             transform: Transform {
                 scale: Vec3::splat(PLAYER_SCALE_FACTOR),
                 translation: level.map.get_start_screen().get_center().extend(20.0)
@@ -169,6 +170,10 @@ fn setup_player(
                 ..default()
             },
             ..default()
+        },
+        TextureAtlas {
+            layout: texture_atlas_layout,
+            index: 0,
         },
         RigidBody::KinematicPositionBased,
         AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),

@@ -100,7 +100,7 @@ fn spawn_enigma_materials(
 
         let texture = rock_run_assets.warrior.clone();
         let layout = TextureAtlasLayout::from_grid(
-            Vec2::new(WARRIOR_WIDTH, WARRIOR_HEIGHT),
+            UVec2::new(WARRIOR_WIDTH as u32, WARRIOR_HEIGHT as u32),
             6,
             1,
             None,
@@ -109,13 +109,9 @@ fn spawn_enigma_materials(
         let texture_atlas_layout = texture_atlases.add(layout);
 
         commands.spawn((
-            SpriteSheetBundle {
+            SpriteBundle {
                 texture,
                 sprite: Sprite { ..default() },
-                atlas: TextureAtlas {
-                    layout: texture_atlas_layout,
-                    index: 0,
-                },
                 transform: Transform {
                     scale: Vec3::splat(WARRIOR_SCALE_FACTOR),
                     translation: level
@@ -125,6 +121,10 @@ fn spawn_enigma_materials(
                     ..default()
                 },
                 ..default()
+            },
+            TextureAtlas {
+                layout: texture_atlas_layout,
+                index: 0,
             },
             AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
             Warrior,

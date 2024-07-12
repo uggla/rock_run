@@ -67,7 +67,7 @@ impl Plugin for MenuPlugin {
                 (menu_input_system, menu_blink_system, game_messages),
             )
             .add_systems(Update, update_menu.run_if(in_state(AppState::StartMenu)))
-            .add_systems(Startup, setup);
+            .add_systems(OnEnter(AppState::Loading), setup);
     }
 }
 
@@ -182,7 +182,7 @@ fn start_menu(
                             TextStyle {
                                 font: rock_run_assets.cute_dino_font.clone(),
                                 font_size: 55.0,
-                                color: Color::rgb_u8(0x54, 0x2E, 0x0A),
+                                color: Color::srgb_u8(0x54, 0x2E, 0x0A),
                             },
                         ),
                         ..default()
@@ -233,7 +233,7 @@ fn start_menu(
                                         TextStyle {
                                             font: rock_run_assets.cute_dino_font.clone(),
                                             font_size: 40.0,
-                                            color: Color::rgb_u8(0x54, 0x2E, 0x0A),
+                                            color: Color::srgb_u8(0x54, 0x2E, 0x0A),
                                         },
                                     ),
                                     ..default()
@@ -309,7 +309,7 @@ fn start_menu(
                                         TextStyle {
                                             font: rock_run_assets.cute_dino_font.clone(),
                                             font_size: 40.0,
-                                            color: Color::rgb_u8(0x54, 0x2E, 0x0A),
+                                            color: Color::srgb_u8(0x54, 0x2E, 0x0A),
                                         },
                                     ),
                                     ..default()
@@ -338,7 +338,7 @@ fn start_menu(
                                 TextStyle {
                                     font: rock_run_assets.cute_dino_font.clone(),
                                     font_size: 30.0,
-                                    color: Color::rgb_u8(0x54, 0x2E, 0x0A),
+                                    color: Color::srgb_u8(0x54, 0x2E, 0x0A),
                                 },
                             ),
                             ..default()
@@ -374,9 +374,9 @@ fn update_menu(
     impl MenuColor {
         fn color(&self) -> Color {
             match self {
-                MenuColor::Selected => Color::rgb_u8(0xD3, 0xCD, 0x39),
-                MenuColor::CurrentLang => Color::rgb_u8(0xF4, 0x78, 0x04),
-                MenuColor::OtherLang => Color::rgb_u8(0x54, 0x2E, 0x0A),
+                MenuColor::Selected => Color::srgb_u8(0xD3, 0xCD, 0x39),
+                MenuColor::CurrentLang => Color::srgb_u8(0xF4, 0x78, 0x04),
+                MenuColor::OtherLang => Color::srgb_u8(0x54, 0x2E, 0x0A),
             }
         }
     }
@@ -582,7 +582,7 @@ fn pause_menu(mut commands: Commands, rock_run_assets: Res<RockRunAssets>) {
                         TextStyle {
                             font: rock_run_assets.cute_dino_font.clone(),
                             font_size: 100.0,
-                            color: Color::rgb_u8(0xF8, 0xE4, 0x73),
+                            color: Color::srgb_u8(0xF8, 0xE4, 0x73),
                         },
                     ),
                     ..default()
@@ -636,7 +636,7 @@ fn menu_input_system(
             AppState::StartMenu => {
                 current_level.id = 1;
                 if menu_action_state.just_pressed(&MenuAction::Quit) {
-                    app_exit_events.send(AppExit);
+                    app_exit_events.send(AppExit::Success);
                 }
             }
             AppState::GameCreate => {

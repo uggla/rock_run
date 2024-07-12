@@ -94,24 +94,30 @@ fn spawn_bat(
         }
 
         let texture = rock_run_assets.bat.clone();
-        let layout =
-            TextureAtlasLayout::from_grid(Vec2::new(BAT_WIDTH, BAT_HEIGHT), 7, 2, None, None);
+        let layout = TextureAtlasLayout::from_grid(
+            UVec2::new(BAT_WIDTH as u32, BAT_HEIGHT as u32),
+            7,
+            2,
+            None,
+            None,
+        );
         let texture_atlas_layout = texture_atlases.add(layout);
 
         commands.spawn((
-            SpriteSheetBundle {
+            SpriteBundle {
                 texture,
                 sprite: Sprite { ..default() },
-                atlas: TextureAtlas {
-                    layout: texture_atlas_layout,
-                    index: 0,
-                },
+
                 transform: Transform {
                     scale: Vec3::splat(BAT_SCALE_FACTOR),
                     translation: collision_event.spawn_pos.extend(20.0),
                     ..default()
                 },
                 ..default()
+            },
+            TextureAtlas {
+                layout: texture_atlas_layout,
+                index: 0,
             },
             RigidBody::KinematicPositionBased,
             AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
