@@ -1,9 +1,11 @@
 # TODO list
 
-- [X] Refactor to use PluginGroup.
-- [X] Refactor to use [bevy_asset_loader](https://github.com/NiklasEi/bevy_asset_loader).
-- [ ] Bump to bevy 0.14.
+- [x] Refactor to use PluginGroup.
+- [x] Refactor to use [bevy_asset_loader](https://github.com/NiklasEi/bevy_asset_loader).
+- [x] Bump to bevy 0.14.
 - [ ] Add background musics.
+- [ ] Improve level 1.
+- [ ] Add level 3.
 - [ ] Remove remaining debugging stuffs especially on main.rs.
 - [ ] Release a first version of the game on Github.
 - [ ] Release a first version of the game on Itch.io with web version.
@@ -18,3 +20,4 @@
 - [ ] Add more levels.
 - [ ] Add more beasts.
 - [ ] Check for compilation optimization.
+- [ ] Check hit collision bugs.
