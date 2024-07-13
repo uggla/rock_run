@@ -4,8 +4,12 @@
 - [x] Refactor to use [bevy_asset_loader](https://github.com/NiklasEi/bevy_asset_loader).
 - [x] Bump to bevy 0.14.
 - [ ] Add background musics.
+- [ ] Add trex.
+- [ ] Add an enigma that drop a rock allowing to go over spikes.
 - [ ] Improve level 1.
 - [ ] Add level 3.
+- [ ] Check for compilation optimization.
+- [ ] Review stories.
 - [ ] Remove remaining debugging stuffs especially on main.rs.
 - [ ] Release a first version of the game on Github.
 - [ ] Release a first version of the game on Itch.io with web version.
@@ -14,10 +18,11 @@
 - [ ] Add more enigmas.
 - [ ] Add a envvar to enable fixing menu position.
 - [ ] Review camera smoothing especially y axis.
-- [ ] Add trex.
+- [ ] Add dragon throwing fireballs.
+- [ ] Add wolf.
 - [ ] Add more sound effects.
 - [ ] Add a volcano that throws rocks.
 - [ ] Add more levels.
 - [ ] Add more beasts.
-- [ ] Check for compilation optimization.
+- [ ] Add more enigmas.
 - [ ] Check hit collision bugs.
