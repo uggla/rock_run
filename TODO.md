@@ -10,6 +10,7 @@
 - [ ] Add level 3.
 - [x] Check for compilation optimization.
 - [ ] Review stories.
+- [ ] Update doc about tiled.
 - [ ] Remove remaining debugging stuffs especially on main.rs.
 - [ ] Release a first version of the game on Github.
 - [ ] Release a first version of the game on Itch.io with web version.
