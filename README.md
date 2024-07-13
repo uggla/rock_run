@@ -14,10 +14,22 @@ All assets are under CC0 license, most of them coming from the repository
 is a great example of using Bevy, and the game draws inspiration and uses
 parts of the code from this repository.
 
+## Project status
+
 The project is currently under heavy development, and it does not make
 sense to provide binaries at this moment. However, as soon as the state
 is sufficiently advanced, binaries and a playable online version will
 be released.
+
+Please note that the code in this project may not be as clean or optimized
+as it could be. I am currently learning Bevy, and my primary focus has been
+on making progress in the development of the game rather than perfecting
+the code. This project is a hobby for me, and while I strive to improve
+and learn best practices, my main goal is to create and enjoy the process.
+
+Additionally, this game is being created for my daughter to help her with
+reading and calculating. It's important for me to complete the game before
+she gets too old for these learning activities.
 
 ## Authors
 
@@ -26,6 +38,19 @@ be released.
 ## Screenshots
 
 ![screenshot](images/screenshot-01.png)
+
+![screenshot](images/screenshot-02.png)
+
+## Game controls
+
+Use ⌨️ or 🎮 (left stick) to play.
+
+- ⬅️ and ➡️ move left and right.
+- ⬆️ climb ladders, activate stories (❓️) or exit.
+- ⬇️ descend ladders.
+- 🟢 or **space**, jump or validate.
+- ▶️ or **Esc** pause the game.
+- ◀️ or **Backspace** go back or exit the game.
 
 ## Run Locally (mainly for development purposes)
 
@@ -47,25 +72,9 @@ be released.
 
    _Tips: the rustup method is the simplest one._
 
-2. Install required library for macroquad
+2. Install required library for Bevy
 
-- Ubuntu system dependencies (to be verified)
-
-```bash
-apt install pkg-config libx11-dev libxi-dev libgl1-mesa-dev libasound2-dev
-```
-
-- Fedora system dependencies (to be verified)
-
-```bash
-dnf install libX11-devel libXi-devel mesa-libGL-devel alsa-lib-devel
-```
-
-- Windows and MacOS system
-
-```
-No dependencies are required for Windows or MacOS
-```
+Look at https://bevyengine.org/learn/quick-start/getting-started/setup
 
 3. Run
 
