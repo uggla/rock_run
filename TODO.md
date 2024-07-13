@@ -8,7 +8,7 @@
 - [ ] Add an enigma that drop a rock allowing to go over spikes.
 - [ ] Improve level 1.
 - [ ] Add level 3.
-- [ ] Check for compilation optimization.
+- [x] Check for compilation optimization.
 - [ ] Review stories.
 - [ ] Remove remaining debugging stuffs especially on main.rs.
 - [ ] Release a first version of the game on Github.
