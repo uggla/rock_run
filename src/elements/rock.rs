@@ -11,8 +11,8 @@ use crate::{
     events::{PositionSensorCollisionStart, Restart},
 };
 
-const ROCK_SCALE_FACTOR: f32 = 1.0;
-const ROCK_DIAMETER: f32 = 64.0;
+pub const ROCK_SCALE_FACTOR: f32 = 1.0;
+pub const ROCK_DIAMETER: f32 = 64.0;
 
 #[derive(Component)]
 pub struct Rock;

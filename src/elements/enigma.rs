@@ -4,12 +4,18 @@ use crate::{
         level::{CurrentLevel, Level},
         state::AppState,
     },
-    elements::story::{decompose_selection_msg, TextSyllableValues},
+    elements::{
+        rock::{ROCK_DIAMETER, ROCK_SCALE_FACTOR},
+        story::{decompose_selection_msg, TextSyllableValues},
+    },
     events::{EnigmaResult, NoMoreStoryMessages},
     helpers::texture::cycle_texture,
 };
 use bevy::{prelude::*, utils::HashMap};
-use bevy_rapier2d::geometry::Collider;
+use bevy_rapier2d::{
+    dynamics::{Ccd, ExternalImpulse, GravityScale, RigidBody, Velocity},
+    geometry::{ActiveCollisionTypes, Collider},
+};
 use rand::{thread_rng, Rng};
 
 const WARRIOR_SCALE_FACTOR: f32 = 1.0;
@@ -25,6 +31,11 @@ pub struct Warrior;
 
 #[derive(Component)]
 pub struct Gate {
+    associated_story: String,
+}
+
+#[derive(Component)]
+pub struct RockGate {
     associated_story: String,
 }
 
@@ -55,28 +66,37 @@ impl Plugin for EnigmaPlugin {
     fn build(&self, app: &mut App) {
         let mut rng = thread_rng();
         let enigmas = Enigmas {
-            enigmas: vec![Enigma {
-                associated_story: "story03-01".to_string(),
-                kind: EnigmaKind::Numbers(HashMap::from([
-                    ("n1".to_string(), rng.gen_range(0..=50).to_string()),
-                    ("n2".to_string(), rng.gen_range(0..50).to_string()),
-                ])),
-            }],
+            enigmas: vec![
+                Enigma {
+                    associated_story: "story03-01".to_string(),
+                    kind: EnigmaKind::Numbers(HashMap::from([
+                        ("n1".to_string(), rng.gen_range(0..=50).to_string()),
+                        ("n2".to_string(), rng.gen_range(0..50).to_string()),
+                    ])),
+                },
+                Enigma {
+                    associated_story: "story04-01".to_string(),
+                    kind: EnigmaKind::Numbers(HashMap::from([(
+                        "n1".to_string(),
+                        rng.gen_range(0..=49).to_string(),
+                    )])),
+                },
+            ],
         };
         app.insert_resource(enigmas)
             .add_systems(OnEnter(AppState::GameCreate), spawn_enigma_materials)
             .add_systems(OnEnter(AppState::NextLevel), spawn_enigma_materials)
             .add_systems(
                 OnEnter(AppState::StartMenu),
-                (despawn_warrior, despawn_gate),
+                (despawn_warrior, despawn_gate, despawn_rockgate),
             )
             .add_systems(
                 OnEnter(AppState::FinishLevel),
-                (despawn_warrior, despawn_gate),
+                (despawn_warrior, despawn_gate, despawn_rockgate),
             )
             .add_systems(
                 Update,
-                (move_warrior, move_gate).run_if(in_state(AppState::GameRunning)),
+                (move_warrior, move_gate, move_rockgate).run_if(in_state(AppState::GameRunning)),
             )
             .add_systems(Update, check_enigma)
             .add_event::<EnigmaResult>();
@@ -92,65 +112,166 @@ fn spawn_enigma_materials(
 ) {
     info!("spawn_enigma_materials");
 
-    if current_level.id == 2 {
-        let level = levels
-            .iter()
-            .find(|level| level.id == current_level.id)
-            .unwrap();
+    let level = levels
+        .iter()
+        .find(|level| level.id == current_level.id)
+        .unwrap();
 
-        let texture = rock_run_assets.warrior.clone();
-        let layout = TextureAtlasLayout::from_grid(
-            UVec2::new(WARRIOR_WIDTH as u32, WARRIOR_HEIGHT as u32),
-            6,
-            1,
-            None,
-            None,
-        );
-        let texture_atlas_layout = texture_atlases.add(layout);
+    match current_level.id {
+        1 => {
+            let texture = rock_run_assets.rock_ball.clone();
 
-        commands.spawn((
-            SpriteBundle {
-                texture,
-                sprite: Sprite { ..default() },
-                transform: Transform {
-                    scale: Vec3::splat(WARRIOR_SCALE_FACTOR),
-                    translation: level
-                        .map
-                        .tiled_to_bevy_coord(Vec2::new(5575.0, 608.0))
-                        .extend(2.0),
+            commands.spawn((
+                SpriteBundle {
+                    texture,
+                    sprite: Sprite { ..default() },
+                    transform: Transform {
+                        scale: Vec3::splat(ROCK_SCALE_FACTOR),
+                        translation: level
+                            .map
+                            .tiled_to_bevy_coord(Vec2::new(2800.0, 160.0 - ROCK_DIAMETER / 2.0))
+                            .extend(20.0),
+                        ..default()
+                    },
                     ..default()
                 },
-                ..default()
-            },
-            TextureAtlas {
-                layout: texture_atlas_layout,
-                index: 0,
-            },
-            AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
-            Warrior,
-        ));
+                RigidBody::Dynamic,
+                GravityScale(20.0),
+                Velocity::zero(),
+                Collider::ball(ROCK_DIAMETER / 2.0),
+                ActiveCollisionTypes::DYNAMIC_KINEMATIC | ActiveCollisionTypes::DYNAMIC_DYNAMIC,
+                Ccd::enabled(),
+                ExternalImpulse::default(),
+                RockGate {
+                    associated_story: "story04-01".to_string(),
+                },
+            ));
+        }
 
-        let texture = rock_run_assets.gate.clone();
-        commands.spawn((
-            SpriteBundle {
-                texture,
-                sprite: Sprite { ..default() },
-                transform: Transform {
-                    scale: Vec3::splat(GATE_SCALE_FACTOR),
-                    translation: level
-                        .map
-                        .tiled_to_bevy_coord(Vec2::new(5488.0, 615.0))
-                        .extend(1.0),
+        2 => {
+            let texture = rock_run_assets.warrior.clone();
+            let layout = TextureAtlasLayout::from_grid(
+                UVec2::new(WARRIOR_WIDTH as u32, WARRIOR_HEIGHT as u32),
+                6,
+                1,
+                None,
+                None,
+            );
+            let texture_atlas_layout = texture_atlases.add(layout);
+
+            commands.spawn((
+                SpriteBundle {
+                    texture,
+                    sprite: Sprite { ..default() },
+                    transform: Transform {
+                        scale: Vec3::splat(WARRIOR_SCALE_FACTOR),
+                        translation: level
+                            .map
+                            .tiled_to_bevy_coord(Vec2::new(5575.0, 608.0))
+                            .extend(2.0),
+                        ..default()
+                    },
                     ..default()
                 },
-                ..default()
-            },
-            Collider::cuboid(GATE_WIDTH / 2.0, GATE_HEIGHT / 2.0),
-            AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
-            Gate {
-                associated_story: "story03-01".to_string(),
-            },
-        ));
+                TextureAtlas {
+                    layout: texture_atlas_layout,
+                    index: 0,
+                },
+                AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
+                Warrior,
+            ));
+
+            let texture = rock_run_assets.gate.clone();
+            commands.spawn((
+                SpriteBundle {
+                    texture,
+                    sprite: Sprite { ..default() },
+                    transform: Transform {
+                        scale: Vec3::splat(GATE_SCALE_FACTOR),
+                        translation: level
+                            .map
+                            .tiled_to_bevy_coord(Vec2::new(5488.0, 615.0))
+                            .extend(1.0),
+                        ..default()
+                    },
+                    ..default()
+                },
+                Collider::cuboid(GATE_WIDTH / 2.0, GATE_HEIGHT / 2.0),
+                AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
+                Gate {
+                    associated_story: "story03-01".to_string(),
+                },
+            ));
+        }
+        _ => (),
+    }
+}
+
+#[allow(clippy::single_match)]
+fn check_enigma(
+    mut no_more_msg_event: EventReader<NoMoreStoryMessages>,
+    enigmas: ResMut<Enigmas>,
+    params: ResMut<TextSyllableValues>,
+    mut enigna_result: EventWriter<EnigmaResult>,
+) {
+    for ev in no_more_msg_event.read() {
+        debug!("No more story messages: {:?}", ev.latest);
+        match ev.latest.as_ref() {
+            "story03-01" => {
+                let story = "story03-01";
+                let numbers = enigmas
+                    .enigmas
+                    .iter()
+                    .filter(|e| e.associated_story == story)
+                    .map(|e| match e.kind.clone() {
+                        EnigmaKind::Numbers(n) => n,
+                        EnigmaKind::Qcm(_) => unreachable!(),
+                    })
+                    .last()
+                    .unwrap();
+
+                let n1 = numbers.get("n1").unwrap().parse::<usize>().unwrap();
+                let n2 = numbers.get("n2").unwrap().parse::<usize>().unwrap();
+
+                let (_ltext, selection, _rtext) = decompose_selection_msg(&params.text).unwrap();
+                let user_answer = selection.selection_items.join("").parse::<usize>().unwrap();
+
+                if n1 + n2 == user_answer {
+                    debug!("Correct answer: {} + {} = {}", n1, n2, user_answer);
+                    enigna_result.send(EnigmaResult::Correct(story.to_string()));
+                } else {
+                    debug!("Incorrect answer: {} + {} = {}", n1, n2, user_answer);
+                    enigna_result.send(EnigmaResult::Incorrect(story.to_string()));
+                }
+            }
+            "story04-01" => {
+                let story = "story04-01";
+                let numbers = enigmas
+                    .enigmas
+                    .iter()
+                    .filter(|e| e.associated_story == story)
+                    .map(|e| match e.kind.clone() {
+                        EnigmaKind::Numbers(n) => n,
+                        EnigmaKind::Qcm(_) => unreachable!(),
+                    })
+                    .last()
+                    .unwrap();
+
+                let n1 = numbers.get("n1").unwrap().parse::<usize>().unwrap();
+
+                let (_ltext, selection, _rtext) = decompose_selection_msg(&params.text).unwrap();
+                let user_answer = selection.selection_items.join("").parse::<usize>().unwrap();
+
+                if n1 * 2 == user_answer {
+                    debug!("Correct answer: {} * 2 = {}", n1, user_answer);
+                    enigna_result.send(EnigmaResult::Correct(story.to_string()));
+                } else {
+                    debug!("Correct answer: {} * 2 = {}", n1, user_answer);
+                    enigna_result.send(EnigmaResult::Incorrect(story.to_string()));
+                }
+            }
+            _ => {}
+        }
     }
 }
 
@@ -201,7 +322,7 @@ fn move_gate(
             for (gate_entity, current_gate) in gate_query.iter_mut() {
                 if current_gate.associated_story == *enigma {
                     debug!(
-                        "Opening gate {:?} associted to \"{:?}\"",
+                        "Opening gate {:?} associted to {:?}",
                         gate_entity, current_gate.associated_story
                     );
                     *gate = Some(gate_entity);
@@ -216,44 +337,25 @@ fn move_gate(
     }
 }
 
-#[allow(clippy::single_match)]
-fn check_enigma(
-    mut no_more_msg_event: EventReader<NoMoreStoryMessages>,
-    enigmas: ResMut<Enigmas>,
-    params: ResMut<TextSyllableValues>,
-    mut enigna_result: EventWriter<EnigmaResult>,
+fn move_rockgate(
+    mut gate_query: Query<(Entity, &RockGate), With<RockGate>>,
+    mut enigna_result: EventReader<EnigmaResult>,
+    mut ext_impulses: Query<&mut ExternalImpulse, With<RockGate>>,
 ) {
-    for ev in no_more_msg_event.read() {
-        debug!("No more story messages: {:?}", ev.latest);
-        match ev.latest.as_ref() {
-            "story03-01" => {
-                let story = "story03-01";
-                let numbers = enigmas
-                    .enigmas
-                    .iter()
-                    .filter(|e| e.associated_story == story)
-                    .map(|e| match e.kind.clone() {
-                        EnigmaKind::Numbers(n) => n,
-                        EnigmaKind::Qcm(_) => unreachable!(),
-                    })
-                    .last()
-                    .unwrap();
+    for ev in enigna_result.read() {
+        if let EnigmaResult::Correct(enigma) = ev {
+            for (gate_entity, current_gate) in gate_query.iter_mut() {
+                if current_gate.associated_story == *enigma {
+                    debug!(
+                        "Opening gate {:?} associted to {:?}",
+                        gate_entity, current_gate.associated_story
+                    );
 
-                let n1 = numbers.get("n1").unwrap().parse::<usize>().unwrap();
-                let n2 = numbers.get("n2").unwrap().parse::<usize>().unwrap();
-
-                let (_ltext, selection, _rtext) = decompose_selection_msg(&params.text).unwrap();
-                let user_answer = selection.selection_items.join("").parse::<usize>().unwrap();
-
-                if n1 + n2 == user_answer {
-                    debug!("Correct answer: {} + {} = {}", n1, n2, user_answer);
-                    enigna_result.send(EnigmaResult::Correct(story.to_string()));
-                } else {
-                    debug!("Incorrect answer: {} + {} = {}", n1, n2, user_answer);
-                    enigna_result.send(EnigmaResult::Incorrect(story.to_string()));
+                    for mut ext_impulse in ext_impulses.iter_mut() {
+                        ext_impulse.impulse = Vec2::new(4096.0 * 120.0, 0.0);
+                    }
                 }
             }
-            _ => {}
         }
     }
 }
@@ -267,5 +369,11 @@ fn despawn_warrior(mut commands: Commands, warriors: Query<Entity, With<Warrior>
 fn despawn_gate(mut commands: Commands, gates: Query<Entity, With<Gate>>) {
     for gate in gates.iter() {
         commands.entity(gate).despawn_recursive();
+    }
+}
+
+fn despawn_rockgate(mut commands: Commands, rockgates: Query<Entity, With<RockGate>>) {
+    for rockgate in rockgates.iter() {
+        commands.entity(rockgate).despawn_recursive();
     }
 }

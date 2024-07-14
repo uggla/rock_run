@@ -15,7 +15,7 @@ use crate::{
         state::AppState,
     },
     elements::{
-        enigma::{EnigmaKind, Enigmas},
+        enigma::{EnigmaKind, Enigmas, RockGate},
         moving_platform::MovingPlatform,
         rock::Rock,
     },
@@ -82,6 +82,7 @@ fn player_collisions(
     spikes: Query<Entity, With<Spike>>,
     moving_platforms: Query<Entity, With<MovingPlatform>>,
     rocks: Query<(Entity, &Velocity), With<Rock>>,
+    rockgates: Query<(Entity, &Velocity), With<RockGate>>,
     mut hit: EventWriter<Hit>,
     mut moving_platform_collision: EventWriter<MovingPlatformCollision>,
 ) {
@@ -129,9 +130,9 @@ fn player_collisions(
             }
         }
 
-        // Player collides with fast moving rocks
+        // Player collides with fast moving rocks or rockgates
         // If rocks are moving slowly, we can stay on it
-        for (rock, velocity) in rocks.iter() {
+        for (rock, velocity) in rocks.iter().chain(rockgates.iter()) {
             if character_collision.entity == rock {
                 debug!("hit velocity: {:?}", velocity);
                 if velocity.linvel.x.abs() > 175.0 || velocity.linvel.y.abs() > 20.0 {
@@ -236,7 +237,10 @@ fn story_collisions(
                             || (entity == e2 && player_entity == *e1)
                     })
                 {
-                    debug!("Received collision event: {:?}", collision_event);
+                    debug!(
+                        "Received collision event: {:?}, collider name: {:?}",
+                        collision_event, collider_name
+                    );
 
                     let pos = entity_pos.get(entity).unwrap();
                     debug!("Collision: {:?}", pos);
@@ -326,6 +330,23 @@ fn display_story(
 
                 msg_event.send(StoryMessages::Display(vec![(
                     "story03-01".to_string(),
+                    Some(numbers),
+                )]));
+            }
+            "story04" => {
+                let numbers = enigmas
+                    .enigmas
+                    .iter()
+                    .filter(|e| e.associated_story == "story04-01")
+                    .map(|e| match e.kind.clone() {
+                        EnigmaKind::Numbers(n) => n,
+                        EnigmaKind::Qcm(_) => unreachable!(),
+                    })
+                    .last()
+                    .unwrap();
+
+                msg_event.send(StoryMessages::Display(vec![(
+                    "story04-01".to_string(),
                     Some(numbers),
                 )]));
             }
