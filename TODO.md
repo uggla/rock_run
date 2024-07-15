@@ -5,11 +5,11 @@
 - [x] Bump to bevy 0.14.
 - [ ] Add background musics.
 - [ ] Add trex.
-- [ ] Add an enigma that drop a rock allowing to go over spikes.
+- [x] Add an enigma that drop a rock allowing to go over spikes.
 - [ ] Improve level 1.
 - [ ] Add level 3.
 - [x] Check for compilation optimization.
-- [ ] Review stories.
+- [x] Review stories.
 - [ ] Update doc about tiled.
 - [ ] Remove remaining debugging stuffs especially on main.rs.
 - [ ] Release a first version of the game on Github.
@@ -26,4 +26,4 @@
 - [ ] Add more levels.
 - [ ] Add more beasts.
 - [ ] Add more enigmas.
-- [ ] Check hit collision bugs.
+- [x] Check hit collision bugs.
