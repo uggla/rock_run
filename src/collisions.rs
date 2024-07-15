@@ -311,7 +311,7 @@ fn display_story(
                 let numbers = enigmas
                     .enigmas
                     .iter()
-                    .filter(|e| e.associated_story == "story03-01")
+                    .filter(|e| e.associated_story == "story03-03")
                     .map(|e| match e.kind.clone() {
                         EnigmaKind::Numbers(n) => n,
                         EnigmaKind::Qcm(_) => unreachable!(),
@@ -319,16 +319,17 @@ fn display_story(
                     .last()
                     .unwrap();
 
-                msg_event.send(StoryMessages::Display(vec![(
-                    "story03-01".to_string(),
-                    Some(numbers),
-                )]));
+                msg_event.send(StoryMessages::Display(vec![
+                    ("story03-01".to_string(), None),
+                    ("story03-02".to_string(), None),
+                    ("story03-03".to_string(), Some(numbers)),
+                ]));
             }
             "story04" => {
                 let numbers = enigmas
                     .enigmas
                     .iter()
-                    .filter(|e| e.associated_story == "story04-01")
+                    .filter(|e| e.associated_story == "story04-03")
                     .map(|e| match e.kind.clone() {
                         EnigmaKind::Numbers(n) => n,
                         EnigmaKind::Qcm(_) => unreachable!(),
@@ -336,10 +337,11 @@ fn display_story(
                     .last()
                     .unwrap();
 
-                msg_event.send(StoryMessages::Display(vec![(
-                    "story04-01".to_string(),
-                    Some(numbers),
-                )]));
+                msg_event.send(StoryMessages::Display(vec![
+                    ("story04-01".to_string(), None),
+                    ("story04-02".to_string(), None),
+                    ("story04-03".to_string(), Some(numbers)),
+                ]));
             }
             _ => {}
         };

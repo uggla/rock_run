@@ -42,7 +42,7 @@ pub struct RockGate {
 #[derive(Component, Deref, DerefMut)]
 struct AnimationTimer(Timer);
 
-#[derive(Resource, Debug)]
+#[derive(Resource, Debug, Default)]
 pub struct Enigmas {
     pub enigmas: Vec<Enigma>,
 }
@@ -64,26 +64,7 @@ pub struct EnigmaPlugin;
 
 impl Plugin for EnigmaPlugin {
     fn build(&self, app: &mut App) {
-        let mut rng = thread_rng();
-        let enigmas = Enigmas {
-            enigmas: vec![
-                Enigma {
-                    associated_story: "story03-01".to_string(),
-                    kind: EnigmaKind::Numbers(HashMap::from([
-                        ("n1".to_string(), rng.gen_range(0..=50).to_string()),
-                        ("n2".to_string(), rng.gen_range(0..50).to_string()),
-                    ])),
-                },
-                Enigma {
-                    associated_story: "story04-01".to_string(),
-                    kind: EnigmaKind::Numbers(HashMap::from([(
-                        "n1".to_string(),
-                        rng.gen_range(0..=49).to_string(),
-                    )])),
-                },
-            ],
-        };
-        app.insert_resource(enigmas)
+        app.insert_resource(Enigmas::default())
             .add_systems(OnEnter(AppState::GameCreate), spawn_enigma_materials)
             .add_systems(OnEnter(AppState::NextLevel), spawn_enigma_materials)
             .add_systems(
@@ -109,8 +90,29 @@ fn spawn_enigma_materials(
     mut texture_atlases: ResMut<Assets<TextureAtlasLayout>>,
     current_level: Res<CurrentLevel>,
     levels: Query<&Level, With<Level>>,
+    mut enigmas: ResMut<Enigmas>,
 ) {
     info!("spawn_enigma_materials");
+    let mut rng = thread_rng();
+
+    *enigmas = Enigmas {
+        enigmas: vec![
+            Enigma {
+                associated_story: "story03-03".to_string(),
+                kind: EnigmaKind::Numbers(HashMap::from([
+                    ("n1".to_string(), rng.gen_range(0..=50).to_string()),
+                    ("n2".to_string(), rng.gen_range(0..50).to_string()),
+                ])),
+            },
+            Enigma {
+                associated_story: "story04-03".to_string(),
+                kind: EnigmaKind::Numbers(HashMap::from([(
+                    "n1".to_string(),
+                    rng.gen_range(0..=49).to_string(),
+                )])),
+            },
+        ],
+    };
 
     let level = levels
         .iter()
@@ -143,7 +145,7 @@ fn spawn_enigma_materials(
                 Ccd::enabled(),
                 ExternalImpulse::default(),
                 RockGate {
-                    associated_story: "story04-01".to_string(),
+                    associated_story: "story04-03".to_string(),
                 },
             ));
         }
@@ -199,7 +201,7 @@ fn spawn_enigma_materials(
                 Collider::cuboid(GATE_WIDTH / 2.0, GATE_HEIGHT / 2.0),
                 AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
                 Gate {
-                    associated_story: "story03-01".to_string(),
+                    associated_story: "story03-03".to_string(),
                 },
             ));
         }
@@ -217,8 +219,8 @@ fn check_enigma(
     for ev in no_more_msg_event.read() {
         debug!("No more story messages: {:?}", ev.latest);
         match ev.latest.as_ref() {
-            "story03-01" => {
-                let story = "story03-01";
+            "story03-03" => {
+                let story = "story03-03";
                 let numbers = enigmas
                     .enigmas
                     .iter()
@@ -244,8 +246,8 @@ fn check_enigma(
                     enigna_result.send(EnigmaResult::Incorrect(story.to_string()));
                 }
             }
-            "story04-01" => {
-                let story = "story04-01";
+            "story04-03" => {
+                let story = "story04-03";
                 let numbers = enigmas
                     .enigmas
                     .iter()
