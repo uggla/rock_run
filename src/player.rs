@@ -459,7 +459,7 @@ fn check_hit(
         }
     }
 
-    if state.get() == &PlayerState::Hit && jump_timer.just_finished() {
+    if state.get() == &PlayerState::Hit && jump_timer.finished() && *just_hit {
         debug!("timer finished");
         *just_hit = false;
         restart.send(Restart);
