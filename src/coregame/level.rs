@@ -197,6 +197,7 @@ fn show_level_background(
     map_query: Query<(&Level, &TilesetLayerToStorageEntity), With<Level>>,
     tile_storage_query: Query<(Entity, &TileStorage)>,
 ) {
+    debug!("show_level_background {:?}", current_level.id);
     let mut tiles = get_tiles(map_query, current_level, tile_storage_query);
 
     tiles.iter_mut().for_each(|tile| {
@@ -211,6 +212,7 @@ fn hide_level_background(
     map_query: Query<(&Level, &TilesetLayerToStorageEntity), With<Level>>,
     tile_storage_query: Query<(Entity, &TileStorage)>,
 ) {
+    debug!("hide_level_background {:?}", current_level.id);
     let mut tiles = get_tiles(map_query, current_level, tile_storage_query);
 
     tiles.iter_mut().for_each(|tile| {

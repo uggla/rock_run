@@ -627,7 +627,6 @@ fn menu_input_system(
         && menu_action_state.just_pressed(&MenuAction::ExitToMenu)
     {
         next_state.set(AppState::StartMenu);
-        current_level.id = 1;
         rapier_config.physics_pipeline_active = true;
         msg_event.send(StoryMessages::Hide);
         ladder_collision_stop.send(LadderCollisionStop);
