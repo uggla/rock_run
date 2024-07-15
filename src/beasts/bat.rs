@@ -123,7 +123,10 @@ fn spawn_bat(
             AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
             ChaseTimer(Timer::from_seconds(15.0, TimerMode::Once)),
             Collider::compound(get_collider_shapes(false)),
-            KinematicCharacterController { ..default() },
+            KinematicCharacterController {
+                filter_flags: QueryFilterFlags::ONLY_FIXED,
+                ..default()
+            },
             Bat {
                 exit_pos: collision_event.exit_pos,
                 current_movement: BatMovement::Fly(BatDirection::default()),

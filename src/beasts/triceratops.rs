@@ -1,6 +1,7 @@
 use bevy::{prelude::*, utils::HashMap};
 use bevy_rapier2d::{
     control::KinematicCharacterController, dynamics::RigidBody, geometry::Collider,
+    pipeline::QueryFilterFlags,
 };
 
 use crate::{
@@ -150,7 +151,10 @@ fn setup_triceratops(
             RigidBody::KinematicPositionBased,
             AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
             Collider::compound(get_collider_shapes(false)),
-            KinematicCharacterController { ..default() },
+            KinematicCharacterController {
+                filter_flags: QueryFilterFlags::EXCLUDE_KINEMATIC,
+                ..default()
+            },
             Triceratops {
                 current_movement: TriceratopsMovement::Run(TriceratopsDirection::default()),
             },

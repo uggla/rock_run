@@ -1,9 +1,7 @@
 use bevy::{prelude::*, utils::HashMap};
 use bevy_rapier2d::{
-    control::{KinematicCharacterController, KinematicCharacterControllerOutput},
-    dynamics::Velocity,
-    geometry::ActiveCollisionTypes,
-    pipeline::{CollisionEvent, QueryFilterFlags},
+    control::KinematicCharacterControllerOutput, dynamics::Velocity,
+    geometry::ActiveCollisionTypes, pipeline::CollisionEvent,
 };
 
 use crate::{
@@ -49,8 +47,6 @@ impl Plugin for CollisionsPlugin {
             (
                 player_collisions,
                 triceratops_collisions,
-                bat_collisions,
-                pterodactyl_collisions,
                 story_collisions,
                 display_story,
                 position_sensor_collisions,
@@ -81,6 +77,9 @@ fn player_collisions(
     platforms: Query<Entity, With<Platform>>,
     spikes: Query<Entity, With<Spike>>,
     moving_platforms: Query<Entity, With<MovingPlatform>>,
+    bats: Query<Entity, With<Bat>>,
+    pterodactyls: Query<Entity, With<Pterodactyl>>,
+    triceratops: Query<Entity, With<Triceratops>>,
     rocks: Query<(Entity, &Velocity), With<Rock>>,
     rockgates: Query<(Entity, &Velocity), With<RockGate>>,
     mut hit: EventWriter<Hit>,
@@ -129,6 +128,29 @@ fn player_collisions(
                 });
             }
         }
+        // Player collides with bats
+        for bat in bats.iter() {
+            if character_collision.entity == bat {
+                debug!("hit bat {:?}", bat);
+                hit.send(Hit);
+            }
+        }
+
+        // Player collides with pterodactyls
+        for pterodactyl in pterodactyls.iter() {
+            if character_collision.entity == pterodactyl {
+                debug!("hit pterodactyl {:?}", pterodactyl);
+                hit.send(Hit);
+            }
+        }
+
+        // Player collides with trieratops
+        for triceratops in triceratops.iter() {
+            if character_collision.entity == triceratops {
+                debug!("hit triceratops {:?}", triceratops);
+                hit.send(Hit);
+            }
+        }
 
         // Player collides with fast moving rocks or rockgates
         // If rocks are moving slowly, we can stay on it
@@ -155,51 +177,20 @@ fn player_collisions(
 }
 
 fn triceratops_collisions(
-    state: Res<State<PlayerState>>,
     mut triceratops_controller: Query<
-        (
-            Entity,
-            &KinematicCharacterControllerOutput,
-            &mut KinematicCharacterController,
-        ),
+        (Entity, &KinematicCharacterControllerOutput),
         With<Triceratops>,
     >,
     ground: Query<Entity, With<Ground>>,
-    player: Query<Entity, With<Player>>,
     mut collision_event: EventWriter<TriceratopsCollision>,
-    mut hit: EventWriter<Hit>,
 ) {
-    if state.get() == &PlayerState::Hit {
-        return;
-    }
-
     let ground_entity = match ground.get_single() {
         Ok(entity) => entity,
         Err(_) => return,
     };
 
-    let player_entity = match player.get_single() {
-        Ok(entity) => entity,
-        Err(_) => return,
-    };
-
-    for (triceratops_entity, output, mut ctrl) in triceratops_controller.iter_mut() {
-        // Maybe an event saying that the game start could be better than using a state here.
-        // The following code is used right after the end of the restart event
-        // It enable again the collision with the triceratops. The collision are disabled as soon as we
-        // detect a collision with the player to keep only one collision and avoid multiple collisions.
-        if state.get() == &PlayerState::Falling {
-            ctrl.filter_flags
-                .remove(QueryFilterFlags::EXCLUDE_KINEMATIC);
-            // debug!("Re-enabling collision with triceratops");
-        }
+    for (triceratops_entity, output) in triceratops_controller.iter_mut() {
         for character_collision in output.collisions.iter() {
-            // triceratops hits player
-            if character_collision.entity == player_entity {
-                hit.send(Hit);
-                ctrl.filter_flags = QueryFilterFlags::EXCLUDE_KINEMATIC;
-                debug!("Triceratops hits player, disabling further collision with triceratops");
-            }
             // Triceratops collides with ground and can not move on x axis
             if (character_collision.entity == ground_entity)
                 && output.grounded
@@ -399,84 +390,6 @@ fn ladder_collisions(
 
                     ladder_collision_stop.send(LadderCollisionStop);
                 };
-            }
-        }
-    }
-}
-
-fn bat_collisions(
-    state: Res<State<PlayerState>>,
-    mut bat_controller: Query<
-        (
-            &KinematicCharacterControllerOutput,
-            &mut KinematicCharacterController,
-        ),
-        With<Bat>,
-    >,
-    player: Query<Entity, With<Player>>,
-    mut hit: EventWriter<Hit>,
-) {
-    if state.get() == &PlayerState::Hit {
-        return;
-    }
-
-    let player_entity = match player.get_single() {
-        Ok(entity) => entity,
-        Err(_) => return,
-    };
-
-    for (output, mut ctrl) in bat_controller.iter_mut() {
-        if state.get() == &PlayerState::Falling {
-            ctrl.filter_flags
-                .remove(QueryFilterFlags::EXCLUDE_KINEMATIC);
-            // debug!("Re-enabling collision with bat");
-        }
-
-        for character_collision in output.collisions.iter() {
-            // bat hits player
-            if character_collision.entity == player_entity {
-                hit.send(Hit);
-                ctrl.filter_flags = QueryFilterFlags::EXCLUDE_KINEMATIC;
-                debug!("Bat hits player, disabling further collision with bat");
-            }
-        }
-    }
-}
-
-fn pterodactyl_collisions(
-    state: Res<State<PlayerState>>,
-    mut pterodactyl_controller: Query<
-        (
-            &KinematicCharacterControllerOutput,
-            &mut KinematicCharacterController,
-        ),
-        With<Pterodactyl>,
-    >,
-    player: Query<Entity, With<Player>>,
-    mut hit: EventWriter<Hit>,
-) {
-    if state.get() == &PlayerState::Hit {
-        return;
-    }
-
-    let player_entity = match player.get_single() {
-        Ok(entity) => entity,
-        Err(_) => return,
-    };
-
-    for (output, mut ctrl) in pterodactyl_controller.iter_mut() {
-        if state.get() == &PlayerState::Falling {
-            ctrl.filter_flags
-                .remove(QueryFilterFlags::EXCLUDE_KINEMATIC);
-            // debug!("Re-enabling collision with pterodactyl");
-        }
-
-        for character_collision in output.collisions.iter() {
-            // pterodactyl hits player
-            if character_collision.entity == player_entity {
-                hit.send(Hit);
-                ctrl.filter_flags = QueryFilterFlags::EXCLUDE_KINEMATIC;
-                debug!("Pterodactyl hits player, disabling further collision with pterodactyl");
             }
         }
     }
