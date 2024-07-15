@@ -464,6 +464,14 @@ fn position_sensor_collisions(
                     },
                 ),
                 (
+                    "pterodactyl01".to_string(),
+                    SensorValues {
+                        start_pos: level.map.tiled_to_bevy_coord(Vec2::new(1400.0, 320.0)),
+                        end_pos: level.map.tiled_to_bevy_coord(Vec2::new(-30.0, 320.0)),
+                        disable_next_collision: true,
+                    },
+                ),
+                (
                     "rock01".to_string(),
                     SensorValues {
                         start_pos: level.map.tiled_to_bevy_coord(Vec2::new(5300.0, 800.0)),
