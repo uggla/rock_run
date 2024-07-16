@@ -7,6 +7,7 @@ mod events;
 mod external_plugins;
 mod helpers;
 mod life;
+mod music;
 mod player;
 mod screen_map;
 
@@ -22,6 +23,7 @@ use crate::{
     events::{NoMoreStoryMessages, StoryMessages},
     external_plugins::ExternalPlugins,
     life::LifePlugin,
+    music::MusicPlugin,
     player::PlayerPlugin,
 };
 
@@ -51,6 +53,7 @@ fn main() {
         BeastsPlugins,
         ElementsPlugins,
         helpers::tiled::TiledMapPlugin,
+        MusicPlugin,
         PlayerPlugin,
         LifePlugin,
         CollisionsPlugin,
@@ -118,17 +121,5 @@ fn update_text(
 
     if input_state.just_pressed(&player::PlayerMovement::Crouch) {
         debug!("debugging you press crouch(down array key)");
-        // for mut ext_impulse in ext_impulses.iter_mut() {
-        //     ext_impulse.impulse = Vec2::new(-100.0, 0.0);
-        // }
-        //     msg_event.send(StoryMessages::Display(vec![
-        //         (
-        //             "hello-world".to_string(),
-        //             Some(HashMap::from([("name".to_string(), "Rose".to_string())])),
-        //         ),
-        //         ("story01-01".to_string(), None),
-        //     ]));
-
-        // life_event.send(events::LifeEvent::Lost);
     }
 }
