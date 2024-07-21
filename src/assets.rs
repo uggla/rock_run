@@ -45,8 +45,8 @@ pub struct RockRunAssets {
     pub rock_small: Handle<Image>,
     #[asset(path = "sprites/bat.png")]
     pub bat: Handle<Image>,
-    // #[asset(path = "sprites/tyrannosaurus.png")]
-    // pub tyrannosaurus: Handle<Image>,
+    #[asset(path = "sprites/trex.png")]
+    pub trex: Handle<Image>,
 
     // Images
     #[asset(path = "images/menu.jpg")]
@@ -71,6 +71,10 @@ pub struct RockRunAssets {
     pub loose_sound: Handle<AudioSource>,
     #[asset(path = "sounds/pterodactyl.ogg")]
     pub pterodactyl_sound: Handle<AudioSource>,
+    #[asset(path = "sounds/trex_rush.ogg")]
+    pub trex_rush_sound: Handle<AudioSource>,
+    #[asset(path = "sounds/trex_bite.ogg")]
+    pub trex_bite_sound: Handle<AudioSource>,
 
     // Music
     #[asset(path = "musics/theme_01.ogg")]
