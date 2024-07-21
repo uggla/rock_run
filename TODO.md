@@ -3,7 +3,7 @@
 - [x] Refactor to use PluginGroup.
 - [x] Refactor to use [bevy_asset_loader](https://github.com/NiklasEi/bevy_asset_loader).
 - [x] Bump to bevy 0.14.
-- [ ] Add background musics.
+- [x] Add background musics.
 - [ ] Add trex.
 - [x] Add an enigma that drop a rock allowing to go over spikes.
 - [ ] Improve level 1.
@@ -11,6 +11,7 @@
 - [x] Check for compilation optimization.
 - [x] Review stories.
 - [ ] Update doc about tiled.
+- [ ] Add a squirrel and a challenge to get all his nuts.
 - [ ] Remove remaining debugging stuffs especially on main.rs.
 - [ ] Release a first version of the game on Github.
 - [ ] Release a first version of the game on Itch.io with web version.
