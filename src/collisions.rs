@@ -6,7 +6,7 @@ use bevy_rapier2d::{
 
 use crate::{
     assets::RockRunAssets,
-    beasts::{bat::Bat, pterodactyl::Pterodactyl, triceratops::Triceratops},
+    beasts::{bat::Bat, pterodactyl::Pterodactyl, trex::Trex, triceratops::Triceratops},
     coregame::{
         colliders::{ColliderName, Ground, Ladder, Platform, PositionSensor, Spike, Story},
         level::{CurrentLevel, Level},
@@ -80,6 +80,7 @@ fn player_collisions(
     bats: Query<Entity, With<Bat>>,
     pterodactyls: Query<Entity, With<Pterodactyl>>,
     triceratops: Query<Entity, With<Triceratops>>,
+    trexes: Query<Entity, With<Trex>>,
     rocks: Query<(Entity, &Velocity), With<Rock>>,
     rockgates: Query<(Entity, &Velocity), With<RockGate>>,
     mut hit: EventWriter<Hit>,
@@ -144,10 +145,18 @@ fn player_collisions(
             }
         }
 
-        // Player collides with trieratops
+        // Player collides with triceratops
         for triceratops in triceratops.iter() {
             if character_collision.entity == triceratops {
                 debug!("hit triceratops {:?}", triceratops);
+                hit.send(Hit);
+            }
+        }
+
+        // Player collides with trex
+        for trex in trexes.iter() {
+            if character_collision.entity == trex {
+                debug!("hit trex {:?}", trex);
                 hit.send(Hit);
             }
         }
