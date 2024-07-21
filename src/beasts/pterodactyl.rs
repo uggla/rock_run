@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{audio::PlaybackMode, prelude::*};
 use bevy_rapier2d::{
     control::KinematicCharacterController,
     dynamics::{Ccd, GravityScale, RigidBody, Velocity},
@@ -156,6 +156,14 @@ fn spawn_pterodactyl(
             },
             pterodactyl,
         ));
+
+        commands.spawn(AudioBundle {
+            source: rock_run_assets.pterodactyl_sound.clone(),
+            settings: PlaybackSettings {
+                mode: PlaybackMode::Despawn,
+                ..default()
+            },
+        });
     }
 }
 
@@ -188,32 +196,42 @@ fn move_pterodactyl(
     ) in pterodactyl_query.iter_mut()
     {
         let player = player_query.single();
-        let mut anim = |current_movement: PterodactylMovement| match current_movement {
-            PterodactylMovement::Fly(pterodactyl_direction) => {
-                let (mut anim_timer, mut texture, mut sprite) =
-                    animation_query.get_mut(pterodactyl_entity).unwrap();
-                anim_timer.tick(time.delta());
-                match pterodactyl_direction {
-                    PterodactylDirection::Left => {
-                        sprite.flip_x = true;
-                        *pterodactyl_collider = Collider::compound(get_collider_shapes(true));
+        let mut anim =
+            |current_movement: PterodactylMovement, commands: &mut Commands| match current_movement
+            {
+                PterodactylMovement::Fly(pterodactyl_direction) => {
+                    let (mut anim_timer, mut texture, mut sprite) =
+                        animation_query.get_mut(pterodactyl_entity).unwrap();
+                    anim_timer.tick(time.delta());
+                    match pterodactyl_direction {
+                        PterodactylDirection::Left => {
+                            sprite.flip_x = true;
+                            *pterodactyl_collider = Collider::compound(get_collider_shapes(true));
+                        }
+                        PterodactylDirection::Right => {
+                            sprite.flip_x = false;
+                            *pterodactyl_collider = Collider::compound(get_collider_shapes(false));
+                        }
                     }
-                    PterodactylDirection::Right => {
-                        sprite.flip_x = false;
-                        *pterodactyl_collider = Collider::compound(get_collider_shapes(false));
+                    if anim_timer.just_finished() {
+                        cycle_texture(&mut texture, 0..=4);
                     }
                 }
-                if anim_timer.just_finished() {
-                    cycle_texture(&mut texture, 0..=4);
-                }
-            }
 
-            PterodactylMovement::Throw => {
-                let (mut _anim_timer, mut texture, mut _sprite) =
-                    animation_query.get_mut(pterodactyl_entity).unwrap();
-                texture.index = 5;
-            }
-        };
+                PterodactylMovement::Throw => {
+                    let (mut _anim_timer, mut texture, mut _sprite) =
+                        animation_query.get_mut(pterodactyl_entity).unwrap();
+                    texture.index = 5;
+
+                    commands.spawn(AudioBundle {
+                        source: rock_run_assets.pterodactyl_sound.clone(),
+                        settings: PlaybackSettings {
+                            mode: PlaybackMode::Despawn,
+                            ..default()
+                        },
+                    });
+                }
+            };
 
         let mut chase_timer = chase_timer.get_mut(pterodactyl_entity).unwrap();
         let mut throw_timer = throw_timer.get_mut(pterodactyl_entity).unwrap();
@@ -269,17 +287,17 @@ fn move_pterodactyl(
         {
             if throw_timer.just_finished() {
                 spawn_little_rock(&mut commands, pterodactyl_pos, &rock_run_assets);
-                anim(pterodactyl.current_movement);
+                anim(pterodactyl.current_movement, &mut commands);
                 pterodactyl_controller.translation = Some(Vec2::new(direction.x, direction.y));
                 throw_timer.reset();
             } else {
                 throw_timer.tick(time.delta());
                 pterodactyl.current_movement = PterodactylMovement::Throw;
-                anim(pterodactyl.current_movement);
+                anim(pterodactyl.current_movement, &mut commands);
                 pterodactyl_controller.translation = None;
             }
         } else {
-            anim(pterodactyl.current_movement);
+            anim(pterodactyl.current_movement, &mut commands);
             pterodactyl_controller.translation = Some(Vec2::new(direction.x, direction.y));
         };
     }

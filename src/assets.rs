@@ -69,6 +69,8 @@ pub struct RockRunAssets {
     pub hit_sound: Handle<AudioSource>,
     #[asset(path = "sounds/loose.ogg")]
     pub loose_sound: Handle<AudioSource>,
+    #[asset(path = "sounds/pterodactyl.ogg")]
+    pub pterodactyl_sound: Handle<AudioSource>,
 
     // Music
     #[asset(path = "musics/theme_01.ogg")]
