@@ -250,6 +250,9 @@ fn move_player(
                     PlayerState::Falling => {
                         cycle_texture(&mut texture, 14..=16);
                     }
+                    PlayerState::Climbing => {
+                        cycle_texture(&mut texture, 33..=36);
+                    }
                     _ => {
                         cycle_texture(&mut texture, 6..=10);
                     }
@@ -319,6 +322,7 @@ fn move_player(
     if !ladder_collision_stop.is_empty() {
         *ladder_collision = false;
         ladder_collision_stop.clear();
+        next_state.set(PlayerState::Falling);
     }
 
     if input_state.pressed(&PlayerMovement::Run(PlayerDirection::Left)) {

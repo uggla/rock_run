@@ -19,7 +19,7 @@
             "scale": 0.75,
             "selectedLayer": 9,
             "viewCenter": {
-                "x": 6402.666666666666,
+                "x": 6399.333333333333,
                 "y": 359.3333333333333
             }
         },
@@ -59,9 +59,9 @@
         },
         "level02.tmx": {
             "expandedObjectLayers": [
-                4,
+                8,
                 5,
-                8
+                4
             ],
             "scale": 0.75,
             "selectedLayer": 6,
