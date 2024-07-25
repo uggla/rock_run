@@ -16,11 +16,11 @@
             "expandedObjectLayers": [
                 6
             ],
-            "scale": 0.75,
-            "selectedLayer": 9,
+            "scale": 2,
+            "selectedLayer": 7,
             "viewCenter": {
-                "x": 6399.333333333333,
-                "y": 359.3333333333333
+                "x": 3096.25,
+                "y": 680.25
             }
         },
         "level01.tmx#backgrounds": {
@@ -29,6 +29,7 @@
             "scaleInEditor": 1
         },
         "level01.tmx#cloud-1": {
+            "dynamicWrapping": false,
             "scaleInDock": 0.25
         },
         "level01.tmx#forest-1": {
@@ -55,6 +56,9 @@
         },
         "level01.tmx#tileset-1": {
             "dynamicWrapping": false,
+            "scaleInDock": 0.75
+        },
+        "level01.tmx#trellis-1": {
             "scaleInDock": 1
         },
         "level02.tmx": {
@@ -66,7 +70,7 @@
             "scale": 0.75,
             "selectedLayer": 6,
             "viewCenter": {
-                "x": 3199.333333333333,
+                "x": 3200,
                 "y": 719.3333333333333
             }
         },
@@ -97,7 +101,7 @@
             "scaleInDock": 1
         }
     },
-    "last.imagePath": "/home/rribaud/workspace/rust/rock_run/assets",
+    "last.imagePath": "/home/uggla/workspace/rust/rock_run/assets",
     "last.worldFilePath": "/home/rribaud/workspace/rust/rock_run/assets",
     "loadedWorlds": [
         "/home/rribaud/workspace/rust/rock_run/assets/level01.tmx"

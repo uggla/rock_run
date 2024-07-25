@@ -129,6 +129,7 @@ fn player_collisions(
                 });
             }
         }
+
         // Player collides with bats
         for bat in bats.iter() {
             if character_collision.entity == bat {
@@ -456,8 +457,16 @@ fn position_sensor_collisions(
                     "pterodactyl_attack01".to_string(),
                     SensorValues {
                         start_pos: level.map.tiled_to_bevy_coord(Vec2::new(1596.0, 455.0)),
-                        end_pos: level.map.tiled_to_bevy_coord(Vec2::new(0.0, 455.0)),
+                        end_pos: level.map.tiled_to_bevy_coord(Vec2::new(-100.0, 455.0)),
                         disable_next_collision: true,
+                    },
+                ),
+                (
+                    "pterodactyl_wave_30_01".to_string(),
+                    SensorValues {
+                        start_pos: Vec2::ZERO,
+                        end_pos: Vec2::ZERO,
+                        disable_next_collision: false,
                     },
                 ),
             ]),

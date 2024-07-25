@@ -119,6 +119,10 @@ fn setup_triceratops(
     );
     let texture_atlas_layout = texture_atlases.add(layout);
     let mut level_triceratops_pos: HashMap<u8, Vec<Vec2>> = HashMap::new();
+    // level_triceratops_pos.insert(
+    //     1,
+    //     vec![level.map.tiled_to_bevy_coord(Vec2::new(4720.0, 576.0))],
+    // );
     level_triceratops_pos.insert(
         2,
         vec![
@@ -152,7 +156,8 @@ fn setup_triceratops(
             AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
             Collider::compound(get_collider_shapes(false)),
             KinematicCharacterController {
-                filter_flags: QueryFilterFlags::EXCLUDE_KINEMATIC,
+                filter_flags: QueryFilterFlags::EXCLUDE_KINEMATIC
+                    | QueryFilterFlags::EXCLUDE_SENSORS,
                 ..default()
             },
             Triceratops {
