@@ -21,6 +21,9 @@ pub struct NoMoreStoryMessages {
 pub struct Hit;
 
 #[derive(Event)]
+pub struct StartGame;
+
+#[derive(Event)]
 pub struct Restart;
 
 #[derive(Event)]

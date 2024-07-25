@@ -5,19 +5,21 @@ use bevy_rapier2d::{
     geometry::{ActiveCollisionTypes, Collider},
     pipeline::QueryFilterFlags,
 };
+use rand::seq::SliceRandom;
+use rand::thread_rng;
 
 use crate::{
     assets::RockRunAssets,
     collisions::CollisionSet,
     coregame::state::AppState,
     elements::rock::Rock,
-    events::{PositionSensorCollisionStart, Restart},
+    events::{PositionSensorCollisionStart, Restart, StartGame},
     helpers::texture::cycle_texture,
     player::Player,
     WINDOW_HEIGHT, WINDOW_WIDTH,
 };
 
-const PTERODACTYL_SPEED: f32 = 400.0;
+const PTERODACTYL_SPEED: f32 = 600.0;
 const PTERODACTYL_SCALE_FACTOR: f32 = 1.0;
 const PTERODACTYL_WIDTH: f32 = 128.0;
 const PTERODACTYL_HEIGHT: f32 = 112.0;
@@ -26,6 +28,8 @@ const ROCK_SCALE_FACTOR: f32 = 1.0;
 
 #[derive(Component)]
 pub struct Pterodactyl {
+    // if spawn_pos is none, spawn at current player y pos.
+    spawn_pos: Option<Vec2>,
     exit_pos: Vec2,
     current_movement: PterodactylMovement,
     attack: bool,
@@ -96,17 +100,38 @@ fn get_collider_shapes(y_mirror: bool) -> Vec<(Vec2, f32, Collider)> {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn spawn_pterodactyl(
     mut commands: Commands,
+    time: Res<Time>,
     rock_run_assets: Res<RockRunAssets>,
     mut texture_atlases: ResMut<Assets<TextureAtlasLayout>>,
     mut pterodactyl_sensor_collision: EventReader<PositionSensorCollisionStart>,
+    mut pterodactyls: Local<Vec<Pterodactyl>>,
+    mut spawn_timer: Local<Timer>,
+    mut game_event: EventReader<StartGame>,
+    mut restart_event: EventReader<Restart>,
+    player_query: Query<&Transform, With<Player>>,
+    camera_query: Query<&mut Transform, (With<Camera2d>, Without<Player>)>,
 ) {
-    for collision_event in pterodactyl_sensor_collision.read() {
-        if !collision_event.sensor_name.contains("pterodactyl") {
-            return;
-        }
+    if !game_event.is_empty() {
+        pterodactyls.clear();
+        game_event.clear();
+        return;
+    }
 
+    if !restart_event.is_empty() {
+        pterodactyls.clear();
+        restart_event.clear();
+        return;
+    }
+
+    spawn_timer.tick(time.delta());
+
+    if !pterodactyls.is_empty() && spawn_timer.finished() {
+        let spawn_time_values = [0.3, 0.6, 1.0];
+        let spawn_y_values = [-50.0, 0.0, 50.0];
+        let mut rng = thread_rng();
         let texture = rock_run_assets.pterodactyl.clone();
         let layout = TextureAtlasLayout::from_grid(
             UVec2::new(PTERODACTYL_WIDTH as u32, PTERODACTYL_HEIGHT as u32),
@@ -117,18 +142,19 @@ fn spawn_pterodactyl(
         );
         let texture_atlas_layout = texture_atlases.add(layout);
 
-        let pterodactyl = match collision_event.sensor_name.contains("pterodactyl_attack") {
-            true => Pterodactyl {
-                exit_pos: collision_event.exit_pos,
-                current_movement: PterodactylMovement::Fly(PterodactylDirection::Left),
-                attack: true,
-            },
-            false => Pterodactyl {
-                exit_pos: collision_event.exit_pos,
-                current_movement: PterodactylMovement::Fly(PterodactylDirection::Left),
-                attack: false,
-            },
-        };
+        let mut pterodactyl = pterodactyls.pop().unwrap();
+        let player_pos = player_query.single();
+        let camera_pos = camera_query.single();
+
+        if pterodactyl.spawn_pos.is_none() {
+            let spawn_y = player_pos.translation.y + spawn_y_values.choose(&mut rng).unwrap();
+            pterodactyl.spawn_pos = Some(Vec2::new(
+                camera_pos.translation.x + (WINDOW_WIDTH / 2.0 + 100.0),
+                spawn_y,
+            ));
+            pterodactyl.exit_pos =
+                Vec2::new(camera_pos.translation.x - (WINDOW_WIDTH + 100.0), spawn_y);
+        }
 
         commands.spawn((
             SpriteBundle {
@@ -136,7 +162,7 @@ fn spawn_pterodactyl(
                 sprite: Sprite { ..default() },
                 transform: Transform {
                     scale: Vec3::splat(PTERODACTYL_SCALE_FACTOR),
-                    translation: collision_event.spawn_pos.extend(20.0),
+                    translation: pterodactyl.spawn_pos.unwrap().extend(20.0),
                     ..default()
                 },
                 ..default()
@@ -164,7 +190,63 @@ fn spawn_pterodactyl(
                 ..default()
             },
         });
+
+        *spawn_timer = Timer::from_seconds(
+            *spawn_time_values.choose(&mut rng).unwrap(),
+            TimerMode::Once,
+        );
     }
+
+    for collision_event in pterodactyl_sensor_collision.read() {
+        if !collision_event.sensor_name.contains("pterodactyl") {
+            return;
+        }
+
+        *pterodactyls = build_pterodactyls_to_spawn(collision_event);
+    }
+}
+
+fn build_pterodactyls_to_spawn(collision_event: &PositionSensorCollisionStart) -> Vec<Pterodactyl> {
+    if collision_event.sensor_name.contains("pterodactyl_attack") {
+        return vec![Pterodactyl {
+            spawn_pos: Some(collision_event.spawn_pos),
+            exit_pos: collision_event.exit_pos,
+            current_movement: PterodactylMovement::Fly(PterodactylDirection::Left),
+            attack: true,
+        }];
+    }
+
+    if collision_event.sensor_name.contains("pterodactyl_wave") {
+        let mut pterodactyls = Vec::new();
+        let number_of_pterodactyls: usize = collision_event
+            .sensor_name
+            .split('_')
+            .nth(2)
+            .unwrap()
+            .parse()
+            .unwrap();
+
+        for _ in 0..number_of_pterodactyls {
+            pterodactyls.push(Pterodactyl {
+                spawn_pos: None,
+                exit_pos: collision_event.exit_pos,
+                current_movement: PterodactylMovement::Fly(PterodactylDirection::Left),
+                attack: true,
+            });
+        }
+        return pterodactyls;
+    }
+
+    if collision_event.sensor_name.contains("pterodactyl") {
+        return vec![Pterodactyl {
+            spawn_pos: Some(collision_event.spawn_pos),
+            exit_pos: collision_event.exit_pos,
+            current_movement: PterodactylMovement::Fly(PterodactylDirection::Left),
+            attack: false,
+        }];
+    }
+
+    vec![]
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -186,6 +268,8 @@ fn move_pterodactyl(
     mut chase_timer: Query<&mut ChaseTimer>,
     mut throw_timer: Query<&mut ThrowTimer>,
     rock_run_assets: Res<RockRunAssets>,
+    mut audio_entity: Local<Option<Entity>>,
+    query_entity: Query<Entity>,
 ) {
     for (
         pterodactyl_entity,
@@ -223,13 +307,19 @@ fn move_pterodactyl(
                         animation_query.get_mut(pterodactyl_entity).unwrap();
                     texture.index = 5;
 
-                    commands.spawn(AudioBundle {
-                        source: rock_run_assets.pterodactyl_sound.clone(),
-                        settings: PlaybackSettings {
-                            mode: PlaybackMode::Despawn,
-                            ..default()
-                        },
-                    });
+                    if audio_entity.is_none() || query_entity.get(audio_entity.unwrap()).is_err() {
+                        *audio_entity = Some(
+                            commands
+                                .spawn(AudioBundle {
+                                    source: rock_run_assets.pterodactyl_sound.clone(),
+                                    settings: PlaybackSettings {
+                                        mode: PlaybackMode::Despawn,
+                                        ..default()
+                                    },
+                                })
+                                .id(),
+                        );
+                    }
                 }
             };
 
@@ -251,11 +341,11 @@ fn move_pterodactyl(
                 } else {
                     // Lemniscate of Gerono above the player
                     let x = (WINDOW_WIDTH / 2.8)
-                        * (time.elapsed_seconds() * PTERODACTYL_SPEED * 0.003).cos()
+                        * (time.elapsed_seconds() * PTERODACTYL_SPEED * 0.002).cos()
                         + player_pos.x;
                     let y = (WINDOW_HEIGHT / 2.8)
-                        * (time.elapsed_seconds() * PTERODACTYL_SPEED * 0.003).sin()
-                        * (time.elapsed_seconds() * PTERODACTYL_SPEED * 0.003).cos()
+                        * (time.elapsed_seconds() * PTERODACTYL_SPEED * 0.002).sin()
+                        * (time.elapsed_seconds() * PTERODACTYL_SPEED * 0.002).cos()
                         + player_pos.y
                         + 300.0;
 
