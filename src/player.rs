@@ -16,7 +16,7 @@ use crate::{
     },
     events::{
         Hit, LadderCollisionStart, LadderCollisionStop, LifeEvent, MovingPlatformDescending,
-        Restart,
+        Restart, StartGame,
     },
     helpers::texture::{cycle_texture, swing_texture, IndexDirection},
 };
@@ -218,6 +218,7 @@ fn move_player(
     mut ladder_collision_start: EventReader<LadderCollisionStart>,
     mut ladder_collision_stop: EventReader<LadderCollisionStop>,
     mut moving_platform_descending: EventReader<MovingPlatformDescending>,
+    mut game_event: EventReader<StartGame>,
     mut ladder_collision: Local<bool>,
 ) {
     let (mut player_collider, mut player_pos, mut player_controller, player_audio) =
@@ -312,6 +313,12 @@ fn move_player(
         anim(current_movement);
         player_controller.translation = Some(Vec2::new(0.0, PLAYER_SPEED * time.delta_seconds()));
         return;
+    }
+
+    if !game_event.is_empty() {
+        game_event.clear();
+        *ladder_collision = false;
+        next_state.set(PlayerState::Falling);
     }
 
     if !ladder_collision_start.is_empty() {
