@@ -75,11 +75,14 @@ impl Plugin for EnigmaPlugin {
                 OnEnter(AppState::FinishLevel),
                 (despawn_warrior, despawn_gate, despawn_rockgate),
             )
-            .add_systems(
-                Update,
-                (move_warrior, move_gate, move_rockgate).run_if(in_state(AppState::GameRunning)),
-            )
-            .add_systems(Update, check_enigma)
+            .add_systems(Update, move_warrior.run_if(in_state(AppState::GameRunning)))
+            // .add_systems(
+            //     Update,
+            //     (move_gate, move_rockgate).run_if(
+            //         in_state(AppState::GameRunning).or_else(in_state(AppState::GameMessage)),
+            //     ),
+            // )
+            .add_systems(Update, (move_gate, move_rockgate, check_enigma))
             .add_event::<EnigmaResult>();
     }
 }
@@ -346,10 +349,11 @@ fn move_rockgate(
 ) {
     for ev in enigna_result.read() {
         if let EnigmaResult::Correct(enigma) = ev {
+            debug!("{:?}", enigma);
             for (gate_entity, current_gate) in gate_query.iter_mut() {
                 if current_gate.associated_story == *enigma {
                     debug!(
-                        "Opening gate {:?} associted to {:?}",
+                        "Moving rockgate {:?} associted to {:?}",
                         gate_entity, current_gate.associated_story
                     );
 
