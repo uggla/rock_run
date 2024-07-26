@@ -220,6 +220,7 @@ fn move_player(
     mut moving_platform_descending: EventReader<MovingPlatformDescending>,
     mut game_event: EventReader<StartGame>,
     mut ladder_collision: Local<bool>,
+    mut toggle: Local<bool>,
 ) {
     let (mut player_collider, mut player_pos, mut player_controller, player_audio) =
         player_query.single_mut();
@@ -388,10 +389,23 @@ fn move_player(
             ));
         }
     } else if *ladder_collision && state.get() == &PlayerState::Climbing {
-        player_controller.translation = Some(Vec2::new(
-            direction_x * PLAYER_SPEED * time.delta_seconds(),
-            direction_y * PLAYER_SPEED * time.delta_seconds(),
-        ));
+        // If the player is stationary, beasts are blocked by the player's
+        // hitbox and collision is not detected. Therefore, initiate a slight,
+        // imperceptible movement to trigger the collision.
+        if direction_x == 0.0 && direction_y == 0.0 {
+            if *toggle {
+                player_controller.translation = Some(Vec2::new(0.1 * time.delta_seconds(), 0.0));
+                *toggle = false;
+            } else {
+                player_controller.translation = Some(Vec2::new(-0.1 * time.delta_seconds(), 0.0));
+                *toggle = true;
+            }
+        } else {
+            player_controller.translation = Some(Vec2::new(
+                direction_x * PLAYER_SPEED * time.delta_seconds(),
+                direction_y * PLAYER_SPEED * time.delta_seconds(),
+            ));
+        }
     } else {
         // Check if we are on a moving platform that goes down
         let events: Vec<&MovingPlatformDescending> = moving_platform_descending.read().collect();
