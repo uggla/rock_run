@@ -2,6 +2,7 @@ use std::f32::consts::PI;
 
 use bevy::{
     asset::AssetPath,
+    audio::PlaybackMode,
     prelude::*,
     render::{
         render_asset::RenderAssetUsages,
@@ -14,6 +15,7 @@ use raqote::{DrawOptions, DrawTarget, Gradient, GradientStop, PathBuilder, Point
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    assets::RockRunAssets,
     coregame::state::AppState,
     events::{SelectionChanged, StoryMessages},
 };
@@ -456,8 +458,10 @@ fn display_or_hide_messages(
 }
 
 fn manage_selection(
+    mut commands: Commands,
     mut params: ResMut<TextSyllableValues>,
     mut selection_event: EventReader<SelectionChanged>,
+    rock_run_assets: Res<RockRunAssets>,
 ) {
     for ev in selection_event.read() {
         match ev.movement {
@@ -482,6 +486,15 @@ fn manage_selection(
                 }
 
                 params.text = compose_selection_msg(&ltext, selection, &rtext);
+
+                commands.spawn(AudioBundle {
+                    source: rock_run_assets.story_plus_sound.clone(),
+                    settings: PlaybackSettings {
+                        mode: PlaybackMode::Despawn,
+                        ..default()
+                    },
+                });
+
                 debug!("{}", params.text);
             }
             SelectionDirection::Down => {
@@ -505,6 +518,15 @@ fn manage_selection(
                 }
 
                 params.text = compose_selection_msg(&ltext, selection, &rtext);
+
+                commands.spawn(AudioBundle {
+                    source: rock_run_assets.story_minus_sound.clone(),
+                    settings: PlaybackSettings {
+                        mode: PlaybackMode::Despawn,
+                        ..default()
+                    },
+                });
+
                 debug!("{}", params.text);
             }
             SelectionDirection::Left => {
@@ -515,6 +537,15 @@ fn manage_selection(
                     selection.selected_item -= 1;
                     params.text = compose_selection_msg(&ltext, selection, &rtext);
                 }
+
+                commands.spawn(AudioBundle {
+                    source: rock_run_assets.story_change_sound.clone(),
+                    settings: PlaybackSettings {
+                        mode: PlaybackMode::Despawn,
+                        ..default()
+                    },
+                });
+
                 debug!("{}", params.text);
             }
             SelectionDirection::Right => {
@@ -525,6 +556,15 @@ fn manage_selection(
                     }
                     params.text = compose_selection_msg(&ltext, selection, &rtext);
                 }
+
+                commands.spawn(AudioBundle {
+                    source: rock_run_assets.story_change_sound.clone(),
+                    settings: PlaybackSettings {
+                        mode: PlaybackMode::Despawn,
+                        ..default()
+                    },
+                });
+
                 debug!("{}", params.text);
             }
         }
@@ -534,7 +574,7 @@ fn manage_selection(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use bevy::color::palettes::css::GREEN;
+    use bevy::color::palettes::css::{BLUE, GREEN, RED};
     use pretty_assertions::assert_eq;
 
     #[test]

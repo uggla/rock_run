@@ -11,7 +11,7 @@ use crate::{
     events::{EnigmaResult, NoMoreStoryMessages},
     helpers::texture::cycle_texture,
 };
-use bevy::{prelude::*, utils::HashMap};
+use bevy::{audio::PlaybackMode, prelude::*, utils::HashMap};
 use bevy_rapier2d::{
     dynamics::{Ccd, ExternalImpulse, GravityScale, RigidBody, Velocity},
     geometry::{ActiveCollisionTypes, Collider},
@@ -82,7 +82,10 @@ impl Plugin for EnigmaPlugin {
             //         in_state(AppState::GameRunning).or_else(in_state(AppState::GameMessage)),
             //     ),
             // )
-            .add_systems(Update, (move_gate, move_rockgate, check_enigma))
+            .add_systems(
+                Update,
+                (move_gate, move_rockgate, check_enigma).run_if(not(in_state(AppState::Loading))),
+            )
             .add_event::<EnigmaResult>();
     }
 }
@@ -214,6 +217,8 @@ fn spawn_enigma_materials(
 
 #[allow(clippy::single_match)]
 fn check_enigma(
+    mut commands: Commands,
+    rock_run_assets: Res<RockRunAssets>,
     mut no_more_msg_event: EventReader<NoMoreStoryMessages>,
     enigmas: ResMut<Enigmas>,
     params: ResMut<TextSyllableValues>,
@@ -277,6 +282,14 @@ fn check_enigma(
             }
             _ => {}
         }
+
+        commands.spawn(AudioBundle {
+            source: rock_run_assets.story_valid_sound.clone(),
+            settings: PlaybackSettings {
+                mode: PlaybackMode::Despawn,
+                ..default()
+            },
+        });
     }
 }
 

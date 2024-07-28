@@ -77,6 +77,14 @@ pub struct RockRunAssets {
     pub trex_bite_sound: Handle<AudioSource>,
     #[asset(path = "sounds/bat.ogg")]
     pub bat_sound: Handle<AudioSource>,
+    #[asset(path = "sounds/story_change.ogg")]
+    pub story_change_sound: Handle<AudioSource>,
+    #[asset(path = "sounds/story_plus.ogg")]
+    pub story_plus_sound: Handle<AudioSource>,
+    #[asset(path = "sounds/story_minus.ogg")]
+    pub story_minus_sound: Handle<AudioSource>,
+    #[asset(path = "sounds/story_valid.ogg")]
+    pub story_valid_sound: Handle<AudioSource>,
 
     // Music
     #[asset(path = "musics/theme_01.ogg")]
