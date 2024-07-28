@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{audio::PlaybackMode, prelude::*};
 use bevy_rapier2d::{
     control::KinematicCharacterController, dynamics::RigidBody, geometry::Collider,
     pipeline::QueryFilterFlags,
@@ -132,6 +132,14 @@ fn spawn_bat(
                 current_movement: BatMovement::Fly(BatDirection::default()),
             },
         ));
+
+        commands.spawn(AudioBundle {
+            source: rock_run_assets.bat_sound.clone(),
+            settings: PlaybackSettings {
+                mode: PlaybackMode::Despawn,
+                ..default()
+            },
+        });
     }
 }
 
@@ -150,7 +158,6 @@ fn move_bat(
         With<Bat>,
     >,
     mut animation_query: Query<(&mut AnimationTimer, &mut TextureAtlas, &mut Sprite)>,
-    // mut current_movement: Local<BatMovement>,
     player_query: Query<&mut Transform, (With<Player>, Without<Bat>)>,
     hit: EventReader<Hit>,
     mut chase_timer: Query<&mut ChaseTimer>,
