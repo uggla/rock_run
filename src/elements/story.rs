@@ -2,7 +2,6 @@ use std::f32::consts::PI;
 
 use bevy::{
     asset::AssetPath,
-    color::palettes::css::{BLUE, DARK_GREEN, RED},
     prelude::*,
     render::{
         render_asset::RenderAssetUsages,
@@ -95,15 +94,20 @@ impl Default for StoryPlugin {
                     stops: vec![
                         GradientStop {
                             position: 0.0,
-                            color: raqote::Color::new(0xff, 0xff, 0xff, 0xff),
+                            color: raqote::Color::new(0xff, 0x9e, 0x36, 0x13),
                         },
-                        // GradientStop {
-                        //     position: 0.9999,
-                        //     color: Color::new(0xff, 0x0, 0x0, 0x0),
-                        // },
+                        GradientStop {
+                            position: 0.08,
+                            // raqote color is ARGB
+                            color: raqote::Color::new(0xff, 0xfe, 0xdf, 0x9c),
+                        },
+                        GradientStop {
+                            position: 0.92,
+                            color: raqote::Color::new(0xff, 0xfe, 0xdf, 0x9c),
+                        },
                         GradientStop {
                             position: 1.0,
-                            color: raqote::Color::new(0xff, 0xa4, 0xa4, 0xa4),
+                            color: raqote::Color::new(0xff, 0x9e, 0x36, 0x13),
                         },
                     ],
                 },
@@ -120,15 +124,15 @@ impl Default for StoryPlugin {
             // }),
             style_a: SyllableStyle {
                 font_size: 42.0,
-                color: BLUE.into(),
+                color: Color::srgb_u8(0xF4, 0x78, 0x04),
             },
             style_b: SyllableStyle {
                 font_size: 42.0,
-                color: DARK_GREEN.into(),
+                color: Color::srgb_u8(0x54, 0x2E, 0x0A),
             },
             style_selected: SyllableStyle {
                 font_size: 42.0,
-                color: RED.into(),
+                color: Color::srgb_u8(0xD3, 0xCD, 0x39),
             },
             text: "Hel-lo I am Rose, help me re-turn home.".into(),
         }
