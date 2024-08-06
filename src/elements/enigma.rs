@@ -76,12 +76,6 @@ impl Plugin for EnigmaPlugin {
                 (despawn_warrior, despawn_gate, despawn_rockgate),
             )
             .add_systems(Update, move_warrior.run_if(in_state(AppState::GameRunning)))
-            // .add_systems(
-            //     Update,
-            //     (move_gate, move_rockgate).run_if(
-            //         in_state(AppState::GameRunning).or_else(in_state(AppState::GameMessage)),
-            //     ),
-            // )
             .add_systems(
                 Update,
                 (move_gate, move_rockgate, check_enigma).run_if(not(in_state(AppState::Loading))),
@@ -248,7 +242,7 @@ fn check_enigma(
 
                 if n1 + n2 == user_answer {
                     debug!("Correct answer: {} + {} = {}", n1, n2, user_answer);
-                    enigna_result.send(EnigmaResult::Correct(story.to_string()));
+                    correct_answer(&mut enigna_result, story, &mut commands, &rock_run_assets);
                 } else {
                     debug!("Incorrect answer: {} + {} = {}", n1, n2, user_answer);
                     enigna_result.send(EnigmaResult::Incorrect(story.to_string()));
@@ -274,23 +268,31 @@ fn check_enigma(
 
                 if n1 * 2 == user_answer {
                     debug!("Correct answer: {} * 2 = {}", n1, user_answer);
-                    enigna_result.send(EnigmaResult::Correct(story.to_string()));
+                    correct_answer(&mut enigna_result, story, &mut commands, &rock_run_assets);
                 } else {
-                    debug!("Correct answer: {} * 2 = {}", n1, user_answer);
+                    debug!("Incorrect answer: {} * 2 = {}", n1, user_answer);
                     enigna_result.send(EnigmaResult::Incorrect(story.to_string()));
                 }
             }
             _ => {}
         }
-
-        commands.spawn(AudioBundle {
-            source: rock_run_assets.story_valid_sound.clone(),
-            settings: PlaybackSettings {
-                mode: PlaybackMode::Despawn,
-                ..default()
-            },
-        });
     }
+}
+
+fn correct_answer(
+    enigna_result: &mut EventWriter<EnigmaResult>,
+    story: &str,
+    commands: &mut Commands,
+    rock_run_assets: &Res<RockRunAssets>,
+) {
+    enigna_result.send(EnigmaResult::Correct(story.to_string()));
+    commands.spawn(AudioBundle {
+        source: rock_run_assets.story_valid_sound.clone(),
+        settings: PlaybackSettings {
+            mode: PlaybackMode::Despawn,
+            ..default()
+        },
+    });
 }
 
 fn move_warrior(
