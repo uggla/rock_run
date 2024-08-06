@@ -62,6 +62,9 @@ opt-level = "z"
 # Strip all debugging information from the binary to reduce file size.
 strip = "debuginfo"
 
+[features]
+atlas = []
+
 # Binary target
 [[bin]]
 name = "rock_run"
