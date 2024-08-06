@@ -17,9 +17,6 @@ pub const ROCK_DIAMETER: f32 = 64.0;
 #[derive(Component)]
 pub struct Rock;
 
-#[derive(Component, Deref, DerefMut)]
-pub struct ChaseTimer(Timer);
-
 #[derive(Debug, Eq, PartialEq, Clone, Copy, Hash, Reflect)]
 pub enum RockMovement {
     Run(RockDirection),
