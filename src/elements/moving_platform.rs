@@ -39,6 +39,7 @@ enum MovingPlatformMovement {
 struct CircleData {
     direction: MovingPlatformDirection,
     center: Vec2,
+    speed: f32,
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]
@@ -46,6 +47,7 @@ struct LeftRightData {
     direction: MovingPlatformDirection,
     max_right: f32,
     max_left: f32,
+    speed: f32,
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]
@@ -53,6 +55,7 @@ struct UpDownData {
     direction: MovingPlatformDirection,
     max_down: f32,
     max_up: f32,
+    speed: f32,
 }
 
 #[allow(dead_code)]
@@ -101,14 +104,23 @@ fn setup_moving_platforms(
     let mut level_moving_platforms: HashMap<u8, Vec<MovingPlatform>> = HashMap::new();
     level_moving_platforms.insert(
         1,
-        vec![MovingPlatform {
-            start_pos: level.map.tiled_to_bevy_coord(Vec2::new(2145.0, 550.0)),
-            movement: MovingPlatformMovement::UpDown(UpDownData {
-                direction: MovingPlatformDirection::Up,
-                max_down: level.map.tiled_to_bevy_coord(Vec2::new(2145.0, 575.0)).y,
-                max_up: level.map.tiled_to_bevy_coord(Vec2::new(2145.0, 335.0)).y,
-            }),
-        }],
+        vec![
+            MovingPlatform {
+                start_pos: level.map.tiled_to_bevy_coord(Vec2::new(2145.0, 550.0)),
+                movement: MovingPlatformMovement::UpDown(UpDownData {
+                    direction: MovingPlatformDirection::Up,
+                    max_down: level.map.tiled_to_bevy_coord(Vec2::new(2145.0, 575.0)).y,
+                    max_up: level.map.tiled_to_bevy_coord(Vec2::new(2145.0, 335.0)).y,
+                }),
+            },
+            MovingPlatform {
+                start_pos: level.map.tiled_to_bevy_coord(Vec2::new(5750.0, 368.0)),
+                movement: MovingPlatformMovement::Circle(CircleData {
+                    center: level.map.tiled_to_bevy_coord(Vec2::new(5872.0, 368.0)),
+                    direction: MovingPlatformDirection::Anticlockwise,
+                }),
+            },
+        ],
     );
     level_moving_platforms.insert(
         2,

@@ -47,6 +47,10 @@ pub struct RockRunAssets {
     pub bat: Handle<Image>,
     #[asset(path = "sprites/trex.png")]
     pub trex: Handle<Image>,
+    #[asset(path = "sprites/squirel_idle.png")]
+    pub squirel_idle: Handle<Image>,
+    #[asset(path = "sprites/nut.png")]
+    pub nut: Handle<Image>,
 
     // Images
     #[asset(path = "images/menu.jpg")]

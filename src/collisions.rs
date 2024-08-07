@@ -353,6 +353,13 @@ fn display_story(
                     ("story04-03".to_string(), Some(numbers)),
                 ]));
             }
+            "story05" => {
+                msg_event.send(StoryMessages::Display(vec![
+                    ("story05-01".to_string(), None),
+                    ("story05-02".to_string(), None),
+                    ("story05-03".to_string(), None),
+                ]));
+            }
             _ => {}
         };
     }

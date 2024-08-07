@@ -14,3 +14,6 @@ story03-03 = { $n1 } + { $n2 }=\("selection_items":["0","0"],"selected_item":0\)
 story04-01 = Oh! je crois que c'est u-ne é-ni-gme, je ne sais pas ré-pond-re.
 story04-02 = Ai-de moi, c'est é-crit...
 story04-03 = Quel est le dou-ble de { $n1 } =\("selection_items":["0","0"],"selected_item":0\)
+story05-01 = Ceci est un test
+story05-02 = 2
+story05-03 = 3 km a pied
