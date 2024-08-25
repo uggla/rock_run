@@ -1,6 +1,6 @@
 use bevy::{app::PluginGroupBuilder, prelude::*};
 
-use crate::beasts::{bat, pterodactyl, trex, triceratops};
+use crate::beasts::{bat, pterodactyl, squirel, trex, triceratops};
 
 pub struct BeastsPlugins;
 
@@ -11,5 +11,6 @@ impl PluginGroup for BeastsPlugins {
             .add(pterodactyl::PterodactylPlugin)
             .add(triceratops::TriceratopsPlugin)
             .add(trex::TrexPlugin)
+            .add(squirel::SquirelPlugin)
     }
 }

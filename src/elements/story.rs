@@ -59,6 +59,19 @@ pub struct UserSelection {
     selected_item: usize,
 }
 
+impl UserSelection {
+    pub fn new(selections: Vec<String>) -> Self {
+        Self {
+            selection_items: selections,
+            selected_item: 0,
+        }
+    }
+
+    pub fn get_selected_item(&self) -> usize {
+        self.selected_item
+    }
+}
+
 pub enum SelectionDirection {
     Up,
     Down,
@@ -310,11 +323,16 @@ fn build_text_sections_according_to_syllables(
     style_b: TextStyle,
 ) -> Vec<TextSection> {
     let mut toggle_style = true;
-    let syllables = text.split_whitespace().collect::<Vec<_>>();
+    let syllables = text.replace("\\-", "####");
+    let syllables = syllables.split_whitespace().collect::<Vec<_>>();
     let syllables = syllables
         .iter()
-        .map(|s| s.split('-').collect::<Vec<&str>>())
-        .collect::<Vec<Vec<&str>>>();
+        .map(|s| {
+            s.split('-')
+                .map(|s| s.replace("####", "-"))
+                .collect::<Vec<String>>()
+        })
+        .collect::<Vec<Vec<String>>>();
 
     let text_sections: Vec<TextSection> = syllables
         .iter()
@@ -361,7 +379,7 @@ pub fn decompose_selection_msg(text: &str) -> Option<(String, UserSelection, Str
     }
 }
 
-fn compose_selection_msg(ltext: &str, selection: UserSelection, rtext: &str) -> String {
+pub fn compose_selection_msg(ltext: &str, selection: UserSelection, rtext: &str) -> String {
     let selection = serde_json::to_string(&selection).unwrap();
     let selection = selection.replace('{', "\\(").replace('}', "\\)");
     format!("{}{}{}", ltext, selection, rtext)
@@ -485,6 +503,17 @@ fn manage_selection(
                     }
                 }
 
+                if selection
+                    .selection_items
+                    .iter()
+                    .all(|item| item.contains('\n'))
+                {
+                    if selection.selected_item == 0 {
+                        selection.selected_item = selection.selection_items.len();
+                    }
+                    selection.selected_item -= 1;
+                }
+
                 params.text = compose_selection_msg(&ltext, selection, &rtext);
 
                 commands.spawn(AudioBundle {
@@ -517,6 +546,17 @@ fn manage_selection(
                     }
                 }
 
+                if selection
+                    .selection_items
+                    .iter()
+                    .all(|item| item.contains('\n'))
+                {
+                    selection.selected_item += 1;
+                    if selection.selected_item == selection.selection_items.len() {
+                        selection.selected_item = 0;
+                    }
+                }
+
                 params.text = compose_selection_msg(&ltext, selection, &rtext);
 
                 commands.spawn(AudioBundle {
@@ -531,6 +571,14 @@ fn manage_selection(
             }
             SelectionDirection::Left => {
                 if let Some((ltext, mut selection, rtext)) = decompose_selection_msg(&params.text) {
+                    if selection
+                        .selection_items
+                        .iter()
+                        .all(|item| item.contains('\n'))
+                    {
+                        return;
+                    }
+
                     if selection.selected_item == 0 {
                         selection.selected_item = selection.selection_items.len();
                     }
@@ -550,6 +598,14 @@ fn manage_selection(
             }
             SelectionDirection::Right => {
                 if let Some((ltext, mut selection, rtext)) = decompose_selection_msg(&params.text) {
+                    if selection
+                        .selection_items
+                        .iter()
+                        .all(|item| item.contains('\n'))
+                    {
+                        return;
+                    }
+
                     selection.selected_item += 1;
                     if selection.selected_item == selection.selection_items.len() {
                         selection.selected_item = 0;

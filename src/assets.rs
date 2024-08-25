@@ -47,6 +47,25 @@ pub struct RockRunAssets {
     pub bat: Handle<Image>,
     #[asset(path = "sprites/trex.png")]
     pub trex: Handle<Image>,
+    #[asset(path = "sprites/squirel.png")]
+    pub squirel: Handle<Image>,
+    #[asset(path = "sprites/nut.png")]
+    pub nut: Handle<Image>,
+
+    #[asset(path = "sprites/vine1.png")]
+    pub vine1: Handle<Image>,
+    #[asset(path = "sprites/vine2.png")]
+    pub vine2: Handle<Image>,
+    #[asset(path = "sprites/vine2_end.png")]
+    pub vine2_end: Handle<Image>,
+    #[asset(path = "sprites/vine_left.png")]
+    pub vine_left: Handle<Image>,
+    #[asset(path = "sprites/vine_left_end.png")]
+    pub vine_left_end: Handle<Image>,
+    #[asset(path = "sprites/vine_right.png")]
+    pub vine_right: Handle<Image>,
+    #[asset(path = "sprites/vine_right_end.png")]
+    pub vine_right_end: Handle<Image>,
 
     // Images
     #[asset(path = "images/menu.jpg")]
@@ -85,6 +104,10 @@ pub struct RockRunAssets {
     pub story_minus_sound: Handle<AudioSource>,
     #[asset(path = "sounds/story_valid.ogg")]
     pub story_valid_sound: Handle<AudioSource>,
+    #[asset(path = "sounds/story_wrong.ogg")]
+    pub story_wrong_sound: Handle<AudioSource>,
+    #[asset(path = "sounds/get_something.ogg")]
+    pub get_something_sound: Handle<AudioSource>,
 
     // Music
     #[asset(path = "musics/theme_01.ogg")]

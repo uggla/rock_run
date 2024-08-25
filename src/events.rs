@@ -84,3 +84,8 @@ pub enum EnigmaResult {
 pub struct ExtraLifeCollision {
     pub entity: Entity,
 }
+
+#[derive(Event)]
+pub struct NutCollision {
+    pub entity: Entity,
+}

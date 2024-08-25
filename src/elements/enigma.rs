@@ -1,22 +1,35 @@
 use crate::{
     assets::RockRunAssets,
+    beasts::squirel::Nuts,
     coregame::{
+        colliders::{ColliderName, Story},
         level::{CurrentLevel, Level},
+        localization,
         state::AppState,
     },
     elements::{
+        moving_platform::MovingPlatformMovement,
         rock::{ROCK_DIAMETER, ROCK_SCALE_FACTOR},
         story::{decompose_selection_msg, TextSyllableValues},
     },
     events::{EnigmaResult, NoMoreStoryMessages},
     helpers::texture::cycle_texture,
 };
-use bevy::{audio::PlaybackMode, prelude::*, utils::HashMap};
+use bevy::{
+    audio::{PlaybackMode, Volume},
+    prelude::*,
+    utils::HashMap,
+};
+use bevy_fluent::{BundleAsset, Locale};
 use bevy_rapier2d::{
     dynamics::{Ccd, ExternalImpulse, GravityScale, RigidBody, Velocity},
     geometry::{ActiveCollisionTypes, Collider},
+    prelude::{ActiveEvents, Sensor},
 };
+use rand::seq::SliceRandom;
 use rand::{thread_rng, Rng};
+
+use super::moving_platform::MovingPlatform;
 
 const WARRIOR_SCALE_FACTOR: f32 = 1.0;
 const WARRIOR_WIDTH: f32 = 70.0;
@@ -34,9 +47,17 @@ pub struct Gate {
     associated_story: String,
 }
 
+#[derive(Debug, PartialEq, Eq, Clone)]
+enum Answer {
+    Correct,
+    Incorrect,
+}
+
 #[derive(Component)]
 pub struct RockGate {
     associated_story: String,
+    impulse: Vec2,
+    move_on: Answer,
 }
 
 #[derive(Component, Deref, DerefMut)]
@@ -56,7 +77,7 @@ pub struct Enigma {
 #[allow(dead_code)]
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum EnigmaKind {
-    Qcm(Vec<String>),
+    Mcq(Vec<String>),
     Numbers(HashMap<String, String>),
 }
 
@@ -78,14 +99,18 @@ impl Plugin for EnigmaPlugin {
             .add_systems(Update, move_warrior.run_if(in_state(AppState::GameRunning)))
             .add_systems(
                 Update,
-                (move_gate, move_rockgate, check_enigma).run_if(not(in_state(AppState::Loading))),
+                (move_gate, move_rockgate, check_enigma, move_platform)
+                    .run_if(not(in_state(AppState::Loading))),
             )
             .add_event::<EnigmaResult>();
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn spawn_enigma_materials(
     mut commands: Commands,
+    locale: Res<Locale>,
+    assets: Res<Assets<BundleAsset>>,
     rock_run_assets: Res<RockRunAssets>,
     mut texture_atlases: ResMut<Assets<TextureAtlasLayout>>,
     current_level: Res<CurrentLevel>,
@@ -95,23 +120,62 @@ fn spawn_enigma_materials(
     info!("spawn_enigma_materials");
     let mut rng = thread_rng();
 
+    let mut mcqs = vec![
+        ("mammals-question", "mammals", "non-mammals"),
+        (
+            "fastest-land-animal-question",
+            "non-fastest-land-animal",
+            "fastest-land-animal",
+        ),
+    ];
+
+    mcqs.shuffle(&mut thread_rng());
+
+    let mut enigmas_builder = Vec::new();
+
+    enigmas_builder.push(Enigma {
+        associated_story: "story03-03".to_string(),
+        kind: EnigmaKind::Numbers(HashMap::from([
+            ("n1".to_string(), rng.gen_range(0..=50).to_string()),
+            ("n2".to_string(), rng.gen_range(0..50).to_string()),
+        ])),
+    });
+
+    enigmas_builder.push(Enigma {
+        associated_story: "story04-03".to_string(),
+        kind: EnigmaKind::Numbers(HashMap::from([(
+            "n1".to_string(),
+            rng.gen_range(0..=49).to_string(),
+        )])),
+    });
+
+    let mcq = mcqs.pop().unwrap();
+    enigmas_builder.push(Enigma {
+        associated_story: "story05-04".to_string(),
+        kind: EnigmaKind::Mcq(vec![
+            localization::get_translation(&locale, &assets, &rock_run_assets, mcq.0, None),
+            localization::get_translation(&locale, &assets, &rock_run_assets, mcq.1, None),
+            localization::get_translation(&locale, &assets, &rock_run_assets, mcq.2, None),
+        ]),
+    });
+
+    let mcq = mcqs.pop().unwrap();
+    enigmas_builder.push(Enigma {
+        associated_story: "story06-03".to_string(),
+        kind: EnigmaKind::Mcq(vec![
+            localization::get_translation(&locale, &assets, &rock_run_assets, mcq.0, None),
+            localization::get_translation(&locale, &assets, &rock_run_assets, mcq.1, None),
+            localization::get_translation(&locale, &assets, &rock_run_assets, mcq.2, None),
+        ]),
+    });
+
+    enigmas_builder.push(Enigma {
+        associated_story: "story100-03".to_string(),
+        kind: EnigmaKind::Mcq(vec![]),
+    });
+
     *enigmas = Enigmas {
-        enigmas: vec![
-            Enigma {
-                associated_story: "story03-03".to_string(),
-                kind: EnigmaKind::Numbers(HashMap::from([
-                    ("n1".to_string(), rng.gen_range(0..=50).to_string()),
-                    ("n2".to_string(), rng.gen_range(0..50).to_string()),
-                ])),
-            },
-            Enigma {
-                associated_story: "story04-03".to_string(),
-                kind: EnigmaKind::Numbers(HashMap::from([(
-                    "n1".to_string(),
-                    rng.gen_range(0..=49).to_string(),
-                )])),
-            },
-        ],
+        enigmas: enigmas_builder,
     };
 
     let level = levels
@@ -125,7 +189,7 @@ fn spawn_enigma_materials(
 
             commands.spawn((
                 SpriteBundle {
-                    texture,
+                    texture: texture.clone(),
                     sprite: Sprite { ..default() },
                     transform: Transform {
                         scale: Vec3::splat(ROCK_SCALE_FACTOR),
@@ -146,6 +210,58 @@ fn spawn_enigma_materials(
                 ExternalImpulse::default(),
                 RockGate {
                     associated_story: "story04-03".to_string(),
+                    impulse: Vec2::new(4096.0 * 120.0, 0.0),
+                    move_on: Answer::Correct,
+                },
+            ));
+
+            commands.spawn((
+                SpriteBundle {
+                    texture: texture.clone(),
+                    sprite: Sprite { ..default() },
+                    transform: Transform {
+                        scale: Vec3::splat(ROCK_SCALE_FACTOR),
+                        translation: level
+                            .map
+                            .tiled_to_bevy_coord(Vec2::new(7505.0, 208.0 - ROCK_DIAMETER / 2.0))
+                            .extend(20.0),
+                        ..default()
+                    },
+                    ..default()
+                },
+                RigidBody::Dynamic,
+                GravityScale(20.0),
+                Velocity::zero(),
+                Collider::ball(ROCK_DIAMETER / 2.0),
+                ActiveCollisionTypes::DYNAMIC_KINEMATIC | ActiveCollisionTypes::DYNAMIC_DYNAMIC,
+                Ccd::enabled(),
+                ExternalImpulse::default(),
+                RockGate {
+                    associated_story: "story06-03".to_string(),
+                    impulse: Vec2::new(-4096.0 * 120.0, 0.0),
+                    move_on: Answer::Incorrect,
+                },
+            ));
+
+            let texture = rock_run_assets.gate.clone();
+            commands.spawn((
+                SpriteBundle {
+                    texture,
+                    sprite: Sprite { ..default() },
+                    transform: Transform {
+                        scale: Vec3::splat(GATE_SCALE_FACTOR),
+                        translation: level
+                            .map
+                            .tiled_to_bevy_coord(Vec2::new(8032.0, 548.0))
+                            .extend(3.0),
+                        ..default()
+                    },
+                    ..default()
+                },
+                Collider::cuboid(GATE_WIDTH / 2.0, GATE_HEIGHT / 2.0),
+                AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
+                Gate {
+                    associated_story: "story06-03".to_string(),
                 },
             ));
         }
@@ -209,7 +325,7 @@ fn spawn_enigma_materials(
     }
 }
 
-#[allow(clippy::single_match)]
+#[allow(clippy::too_many_arguments)]
 fn check_enigma(
     mut commands: Commands,
     rock_run_assets: Res<RockRunAssets>,
@@ -217,9 +333,18 @@ fn check_enigma(
     enigmas: ResMut<Enigmas>,
     params: ResMut<TextSyllableValues>,
     mut enigna_result: EventWriter<EnigmaResult>,
+    nuts: Res<Nuts>,
+    levels: Query<&Level, With<Level>>,
+    current_level: Res<CurrentLevel>,
 ) {
     for ev in no_more_msg_event.read() {
         debug!("No more story messages: {:?}", ev.latest);
+
+        let level = levels
+            .iter()
+            .find(|level| level.id == current_level.id)
+            .unwrap();
+
         match ev.latest.as_ref() {
             "story03-03" => {
                 let story = "story03-03";
@@ -229,7 +354,7 @@ fn check_enigma(
                     .filter(|e| e.associated_story == story)
                     .map(|e| match e.kind.clone() {
                         EnigmaKind::Numbers(n) => n,
-                        EnigmaKind::Qcm(_) => unreachable!(),
+                        EnigmaKind::Mcq(_) => unreachable!(),
                     })
                     .last()
                     .unwrap();
@@ -245,7 +370,7 @@ fn check_enigma(
                     correct_answer(&mut enigna_result, story, &mut commands, &rock_run_assets);
                 } else {
                     debug!("Incorrect answer: {} + {} = {}", n1, n2, user_answer);
-                    enigna_result.send(EnigmaResult::Incorrect(story.to_string()));
+                    wrong_answer(&mut enigna_result, story, &mut commands, &rock_run_assets);
                 }
             }
             "story04-03" => {
@@ -256,7 +381,7 @@ fn check_enigma(
                     .filter(|e| e.associated_story == story)
                     .map(|e| match e.kind.clone() {
                         EnigmaKind::Numbers(n) => n,
-                        EnigmaKind::Qcm(_) => unreachable!(),
+                        EnigmaKind::Mcq(_) => unreachable!(),
                     })
                     .last()
                     .unwrap();
@@ -271,12 +396,119 @@ fn check_enigma(
                     correct_answer(&mut enigna_result, story, &mut commands, &rock_run_assets);
                 } else {
                     debug!("Incorrect answer: {} * 2 = {}", n1, user_answer);
-                    enigna_result.send(EnigmaResult::Incorrect(story.to_string()));
+                    wrong_answer(&mut enigna_result, story, &mut commands, &rock_run_assets);
+                }
+            }
+            "story05-04" => {
+                check_mcq(
+                    "story05-04",
+                    &enigmas,
+                    &params,
+                    &mut enigna_result,
+                    &mut commands,
+                    &rock_run_assets,
+                    level,
+                    spawn_story,
+                );
+            }
+            "story06-03" => {
+                check_mcq(
+                    "story06-03",
+                    &enigmas,
+                    &params,
+                    &mut enigna_result,
+                    &mut commands,
+                    &rock_run_assets,
+                    level,
+                    |_level, _commands| {},
+                );
+            }
+            "story100-03" => {
+                let story = "story100-03";
+                if nuts.len() == 11 {
+                    debug!("Correct answer: {}", nuts.len());
+                    correct_answer(&mut enigna_result, story, &mut commands, &rock_run_assets);
+                } else {
+                    debug!("Incorrect answer: {}", nuts.len());
+                    wrong_answer(&mut enigna_result, story, &mut commands, &rock_run_assets);
                 }
             }
             _ => {}
         }
     }
+}
+
+fn spawn_story(level: &Level, commands: &mut Commands) {
+    let Vec2 { x, y } = level.map.tiled_to_bevy_coord(Vec2::new(7250.0, 608.0));
+    commands
+        .spawn((
+            Collider::cuboid(1.0, 1.0),
+            Story,
+            TransformBundle::from(Transform::from_xyz(x, y, 0.0)),
+        ))
+        .insert(Sensor)
+        .insert(ActiveEvents::COLLISION_EVENTS)
+        .insert(ActiveCollisionTypes::KINEMATIC_STATIC)
+        .insert(ColliderName("story100".to_string()));
+}
+
+#[allow(clippy::too_many_arguments)]
+fn check_mcq<F>(
+    story: &str,
+    enigmas: &ResMut<Enigmas>,
+    params: &ResMut<TextSyllableValues>,
+    enigna_result: &mut EventWriter<EnigmaResult>,
+    commands: &mut Commands,
+    rock_run_assets: &Res<RockRunAssets>,
+    level: &Level,
+    correct_fn: F,
+) where
+    F: Fn(&Level, &mut Commands),
+{
+    let mcq_values = enigmas
+        .enigmas
+        .iter()
+        .filter(|e| e.associated_story == story)
+        .map(|e| match e.kind.clone() {
+            EnigmaKind::Numbers(_) => unreachable!(),
+            EnigmaKind::Mcq(values) => values,
+        })
+        .last()
+        .unwrap();
+
+    let (_ltext, selection, _rtext) = decompose_selection_msg(&params.text).unwrap();
+    let user_answer_nb = selection.get_selected_item();
+    let user_answer = selection
+        .selection_items
+        .get(user_answer_nb)
+        .unwrap()
+        .trim();
+
+    if mcq_values[2].contains(user_answer) {
+        debug!("Correct answer: {}", user_answer);
+        correct_fn(level, commands);
+        correct_answer(enigna_result, story, commands, rock_run_assets);
+    } else {
+        debug!("Incorrect answer: {}", user_answer);
+        wrong_answer(enigna_result, story, commands, rock_run_assets);
+    }
+}
+
+fn wrong_answer(
+    enigna_result: &mut EventWriter<EnigmaResult>,
+    story: &str,
+    commands: &mut Commands,
+    rock_run_assets: &Res<RockRunAssets>,
+) {
+    enigna_result.send(EnigmaResult::Incorrect(story.to_string()));
+    commands.spawn(AudioBundle {
+        source: rock_run_assets.story_wrong_sound.clone(),
+        settings: PlaybackSettings {
+            volume: Volume::new(7.0),
+            mode: PlaybackMode::Despawn,
+            ..default()
+        },
+    });
 }
 
 fn correct_answer(
@@ -342,7 +574,7 @@ fn move_gate(
             for (gate_entity, current_gate) in gate_query.iter_mut() {
                 if current_gate.associated_story == *enigma {
                     debug!(
-                        "Opening gate {:?} associted to {:?}",
+                        "Opening gate {:?} associated to {:?}",
                         gate_entity, current_gate.associated_story
                     );
                     *gate = Some(gate_entity);
@@ -358,22 +590,63 @@ fn move_gate(
 }
 
 fn move_rockgate(
-    mut gate_query: Query<(Entity, &RockGate), With<RockGate>>,
+    mut rockgate_query: Query<(Entity, &RockGate), With<RockGate>>,
     mut enigna_result: EventReader<EnigmaResult>,
     mut ext_impulses: Query<&mut ExternalImpulse, With<RockGate>>,
 ) {
     for ev in enigna_result.read() {
-        if let EnigmaResult::Correct(enigma) = ev {
-            debug!("{:?}", enigma);
-            for (gate_entity, current_gate) in gate_query.iter_mut() {
-                if current_gate.associated_story == *enigma {
-                    debug!(
-                        "Moving rockgate {:?} associted to {:?}",
-                        gate_entity, current_gate.associated_story
-                    );
+        match ev {
+            EnigmaResult::Correct(enigma) => {
+                do_movement(
+                    &mut rockgate_query,
+                    enigma,
+                    &mut ext_impulses,
+                    Answer::Correct,
+                );
+            }
+            EnigmaResult::Incorrect(enigma) => {
+                do_movement(
+                    &mut rockgate_query,
+                    enigma,
+                    &mut ext_impulses,
+                    Answer::Incorrect,
+                );
+            }
+        }
+    }
 
-                    for mut ext_impulse in ext_impulses.iter_mut() {
-                        ext_impulse.impulse = Vec2::new(4096.0 * 120.0, 0.0);
+    fn do_movement(
+        rockgate_query: &mut Query<(Entity, &RockGate), With<RockGate>>,
+        enigma: &String,
+        ext_impulses: &mut Query<&mut ExternalImpulse, With<RockGate>>,
+        act_on: Answer,
+    ) {
+        for (rockgate_entity, current_rockgate) in rockgate_query.iter_mut() {
+            if current_rockgate.associated_story == *enigma && current_rockgate.move_on == act_on {
+                debug!(
+                    "Moving rockgate {:?} associated to {:?}",
+                    rockgate_entity, current_rockgate.associated_story
+                );
+
+                let mut ext_impulse = ext_impulses.get_mut(rockgate_entity).unwrap();
+                ext_impulse.impulse = current_rockgate.impulse;
+            }
+        }
+    }
+}
+
+fn move_platform(
+    mut moving_platform_query: Query<&mut MovingPlatform>,
+    mut enigna_result: EventReader<EnigmaResult>,
+) {
+    for ev in enigna_result.read() {
+        if let EnigmaResult::Correct(enigma) = ev {
+            if enigma == "story05-04" {
+                for mut mvp in moving_platform_query.iter_mut() {
+                    if let MovingPlatformMovement::UpDown(ref mut data) = mvp.movement {
+                        if data.speed == 0.0 {
+                            data.speed = 2.0;
+                        }
                     }
                 }
             }

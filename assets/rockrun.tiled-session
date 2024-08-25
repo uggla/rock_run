@@ -10,17 +10,19 @@
     "file.lastUsedOpenFilter": "All Files (*)",
     "fileStates": {
         "": {
-            "scaleInDock": 1
+            "scaleInDock": 0.33
         },
         "level01.tmx": {
             "expandedObjectLayers": [
-                6
+                5,
+                6,
+                8
             ],
-            "scale": 2,
-            "selectedLayer": 7,
+            "scale": 1.5,
+            "selectedLayer": 5,
             "viewCenter": {
-                "x": 3096.25,
-                "y": 680.25
+                "x": 6401.333333333333,
+                "y": 359.66666666666663
             }
         },
         "level01.tmx#backgrounds": {
@@ -58,20 +60,26 @@
             "dynamicWrapping": false,
             "scaleInDock": 0.75
         },
+        "level01.tmx#tree-01": {
+            "scaleInDock": 1
+        },
+        "level01.tmx#tree-1": {
+            "scaleInDock": 0.5
+        },
         "level01.tmx#trellis-1": {
             "scaleInDock": 1
         },
         "level02.tmx": {
             "expandedObjectLayers": [
-                8,
+                4,
                 5,
-                4
+                8
             ],
-            "scale": 0.75,
+            "scale": 1,
             "selectedLayer": 6,
             "viewCenter": {
                 "x": 3200,
-                "y": 719.3333333333333
+                "y": 719.5
             }
         },
         "level02.tmx#grad-1": {

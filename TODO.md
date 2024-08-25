@@ -6,26 +6,26 @@
 - [x] Add background musics.
 - [ ] Add trex.
 - [x] Add an enigma that drop a rock allowing to go over spikes.
-- [ ] Review enigmas colors.
+- [x] Review enigmas colors.
 - [ ] Improve level 1.
 - [ ] Add level 3.
 - [x] Check for compilation optimization.
 - [x] Review stories.
 - [ ] Update doc about tiled.
-- [ ] Add a squirrel and a challenge to get all his nuts.
+- [x] Add a squirrel and a challenge to get all his nuts.
 - [ ] Remove remaining debugging stuffs especially on main.rs.
 - [ ] Release a first version of the game on Github.
 - [ ] Release a first version of the game on Itch.io with web version.
 - [ ] Test on Windows.
 - [ ] Test on MacOS.
+- [ ] Test on Raspberry Pi.
 - [ ] Add more enigmas.
 - [ ] Add a envvar to enable fixing menu position.
 - [ ] Review camera smoothing especially y axis.
 - [ ] Add dragon throwing fireballs.
 - [ ] Add wolf.
-- [ ] Add more sound effects.
+- [ ] Add more sound effects. (in progress...)
 - [ ] Add a volcano that throws rocks.
 - [ ] Add more levels.
 - [ ] Add more beasts.
-- [ ] Add more enigmas.
 - [x] Check hit collision bugs.

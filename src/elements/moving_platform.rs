@@ -16,43 +16,45 @@ use crate::{
     player::{PlayerSet, PlayerState},
 };
 
-const MOVING_PLATFORM_SPEED: f32 = 1.0;
 const MOVING_PLATFORM_SCALE_FACTOR: f32 = 1.0;
 const MOVING_PLATFORM_WIDTH: f32 = 96.0;
 const MOVING_PLATFORM_HEIGHT: f32 = 16.0;
 
 #[derive(Component, Clone)]
 pub struct MovingPlatform {
-    start_pos: Vec2,
-    movement: MovingPlatformMovement,
+    pub start_pos: Vec2,
+    pub movement: MovingPlatformMovement,
 }
 
 #[allow(dead_code)]
 #[derive(Debug, PartialEq, Clone, Copy)]
-enum MovingPlatformMovement {
+pub enum MovingPlatformMovement {
     LeftRight(LeftRightData),
     UpDown(UpDownData),
     Circle(CircleData),
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]
-struct CircleData {
+pub struct CircleData {
     direction: MovingPlatformDirection,
     center: Vec2,
+    speed: f32,
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]
-struct LeftRightData {
+pub struct LeftRightData {
     direction: MovingPlatformDirection,
     max_right: f32,
     max_left: f32,
+    speed: f32,
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]
-struct UpDownData {
+pub struct UpDownData {
     direction: MovingPlatformDirection,
     max_down: f32,
     max_up: f32,
+    pub speed: f32,
 }
 
 #[allow(dead_code)]
@@ -101,14 +103,51 @@ fn setup_moving_platforms(
     let mut level_moving_platforms: HashMap<u8, Vec<MovingPlatform>> = HashMap::new();
     level_moving_platforms.insert(
         1,
-        vec![MovingPlatform {
-            start_pos: level.map.tiled_to_bevy_coord(Vec2::new(2145.0, 550.0)),
-            movement: MovingPlatformMovement::UpDown(UpDownData {
-                direction: MovingPlatformDirection::Up,
-                max_down: level.map.tiled_to_bevy_coord(Vec2::new(2145.0, 575.0)).y,
-                max_up: level.map.tiled_to_bevy_coord(Vec2::new(2145.0, 335.0)).y,
-            }),
-        }],
+        vec![
+            MovingPlatform {
+                start_pos: level.map.tiled_to_bevy_coord(Vec2::new(2145.0, 550.0)),
+                movement: MovingPlatformMovement::UpDown(UpDownData {
+                    direction: MovingPlatformDirection::Up,
+                    max_down: level.map.tiled_to_bevy_coord(Vec2::new(2145.0, 575.0)).y,
+                    max_up: level.map.tiled_to_bevy_coord(Vec2::new(2145.0, 335.0)).y,
+                    speed: 1.0,
+                }),
+            },
+            MovingPlatform {
+                start_pos: level.map.tiled_to_bevy_coord(Vec2::new(5750.0, 368.0)),
+                movement: MovingPlatformMovement::Circle(CircleData {
+                    center: level.map.tiled_to_bevy_coord(Vec2::new(5875.0, 368.0)),
+                    direction: MovingPlatformDirection::Anticlockwise,
+                    speed: 1.0,
+                }),
+            },
+            MovingPlatform {
+                start_pos: level.map.tiled_to_bevy_coord(Vec2::new(6165.0, 368.0)),
+                movement: MovingPlatformMovement::Circle(CircleData {
+                    center: level.map.tiled_to_bevy_coord(Vec2::new(6290.0, 368.0)),
+                    direction: MovingPlatformDirection::Clockwise,
+                    speed: 2.0,
+                }),
+            },
+            MovingPlatform {
+                start_pos: level.map.tiled_to_bevy_coord(Vec2::new(6515.0, 368.0)),
+                movement: MovingPlatformMovement::LeftRight(LeftRightData {
+                    direction: MovingPlatformDirection::Right,
+                    max_left: level.map.tiled_to_bevy_coord(Vec2::new(6515.0, 0.0)).x,
+                    max_right: level.map.tiled_to_bevy_coord(Vec2::new(6915.0, 0.0)).x,
+                    speed: 2.5,
+                }),
+            },
+            MovingPlatform {
+                start_pos: level.map.tiled_to_bevy_coord(Vec2::new(7100.0, 400.0)),
+                movement: MovingPlatformMovement::UpDown(UpDownData {
+                    direction: MovingPlatformDirection::Up,
+                    max_down: level.map.tiled_to_bevy_coord(Vec2::new(7100.0, 549.0)).y,
+                    max_up: level.map.tiled_to_bevy_coord(Vec2::new(7100.0, 400.0)).y,
+                    speed: 0.0,
+                }),
+            },
+        ],
     );
     level_moving_platforms.insert(
         2,
@@ -118,6 +157,7 @@ fn setup_moving_platforms(
                 movement: MovingPlatformMovement::Circle(CircleData {
                     center: level.map.tiled_to_bevy_coord(Vec2::new(5920.0, 451.0)),
                     direction: MovingPlatformDirection::Clockwise,
+                    speed: 1.0,
                 }),
             },
             MovingPlatform {
@@ -125,6 +165,7 @@ fn setup_moving_platforms(
                 movement: MovingPlatformMovement::Circle(CircleData {
                     center: level.map.tiled_to_bevy_coord(Vec2::new(5920.0, 451.0)),
                     direction: MovingPlatformDirection::Clockwise,
+                    speed: 1.0,
                 }),
             },
             // MovingPlatform {
@@ -190,7 +231,7 @@ fn move_moving_platform(
             MovingPlatformMovement::LeftRight(ref mut right_left_data) => {
                 match right_left_data.direction {
                     MovingPlatformDirection::Left => {
-                        let moving_platform_speed = -MOVING_PLATFORM_SPEED * 100.0;
+                        let moving_platform_speed = -right_left_data.speed * 100.0;
                         if moving_platform_pos.translation.x > right_left_data.max_left {
                             (moving_platform_speed * time.delta_seconds(), 0.0)
                         } else {
@@ -199,7 +240,7 @@ fn move_moving_platform(
                         }
                     }
                     MovingPlatformDirection::Right => {
-                        let moving_platform_speed = MOVING_PLATFORM_SPEED * 100.0;
+                        let moving_platform_speed = right_left_data.speed * 100.0;
                         if moving_platform_pos.translation.x < right_left_data.max_right {
                             (moving_platform_speed * time.delta_seconds(), 0.0)
                         } else {
@@ -212,7 +253,7 @@ fn move_moving_platform(
             }
             MovingPlatformMovement::UpDown(ref mut up_down_data) => match up_down_data.direction {
                 MovingPlatformDirection::Up => {
-                    let moving_platform_speed = -MOVING_PLATFORM_SPEED * 100.0;
+                    let moving_platform_speed = -up_down_data.speed * 100.0;
                     if moving_platform_pos.translation.y > up_down_data.max_down {
                         (0.0, moving_platform_speed * time.delta_seconds())
                     } else {
@@ -221,7 +262,7 @@ fn move_moving_platform(
                     }
                 }
                 MovingPlatformDirection::Down => {
-                    let moving_platform_speed = MOVING_PLATFORM_SPEED * 100.0;
+                    let moving_platform_speed = up_down_data.speed * 100.0;
                     if moving_platform_pos.translation.y < up_down_data.max_up {
                         (0.0, moving_platform_speed * time.delta_seconds())
                     } else {
@@ -233,7 +274,7 @@ fn move_moving_platform(
             },
             MovingPlatformMovement::Circle(circle_data) => match circle_data.direction {
                 MovingPlatformDirection::Clockwise => {
-                    let moving_platform_speed = MOVING_PLATFORM_SPEED;
+                    let moving_platform_speed = circle_data.speed;
                     rotate_platform(
                         &time,
                         moving_platform_speed,
@@ -242,7 +283,7 @@ fn move_moving_platform(
                     )
                 }
                 MovingPlatformDirection::Anticlockwise => {
-                    let moving_platform_speed = -MOVING_PLATFORM_SPEED;
+                    let moving_platform_speed = -circle_data.speed;
                     rotate_platform(
                         &time,
                         moving_platform_speed,

@@ -3,6 +3,12 @@ lang02 = French
 start_game = Start game
 current_level = Level { $current_level }
 hello-world = Hello world { $name }.
+mammals-question = Which of these animals is a mammal?
+mammals = Lion, Elephant, Dolphin, Bat, Hippopotamus, Gorilla, Kangaroo, Otter, Whale, Platypus
+non-mammals = Crocodile, Parrot, Frog, Turtle, Trout, Butterfly, Cobra, Chicken, Squid, Shark
+fastest-land-animal-question = What is the fastest land animal?
+fastest-land-animal = Cheetah
+non-fastest-land-animal = Elephant, Turtle, Lion, Rabbit, Horse, Gazelle, Kangaroo, Giraffe, Leopard, Ostrich, Greyhound
 story01-01 = Hel-lo, my name is Rose.
 story01-02 = It's get-ting late, I need to go home be-cause the night is the do-main of pre-da-tors.
 story01-03 = Help me to re-turn home.
@@ -14,3 +20,13 @@ story03-03 = { $n1 } + { $n2 }=\("selection_items":["0","0"],"selected_item":0\)
 story04-01 = Oh! I think it's a rid-dle, I don't know how to an-swer.
 story04-02 = Help me, it's writ-ten...
 story04-03 = What is the dou-ble of { $n1 } =\("selection_items":["0","0"],"selected_item":0\)
+story05-01 = Hello Rose! I don't re-mem-ber where I hid my nuts.
+story05-02 = If you help me find them and an-swer my ques-tion, I will help you cross the cliff fur-ther a-head.
+story05-03 = { $question }
+story05-04 = { $values }
+story06-01 = It says: an-swer the ques-tion but don't get it wrong!
+story06-02 = { $question }
+story06-03 = { $values }
+story100-01 = Oh! You were quick!
+story100-02 = Did you find all my nuts?
+story100-03 = I will count them.

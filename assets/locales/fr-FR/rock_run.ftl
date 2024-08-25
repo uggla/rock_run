@@ -3,6 +3,12 @@ lang02 = Francais
 start_game = Commencer le jeu
 current_level = Niveau { $current_level }
 hello-world = Salut monde { $name }.
+mammals-question = Par-mis ces a-ni-maux, le-quel n'est pas un mam-mi-fè-re ?
+mammals = Lion, Éléphant, Dauphin, Chauve-souris, Hippopotame, Gorille, Kangourou, Loutre, Baleine, Ornithorynque
+non-mammals = Crocodile, Perroquet, Grenouille, Tortue, Truite, Papillon, Cobra, Poule, Calmar, Requin
+fastest-land-animal-question = Quel est l'a-ni-mal ter-res-tre le plus ra-pi-de ?
+fastest-land-animal = Guépard
+non-fastest-land-animal = Eléphant, Tortue, Lion, Lapin, Cheval, Gazelle, Kangourou, Girafe, Léopard, Autruche, Lévrier
 story01-01 = Sa-lut, je m'ap-pel-le Ro-se.
 story01-02 = Il com-men-ce à ê-tre tard, il faut que je ren-tre car la nuit c'est le do-mai-ne des pré-da-teurs.
 story01-03 = Ai-de moi à ren-trer à la mai-son.
@@ -14,3 +20,13 @@ story03-03 = { $n1 } + { $n2 }=\("selection_items":["0","0"],"selected_item":0\)
 story04-01 = Oh! je crois que c'est u-ne é-ni-gme, je ne sais pas ré-pond-re.
 story04-02 = Ai-de moi, c'est é-crit...
 story04-03 = Quel est le dou-ble de { $n1 } =\("selection_items":["0","0"],"selected_item":0\)
+story05-01 = Sa-lut Ro-se ! Je ne sais plus où j'ai ca-ché mes noi-set-tes.
+story05-02 = Si tu m'ai-des à les ré-cu-pé-rer et que tu ré-ponds à ma ques-tion, je t'ai-de-rai à fran-chir la fa-lai-se un peu plus loin.
+story05-03 = { $question }
+story05-04 = { $values }
+story06-01 = C'est é-crit : ré-ponds à la ques-tion mais ne te trom-pe pas !
+story06-02 = { $question }
+story06-03 = { $values }
+story100-01 = Oh ! Tu as fait vi-te !
+story100-02 = As\-tu trou-vé toutes mes noi-set-tes ?
+story100-03 = Je vais les comp-ter.

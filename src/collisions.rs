@@ -3,10 +3,14 @@ use bevy_rapier2d::{
     control::KinematicCharacterControllerOutput, dynamics::Velocity,
     geometry::ActiveCollisionTypes, pipeline::CollisionEvent,
 };
+use rand::seq::SliceRandom;
+use rand::thread_rng;
 
 use crate::{
     assets::RockRunAssets,
-    beasts::{bat::Bat, pterodactyl::Pterodactyl, trex::Trex, triceratops::Triceratops},
+    beasts::{
+        bat::Bat, pterodactyl::Pterodactyl, squirel::Nut, trex::Trex, triceratops::Triceratops,
+    },
     coregame::{
         colliders::{ColliderName, Ground, Ladder, Platform, PositionSensor, Spike, Story},
         level::{CurrentLevel, Level},
@@ -16,11 +20,12 @@ use crate::{
         enigma::{EnigmaKind, Enigmas, RockGate},
         moving_platform::MovingPlatform,
         rock::Rock,
+        story::{compose_selection_msg, UserSelection},
     },
     events::{
         ExtraLifeCollision, Hit, LadderCollisionStart, LadderCollisionStop,
-        MovingPlatformCollision, PositionSensorCollisionStart, PositionSensorCollisionStop,
-        Restart, StoryMessages, TriceratopsCollision,
+        MovingPlatformCollision, NutCollision, PositionSensorCollisionStart,
+        PositionSensorCollisionStop, Restart, StoryMessages, TriceratopsCollision,
     },
     life::ExtraLife,
     player::{self, Player, PlayerState, PLAYER_HEIGHT},
@@ -52,6 +57,7 @@ impl Plugin for CollisionsPlugin {
                 position_sensor_collisions,
                 ladder_collisions,
                 extra_life_collisions,
+                nut_collisions,
             )
                 .in_set(CollisionSet)
                 .run_if(in_state(AppState::GameRunning)),
@@ -64,7 +70,8 @@ impl Plugin for CollisionsPlugin {
         .add_event::<LadderCollisionStart>()
         .add_event::<LadderCollisionStop>()
         .add_event::<MovingPlatformCollision>()
-        .add_event::<ExtraLifeCollision>();
+        .add_event::<ExtraLifeCollision>()
+        .add_event::<NutCollision>();
     }
 }
 
@@ -100,10 +107,16 @@ fn player_collisions(
         Err(_) => return,
     };
 
-    // info!(
-    //     "Entity {:?} moved by {:?} and touches the ground: {:?}",
-    //     player_entity, output.effective_translation, output.grounded
-    // );
+    // if output.effective_translation.x.abs() < 7.5 {
+    //     debug!(
+    //         "Entity {:?} desired {:?} moved {:?} and touches the ground: {:?}",
+    //         player_entity,
+    //         output.desired_translation,
+    //         output.effective_translation,
+    //         output.grounded
+    //     );
+    // }
+
     for character_collision in output.collisions.iter() {
         // Player collides with ground or platforms
         if (character_collision.entity == ground_entity
@@ -318,16 +331,7 @@ fn display_story(
                 ]));
             }
             "story03" => {
-                let numbers = enigmas
-                    .enigmas
-                    .iter()
-                    .filter(|e| e.associated_story == "story03-03")
-                    .map(|e| match e.kind.clone() {
-                        EnigmaKind::Numbers(n) => n,
-                        EnigmaKind::Qcm(_) => unreachable!(),
-                    })
-                    .last()
-                    .unwrap();
+                let numbers = manage_numbers(&enigmas, "story03-03");
 
                 msg_event.send(StoryMessages::Display(vec![
                     ("story03-01".to_string(), None),
@@ -336,16 +340,7 @@ fn display_story(
                 ]));
             }
             "story04" => {
-                let numbers = enigmas
-                    .enigmas
-                    .iter()
-                    .filter(|e| e.associated_story == "story04-03")
-                    .map(|e| match e.kind.clone() {
-                        EnigmaKind::Numbers(n) => n,
-                        EnigmaKind::Qcm(_) => unreachable!(),
-                    })
-                    .last()
-                    .unwrap();
+                let numbers = manage_numbers(&enigmas, "story04-03");
 
                 msg_event.send(StoryMessages::Display(vec![
                     ("story04-01".to_string(), None),
@@ -353,9 +348,129 @@ fn display_story(
                     ("story04-03".to_string(), Some(numbers)),
                 ]));
             }
+            "story05" => {
+                let (selection, question) = manage_mcq(enigmas, "story05-04");
+
+                debug!("Answers: {:?}", selection);
+
+                msg_event.send(StoryMessages::Display(vec![
+                    ("story05-01".to_string(), None),
+                    ("story05-02".to_string(), None),
+                    ("story05-03".to_string(), Some(question)),
+                    ("story05-04".to_string(), Some(selection)),
+                ]));
+            }
+            "story06" => {
+                let (selection, question) = manage_mcq(enigmas, "story06-03");
+                msg_event.send(StoryMessages::Display(vec![
+                    ("story06-01".to_string(), None),
+                    ("story06-02".to_string(), Some(question)),
+                    ("story06-03".to_string(), Some(selection)),
+                ]));
+            }
+            "story100" => {
+                msg_event.send(StoryMessages::Display(vec![
+                    ("story100-01".to_string(), None),
+                    ("story100-02".to_string(), None),
+                    ("story100-03".to_string(), None),
+                ]));
+            }
             _ => {}
         };
     }
+}
+
+fn manage_numbers(
+    enigmas: &ResMut<Enigmas>,
+    var_name: &str,
+) -> bevy::utils::hashbrown::HashMap<String, String> {
+    let numbers = enigmas
+        .enigmas
+        .iter()
+        .filter(|e| e.associated_story == var_name)
+        .map(|e| match e.kind.clone() {
+            EnigmaKind::Numbers(n) => n,
+            EnigmaKind::Mcq(_) => unreachable!(),
+        })
+        .last()
+        .unwrap();
+    numbers
+}
+
+fn manage_mcq(
+    enigmas: ResMut<Enigmas>,
+    associated_story: &str,
+) -> (
+    bevy::utils::hashbrown::HashMap<String, String>,
+    bevy::utils::hashbrown::HashMap<String, String>,
+) {
+    let mcq_values = enigmas
+        .enigmas
+        .iter()
+        .filter(|e| e.associated_story == associated_story)
+        .map(|e| match e.kind.clone() {
+            EnigmaKind::Numbers(_) => unreachable!(),
+            EnigmaKind::Mcq(values) => values,
+        })
+        .last()
+        .unwrap();
+
+    // In this case:
+    // First item is a string containing the question.
+    // Second item is a string containing the wrong answers separated by a comma.
+    // Third item is a string containing the correct answers separated by a comma or
+    // only the correct answer.
+
+    let question = mcq_values[0].clone();
+
+    let wrong_answers = mcq_values[1]
+        .split(",")
+        .map(|s| {
+            let mut item = s.trim().to_string();
+            item.push('\n');
+            item
+        })
+        .collect::<Vec<String>>();
+
+    let correct_answers = match mcq_values[2].contains(",") {
+        true => mcq_values[2]
+            .split(",")
+            .map(|s| {
+                let mut item = s.trim().to_string();
+                item.push('\n');
+                item
+            })
+            .collect::<Vec<String>>(),
+        false => vec![format!("{}\n", mcq_values[2].trim().to_string())],
+    };
+
+    // Pick 3 random wrong answers and 1 random good answer.
+    let wrong_answers = wrong_answers
+        .choose_multiple(&mut thread_rng(), 3)
+        .map(|s| s.to_string())
+        .collect::<Vec<String>>();
+    let correct_answers = correct_answers
+        .choose(&mut thread_rng())
+        .unwrap()
+        .to_string();
+
+    let mut answers = wrong_answers
+        .iter()
+        .chain(std::iter::once(&correct_answers))
+        .map(|s| s.to_string())
+        .collect::<Vec<String>>();
+
+    // Shuffle the answers
+    answers.shuffle(&mut thread_rng());
+
+    let selection = UserSelection::new(answers);
+    let selection: HashMap<String, String> = HashMap::from([(
+        "values".to_string(),
+        compose_selection_msg("", selection, ""),
+    )]);
+
+    let question: HashMap<String, String> = HashMap::from([("question".to_string(), question)]);
+    (selection, question)
 }
 
 fn ladder_collisions(
@@ -610,6 +725,52 @@ fn extra_life_collisions(
                 // Warning, e1 and e2 can be swapped.
                 if let Some((_entity, collider_name)) =
                     extralifes.iter().find(|(entity, _collider_name)| {
+                        (entity == e1 && player_entity == *e2)
+                            || (entity == e2 && player_entity == *e1)
+                    })
+                {
+                    debug!(
+                        "Received collision event: {:?}, collider name: {:?}",
+                        collision_event, collider_name
+                    );
+                }
+            }
+        }
+    }
+}
+
+fn nut_collisions(
+    nuts: Query<(Entity, &ColliderName), With<Nut>>,
+    mut collision_events: EventReader<CollisionEvent>,
+    mut extralife_collision: EventWriter<NutCollision>,
+    player: Query<Entity, With<Player>>,
+) {
+    let player_entity = match player.get_single() {
+        Ok(player_entity) => player_entity,
+        Err(_) => return,
+    };
+    for collision_event in collision_events.read() {
+        match collision_event {
+            CollisionEvent::Started(e1, e2, _cf) => {
+                // Warning, e1 and e2 can be swapped.
+                if let Some((entity, collider_name)) =
+                    nuts.iter().find(|(entity, _collider_name)| {
+                        (entity == e1 && player_entity == *e2)
+                            || (entity == e2 && player_entity == *e1)
+                    })
+                {
+                    debug!(
+                        "Received collision event: {:?}, collider name: {:?}",
+                        collision_event, collider_name
+                    );
+
+                    extralife_collision.send(NutCollision { entity });
+                };
+            }
+            CollisionEvent::Stopped(e1, e2, _cf) => {
+                // Warning, e1 and e2 can be swapped.
+                if let Some((_entity, collider_name)) =
+                    nuts.iter().find(|(entity, _collider_name)| {
                         (entity == e1 && player_entity == *e2)
                             || (entity == e2 && player_entity == *e1)
                     })
