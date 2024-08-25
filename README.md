@@ -125,6 +125,28 @@ This can be fixed by changing the backend from Vulkan to Gl using the following 
 export WGPU_BACKEND=gl
 ```
 
-2- Menu UI is not rendered well.
+2- Log spam from wgpu_hal
 
-TODO: insert a screenshot, create a environment variable to change the UI settings.
+```bash
+2024-08-15T16:14:27.750208Z ERROR wgpu_hal::gles: wgpu-hal heuristics assumed that the view dimension will be equal to `Cube` rather than `CubeArray`.
+`D2` textures with `depth_or_array_layers == 1` are assumed to have view dimension `D2`
+`D2` textures with `depth_or_array_layers > 1` are assumed to have view dimension `D2Array`
+`D2` textures with `depth_or_array_layers == 6` are assumed to have view dimension `Cube`
+`D2` textures with `depth_or_array_layers > 6 && depth_or_array_layers % 6 == 0` are assumed to have view dimension `CubeArray`
+```
+
+https://github.com/bevyengine/bevy/issues/13115
+
+At the moment writting this documentation, the issue is still open, but it can be mitigated by filtering out logs.
+
+```bash
+RUST_LOG=none,rock_run=info cargo rr
+```
+
+3- Menu UI is not rendered well.
+
+![screenshot](images/menu-failure-01.png)
+
+This is not fixed yet.
+
+TODO: create a environment variable to change the UI settings.
