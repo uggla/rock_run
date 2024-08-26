@@ -1,3 +1,4 @@
+use bevy::audio::Volume;
 use bevy::{app::AppExit, audio::PlaybackMode};
 
 use bevy::prelude::*;
@@ -61,6 +62,7 @@ impl Plugin for MenuPlugin {
         app.add_plugins(InputManagerPlugin::<MenuAction>::default())
             .add_systems(OnEnter(AppState::StartMenu), start_menu)
             .add_systems(OnEnter(AppState::GamePaused), pause_menu)
+            .add_systems(OnExit(AppState::GamePaused), exit_pause_menu)
             .add_systems(OnEnter(AppState::GameOver), gameover_menu)
             .add_systems(OnEnter(AppState::GameFinished), gamefinished_menu)
             .add_systems(
@@ -591,7 +593,28 @@ fn pause_menu(mut commands: Commands, rock_run_assets: Res<RockRunAssets>) {
                 },
                 DrawBlinkTimer(Timer::from_seconds(0.5, TimerMode::Repeating)),
             ));
+        })
+        .with_children(|parent| {
+            parent.spawn(AudioBundle {
+                source: rock_run_assets.pause_in_sound.clone(),
+                settings: PlaybackSettings {
+                    mode: PlaybackMode::Despawn,
+                    volume: Volume::new(4.3),
+                    ..default()
+                },
+            });
         });
+}
+
+fn exit_pause_menu(mut commands: Commands, rock_run_assets: Res<RockRunAssets>) {
+    commands.spawn(AudioBundle {
+        source: rock_run_assets.pause_out_sound.clone(),
+        settings: PlaybackSettings {
+            mode: PlaybackMode::Despawn,
+            volume: Volume::new(4.3),
+            ..default()
+        },
+    });
 }
 
 fn menu_blink_system(
