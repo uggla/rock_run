@@ -23,7 +23,7 @@ use crate::{
         story::{compose_selection_msg, UserSelection},
     },
     events::{
-        ExtraLifeCollision, Hit, LadderCollisionStart, LadderCollisionStop,
+        ExtraLifeCollision, Hit, LadderCollisionStart, LadderCollisionStop, LifeEvent,
         MovingPlatformCollision, NutCollision, PositionSensorCollisionStart,
         PositionSensorCollisionStop, Restart, StoryMessages, TriceratopsCollision,
     },
@@ -92,9 +92,18 @@ fn player_collisions(
     rockgates: Query<(Entity, &Velocity), With<RockGate>>,
     mut hit: EventWriter<Hit>,
     mut moving_platform_collision: EventWriter<MovingPlatformCollision>,
+    mut life_event: EventReader<LifeEvent>,
 ) {
     if state.get() == &PlayerState::Hit {
         return;
+    }
+
+    // This should avoid to loose 2 lives at the same time if the player hits
+    // something in the hit animation phase.
+    for ev in life_event.read() {
+        if let LifeEvent::Lost = ev {
+            return;
+        }
     }
 
     let ground_entity = match ground.get_single() {
