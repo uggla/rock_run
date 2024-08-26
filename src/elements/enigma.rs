@@ -127,6 +127,21 @@ fn spawn_enigma_materials(
             "non-fastest-land-animal",
             "fastest-land-animal",
         ),
+        (
+            "closest-planet-to-sun-question",
+            "non-closest-planet-to-sun",
+            "closest-planet-to-sun",
+        ),
+        (
+            "japan-capital-question",
+            "non-japan-capital",
+            "japan-capital",
+        ),
+        (
+            "who-is-napoleon-question",
+            "non-napoleon-answer",
+            "napoleon-answer",
+        ),
     ];
 
     mcqs.shuffle(&mut thread_rng());
