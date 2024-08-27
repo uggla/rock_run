@@ -3,7 +3,7 @@
 Rock Run Rose's Odyssey is a 2D old-school platformer game. The game is
 programmed in Rust and serves as an experiment with the Bevy framework.
 
-It is aimed at children around 7 years old, with the objective of enhancing
+It is aimed at children around 8 years old, with the objective of enhancing
 reading skills through story following and mathematics (addition, subtraction,
 doubling, etc.) for puzzle solving while playing.
 
@@ -14,6 +14,8 @@ All assets are under CC0 license, most of them coming from the repository
 is a great example of using Bevy, and the game draws inspiration and uses
 parts of the code from this repository.
 
+You can modify levels using [Tiled](https://www.mapeditor.org/), an excellent tool for this purpose.
+
 ## Project status
 
 The project is currently under heavy development, and it does not make
@@ -21,11 +23,15 @@ sense to provide binaries at this moment. However, as soon as the state
 is sufficiently advanced, binaries and a playable online version will
 be released.
 
-Please note that the code in this project may not be as clean or optimized
-as it could be. I am currently learning Bevy, and my primary focus has been
-on making progress in the development of the game rather than perfecting
-the code. This project is a hobby for me, and while I strive to improve
-and learn best practices, my main goal is to create and enjoy the process.
+Please note that the code in this project is far from clean or
+optimized. I am currently learning Bevy, and I've primarily focused
+on progressing the development of the game rather than on the quality
+of the code. Additionally, there isn't a predefined plan for this
+project, which is growing organically as it evolves. This lack of
+structure also contributes to the code's messiness. This project is
+mainly a hobby for me, and while I strive to improve my skills and
+adopt best practices, my main goal is to create and enjoy the process,
+even if the code suffers as a result.
 
 Additionally, this game is being created for my daughter to help her with
 reading and calculating. It's important for me to complete the game before
@@ -86,7 +92,7 @@ or
 cargo rr  # for release mode
 ```
 
-### Wasm32 client
+### Wasm32
 
 1. Follow the above instruction of the native build.
 

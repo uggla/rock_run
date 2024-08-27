@@ -11,7 +11,7 @@
 - [ ] Add level 3.
 - [x] Check for compilation optimization.
 - [x] Review stories.
-- [ ] Update doc about tiled.
+- [x] Update doc about tiled.
 - [x] Add a squirrel and a challenge to get all his nuts.
 - [ ] Remove remaining debugging stuffs especially on main.rs.
 - [ ] Release a first version of the game on Github.
