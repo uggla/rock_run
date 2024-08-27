@@ -515,6 +515,16 @@ fn gamefinished_menu(mut commands: Commands, rock_run_assets: Res<RockRunAssets>
                 },
                 UiImage::new(rock_run_assets.victory.clone()),
             ));
+        })
+        .with_children(|parent| {
+            parent.spawn(AudioBundle {
+                source: rock_run_assets.victory_sound.clone(),
+                settings: PlaybackSettings {
+                    mode: PlaybackMode::Loop,
+                    // volume: Volume::new(4.3),
+                    ..default()
+                },
+            });
         });
 }
 

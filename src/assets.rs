@@ -112,6 +112,8 @@ pub struct RockRunAssets {
     pub pause_in_sound: Handle<AudioSource>,
     #[asset(path = "sounds/pause_out.ogg")]
     pub pause_out_sound: Handle<AudioSource>,
+    #[asset(path = "sounds/victory.ogg")]
+    pub victory_sound: Handle<AudioSource>,
 
     // Music
     #[asset(path = "musics/theme_01.ogg")]
