@@ -300,7 +300,7 @@
   <object id="53" name="s10" x="6208" y="608" width="32" height="16"/>
   <object id="54" name="s11" x="6558" y="592" width="3.99997" height="32"/>
   <object id="55" name="s12" x="6686" y="592" width="3.99997" height="32"/>
-  <object id="68" name="s13" x="7367" y="136.5">
+  <object id="68" name="s13" x="7374" y="132.5">
    <properties>
     <property name="note" value="this is to make squirel jump"/>
    </properties>

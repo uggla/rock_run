@@ -14,15 +14,15 @@
         },
         "level01.tmx": {
             "expandedObjectLayers": [
-                5,
                 6,
+                5,
                 8
             ],
-            "scale": 1.5,
-            "selectedLayer": 5,
+            "scale": 8,
+            "selectedLayer": 8,
             "viewCenter": {
-                "x": 6401.333333333333,
-                "y": 359.66666666666663
+                "x": 7397.625,
+                "y": 147.3125
             }
         },
         "level01.tmx#backgrounds": {
@@ -71,14 +71,14 @@
         },
         "level02.tmx": {
             "expandedObjectLayers": [
-                4,
                 5,
+                4,
                 8
             ],
             "scale": 1,
             "selectedLayer": 6,
             "viewCenter": {
-                "x": 3200,
+                "x": 3199.5,
                 "y": 719.5
             }
         },
