@@ -29,3 +29,4 @@
 - [ ] Add more levels.
 - [ ] Add more beasts.
 - [x] Check hit collision bugs.
+- [ ] Refactor to use despawn with ForState method ?
