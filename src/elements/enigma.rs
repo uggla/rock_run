@@ -23,8 +23,7 @@ use bevy::{
 use bevy_fluent::{BundleAsset, Locale};
 use bevy_rapier2d::{
     dynamics::{Ccd, ExternalImpulse, GravityScale, RigidBody, Velocity},
-    geometry::{ActiveCollisionTypes, Collider},
-    prelude::{ActiveEvents, Sensor},
+    prelude::{ActiveCollisionTypes, ActiveEvents, Collider, CollisionGroups, Group, Sensor},
 };
 use rand::seq::SliceRandom;
 use rand::{thread_rng, Rng};
@@ -220,7 +219,12 @@ fn spawn_enigma_materials(
                 GravityScale(20.0),
                 Velocity::zero(),
                 Collider::ball(ROCK_DIAMETER / 2.0),
-                ActiveCollisionTypes::DYNAMIC_KINEMATIC | ActiveCollisionTypes::DYNAMIC_DYNAMIC,
+                // Group definition so far, might evolves in the future...
+                // GROUP_1: rocks (only this one)
+                // GROUP_2: beasts (pterodactyls)
+                //
+                // Note: All colliders not part of a group (without this component) collides by default.
+                CollisionGroups::new(Group::GROUP_1, Group::GROUP_1),
                 Ccd::enabled(),
                 ExternalImpulse::default(),
                 RockGate {
@@ -248,7 +252,6 @@ fn spawn_enigma_materials(
                 GravityScale(20.0),
                 Velocity::zero(),
                 Collider::ball(ROCK_DIAMETER / 2.0),
-                ActiveCollisionTypes::DYNAMIC_KINEMATIC | ActiveCollisionTypes::DYNAMIC_DYNAMIC,
                 Ccd::enabled(),
                 ExternalImpulse::default(),
                 RockGate {

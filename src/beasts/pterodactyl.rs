@@ -3,7 +3,7 @@ use bevy_rapier2d::{
     control::KinematicCharacterController,
     dynamics::{Ccd, GravityScale, RigidBody, Velocity},
     geometry::{ActiveCollisionTypes, Collider},
-    pipeline::QueryFilterFlags,
+    prelude::{CollisionGroups, Group, QueryFilterFlags},
 };
 use rand::seq::SliceRandom;
 use rand::thread_rng;
@@ -180,6 +180,7 @@ fn spawn_pterodactyl(
                 filter_flags: QueryFilterFlags::ONLY_KINEMATIC,
                 ..default()
             },
+            CollisionGroups::new(Group::GROUP_2, Group::GROUP_2),
             pterodactyl,
         ));
 
