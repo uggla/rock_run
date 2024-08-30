@@ -156,8 +156,8 @@ fn setup_player(
             sprite: Sprite { ..default() },
             transform: Transform {
                 scale: Vec3::splat(PLAYER_SCALE_FACTOR),
-                // translation: level.map.get_start_screen().get_center().extend(20.0)
-                //     + PLAYER_START_OFFSET,
+                translation: level.map.get_start_screen().get_center().extend(20.0)
+                    + PLAYER_START_OFFSET,
                 // translation: level
                 //     .map
                 //     .tiled_to_bevy_coord(Vec2::new(3840.0, 1100.0))
@@ -168,10 +168,10 @@ fn setup_player(
                 //     .tiled_to_bevy_coord(Vec2::new(4950.0, 575.0))
                 //     .extend(20.0),
                 // ..default()
-                translation: level
-                    .map
-                    .tiled_to_bevy_coord(Vec2::new(7792.0, 481.0))
-                    .extend(20.0),
+                // translation: level
+                //     .map
+                //     .tiled_to_bevy_coord(Vec2::new(7792.0, 481.0))
+                //     .extend(20.0),
                 ..default()
             },
             ..default()
