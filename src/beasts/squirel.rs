@@ -19,7 +19,7 @@ use crate::{
         level::{CurrentLevel, Level},
         state::AppState,
     },
-    events::{EnigmaResult, NutCollision, StartGame},
+    events::{EnigmaResult, NextLevel, NutCollision, StartGame},
     helpers::texture::cycle_texture,
 };
 
@@ -421,12 +421,14 @@ fn unroll_vine(
     mut vines: Local<Vec<VineData>>,
     mut enigna_result: EventReader<EnigmaResult>,
     mut vine_query: Query<(Entity, &mut Vine)>,
-    mut game_event: EventReader<StartGame>,
+    mut game_event_start: EventReader<StartGame>,
+    mut game_event_level: EventReader<NextLevel>,
     state: Res<State<AppState>>,
 ) {
-    if !game_event.is_empty() {
+    if !game_event_start.is_empty() || !game_event_level.is_empty() {
         vines.clear();
-        game_event.clear();
+        game_event_start.clear();
+        game_event_level.clear();
         return;
     }
 

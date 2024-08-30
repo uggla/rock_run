@@ -10,7 +10,7 @@ use leafwing_input_manager::{
 };
 use unic_langid::langid;
 
-use crate::events::StartGame;
+use crate::events::{NextLevel, StartGame};
 use crate::{
     assets::RockRunAssets,
     coregame::{
@@ -656,7 +656,8 @@ fn menu_input_system(
     mut selection_event: EventWriter<SelectionChanged>,
     mut no_more_msg_event: EventReader<NoMoreStoryMessages>,
     mut ladder_collision_stop: EventWriter<LadderCollisionStop>,
-    mut game_event: EventWriter<StartGame>,
+    mut game_event_start: EventWriter<StartGame>,
+    mut game_event_level: EventWriter<NextLevel>,
     mut current_level: ResMut<CurrentLevel>,
 ) {
     if state.get() != &AppState::StartMenu
@@ -676,7 +677,7 @@ fn menu_input_system(
             }
             AppState::GameCreate => {
                 next_state.set(AppState::GameRunning);
-                game_event.send(StartGame);
+                game_event_start.send(StartGame);
             }
             AppState::GameRunning => {
                 if menu_action_state.just_pressed(&MenuAction::PauseUnpause) {
@@ -759,6 +760,7 @@ fn menu_input_system(
             }
             AppState::NextLevel => {
                 next_state.set(AppState::GameRunning);
+                game_event_level.send(NextLevel);
             }
             AppState::GameFinished => {
                 if menu_action_state.just_pressed(&MenuAction::Accept) {
