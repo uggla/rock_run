@@ -17,6 +17,8 @@ pub struct RockRunAssets {
     pub level01: Handle<helpers::tiled::TiledMap>,
     #[asset(path = "level02.tmx")]
     pub level02: Handle<helpers::tiled::TiledMap>,
+    #[asset(path = "level03.tmx")]
+    pub level03: Handle<helpers::tiled::TiledMap>,
 
     // Fonts
     #[asset(path = "fonts/Cute_Dino.ttf")]

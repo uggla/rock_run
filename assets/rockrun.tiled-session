@@ -3,26 +3,27 @@
         "height": 4300,
         "width": 2
     },
-    "activeFile": "level01.tmx",
+    "activeFile": "level02.tmx",
     "expandedProjectPaths": [
         "."
     ],
     "file.lastUsedOpenFilter": "All Files (*)",
     "fileStates": {
         "": {
-            "scaleInDock": 1
+            "scaleInDock": 0.33
         },
         "level01.tmx": {
             "expandedObjectLayers": [
+                8,
                 6,
                 5,
-                8
+                4
             ],
-            "scale": 5.5,
-            "selectedLayer": 8,
+            "scale": 1.5,
+            "selectedLayer": 6,
             "viewCenter": {
-                "x": 7328.272727272728,
-                "y": 132.09090909090907
+                "x": 12698,
+                "y": 655
             }
         },
         "level01.tmx#backgrounds": {
@@ -71,19 +72,29 @@
         },
         "level02.tmx": {
             "expandedObjectLayers": [
-                5,
-                4,
-                8
+                3
             ],
-            "scale": 1,
-            "selectedLayer": 6,
+            "scale": 3,
+            "selectedLayer": 4,
             "viewCenter": {
-                "x": 3200,
-                "y": 719.5
+                "x": 2312.6666666666665,
+                "y": 618.8333333333333
             }
         },
         "level02.tmx#grad-1": {
             "scaleInDock": 1
+        },
+        "level02.tmx#grass-1": {
+            "scaleInDock": 0.33
+        },
+        "level02.tmx#grass-2": {
+            "scaleInDock": 1
+        },
+        "level02.tmx#grass-3": {
+            "scaleInDock": 2
+        },
+        "level02.tmx#mountain-2": {
+            "scaleInDock": 0.33
         },
         "level02.tmx#rock-1": {
             "scaleInDock": 1
@@ -94,7 +105,43 @@
         "level02.tmx#sky-2": {
             "scaleInDock": 1
         },
+        "level02.tmx#sky-4": {
+            "scaleInDock": 1
+        },
+        "level02.tmx#sky-5": {
+            "scaleInDock": 2
+        },
+        "level02.tmx#tileset-01": {
+            "scaleInDock": 1
+        },
         "level02.tmx#tileset-1": {
+            "scaleInDock": 1
+        },
+        "level03.tmx": {
+            "expandedObjectLayers": [
+                8,
+                3
+            ],
+            "scale": 0.5,
+            "selectedLayer": 6,
+            "viewCenter": {
+                "x": 4868,
+                "y": 321
+            }
+        },
+        "level03.tmx#grad-1": {
+            "scaleInDock": 1
+        },
+        "level03.tmx#rock-1": {
+            "scaleInDock": 1
+        },
+        "level03.tmx#sky-1": {
+            "scaleInDock": 1
+        },
+        "level03.tmx#sky-2": {
+            "scaleInDock": 1
+        },
+        "level03.tmx#tileset-1": {
             "scaleInDock": 1
         },
         "menu.tmx": {
@@ -118,15 +165,17 @@
     "map.lastUsedFormat": "tmx",
     "map.tileHeight": 16,
     "map.tileWidth": 16,
-    "map.width": 80,
+    "map.width": 160,
     "openFiles": [
         "level01.tmx",
+        "level03.tmx",
         "level02.tmx"
     ],
     "project": "rockrun.tiled-project",
     "recentFiles": [
-        "level02.tmx",
         "level01.tmx",
+        "level03.tmx",
+        "level02.tmx",
         "menu.tmx"
     ],
     "tileset.embedInMap": true,

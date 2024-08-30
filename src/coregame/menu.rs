@@ -23,7 +23,7 @@ use crate::{
     WINDOW_WIDTH,
 };
 
-const LAST_LEVEL: u8 = 2;
+const LAST_LEVEL: u8 = 3;
 
 #[derive(Component)]
 pub struct DrawBlinkTimer(pub Timer);
@@ -671,7 +671,7 @@ fn menu_input_system(
     } else {
         match state.get() {
             AppState::StartMenu => {
-                current_level.id = 1;
+                current_level.id = 2;
                 if menu_action_state.just_pressed(&MenuAction::Quit) {
                     app_exit_events.send(AppExit::Success);
                 }

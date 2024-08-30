@@ -714,6 +714,18 @@ fn position_sensor_collisions(
 
         level_sensor_pos.insert(
             2,
+            HashMap::from([(
+                "exit01".to_string(),
+                SensorValues {
+                    start_pos: Vec2::ZERO,
+                    end_pos: Vec2::ZERO,
+                    disable_next_collision: false,
+                },
+            )]),
+        );
+
+        level_sensor_pos.insert(
+            3,
             HashMap::from([
                 (
                     "bat01".to_string(),

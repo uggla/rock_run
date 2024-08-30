@@ -90,6 +90,19 @@ fn setup_background(mut commands: Commands, rock_run_assets: Res<RockRunAssets>)
         Level {
             id: 2,
             handle: map_handle.clone(),
+            map: Map::new("SO", WINDOW_WIDTH as usize, WINDOW_HEIGHT as usize),
+        },
+    ));
+
+    let map_handle: Handle<helpers::tiled::TiledMap> = rock_run_assets.level03.clone();
+    commands.spawn((
+        helpers::tiled::TiledMapBundle {
+            tiled_map: map_handle.clone(),
+            ..Default::default()
+        },
+        Level {
+            id: 3,
+            handle: map_handle.clone(),
             map: Map::new(
                 "SHFXF\nXOFOO",
                 WINDOW_WIDTH as usize,

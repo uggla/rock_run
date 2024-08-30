@@ -124,7 +124,7 @@ fn setup_triceratops(
     //     vec![level.map.tiled_to_bevy_coord(Vec2::new(4720.0, 576.0))],
     // );
     level_triceratops_pos.insert(
-        2,
+        3,
         vec![
             level.map.tiled_to_bevy_coord(Vec2::new(2400.0, 480.0)),
             level.map.tiled_to_bevy_coord(Vec2::new(6020.0, 1050.0)),

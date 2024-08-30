@@ -49,7 +49,7 @@ fn setup_music(
                 Music,
             ));
         }
-        2 => {
+        3 => {
             commands.spawn((
                 AudioBundle {
                     source: rock_run_assets.music_level02.clone(),
