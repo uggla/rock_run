@@ -185,7 +185,7 @@ fn setup_extralife(
                 sprite: Sprite { ..default() },
                 transform: Transform {
                     scale: Vec3::splat(LIFE_SCALE_FACTOR),
-                    translation: start_pos.extend(20.0),
+                    translation: start_pos.extend(10.0),
                     ..default()
                 },
                 ..default()
