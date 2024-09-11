@@ -3,8 +3,8 @@ use bevy_rapier2d::{
     control::KinematicCharacterController, dynamics::RigidBody, geometry::Collider,
 };
 use leafwing_input_manager::{
-    action_state::ActionState, axislike::SingleAxis, input_map::InputMap,
-    plugin::InputManagerPlugin, Actionlike, InputManagerBundle,
+    action_state::ActionState, input_map::InputMap, plugin::InputManagerPlugin, Actionlike,
+    InputManagerBundle,
 };
 
 use crate::{
@@ -133,22 +133,22 @@ fn setup_player(
     ]);
 
     input_map.insert(PlayerMovement::Jump, GamepadButtonType::South);
-    input_map.insert(
-        PlayerMovement::Run(PlayerDirection::Right),
-        SingleAxis::positive_only(GamepadAxisType::LeftStickX, 0.4),
-    );
-    input_map.insert(
-        PlayerMovement::Run(PlayerDirection::Left),
-        SingleAxis::negative_only(GamepadAxisType::LeftStickX, -0.4),
-    );
-    input_map.insert(
-        PlayerMovement::Climb,
-        SingleAxis::positive_only(GamepadAxisType::LeftStickY, 0.4),
-    );
-    input_map.insert(
-        PlayerMovement::Crouch,
-        SingleAxis::negative_only(GamepadAxisType::LeftStickY, -0.4),
-    );
+    // input_map.insert(
+    //     PlayerMovement::Run(PlayerDirection::Right),
+    //     SingleAxis::positive_only(GamepadAxisType::LeftStickX, 0.4),
+    // );
+    // input_map.insert(
+    //     PlayerMovement::Run(PlayerDirection::Left),
+    //     SingleAxis::negative_only(GamepadAxisType::LeftStickX, -0.4),
+    // );
+    // input_map.insert(
+    //     PlayerMovement::Climb,
+    //     SingleAxis::positive_only(GamepadAxisType::LeftStickY, 0.4),
+    // );
+    // input_map.insert(
+    //     PlayerMovement::Crouch,
+    //     SingleAxis::negative_only(GamepadAxisType::LeftStickY, -0.4),
+    // );
 
     commands.spawn((
         SpriteBundle {
