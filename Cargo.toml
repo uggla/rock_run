@@ -9,7 +9,7 @@ edition = "2021"
 [dependencies]
 bevy = { version = "0.14.2", features = ["jpeg"] }
 bevy_asset_loader = { version = "0.21.0" }
-bevy_ecs_tilemap = { git = "https://github.com/StarArawn/bevy_ecs_tilemap.git", rev = "1f1d46f3456e880145ca92597a8ce48666ea393f" }
+bevy_ecs_tilemap = { git = "https://github.com/StarArawn/bevy_ecs_tilemap.git", rev = "7ebe37b38f66bb78406f26d76618db819f5d0221" }
 bevy_fluent = "0.10.0"
 bevy_rapier2d = "0.27.0"
 enum-iterator = "2.1.0"
