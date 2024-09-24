@@ -53,22 +53,27 @@ impl Screen {
         (self.x_index, self.y_index)
     }
 
+    /// Returns the ranges of the screen in pixels
     pub fn get_ranges(&self) -> (Range<f32>, Range<f32>) {
         (self.x_range.clone(), self.y_range.clone())
     }
 
+    /// Returns `true` if the screen is a start screen (defined in map with a 'S')
     pub fn is_start_screen(&self) -> bool {
         self.start_screen
     }
 
+    /// Returns `true` if the screen is an allowed screen (defined in map with an 'O')
     pub fn is_allowed_screen(&self) -> bool {
         self.allowed_screen
     }
 
+    /// Returns `true` if the screen is a fixed screen (defined in map with a 'F' or 'H')
     pub fn is_fixed_screen(&self) -> bool {
         self.fixed_screen
     }
 
+    /// Returns the transition type (smooth or hard)
     pub fn get_transition(&self) -> Transition {
         self.transition
     }
@@ -98,7 +103,7 @@ impl Map {
     /// Transitions:
     /// - Smooth transition is the default
     ///
-    /// # Examples
+    /// # Example
     ///
     /// A 3 x 3 screen map with 1280 x 720 screen resolution
     ///
@@ -228,6 +233,58 @@ impl Map {
             data,
         }
     }
+
+    /// Convert Tiled coordinates to bevy coordinates
+    ///
+    /// Tiled coordinates:
+    ///
+    /// ```markdown
+    /// (0,0) -- x --> (1280,0)
+    ///  |
+    ///  y
+    ///  |
+    ///  v
+    ///  (0,720)
+    ///  ```
+    ///
+    ///  Origin is top left of all screens
+    ///
+    /// to Bevy coordinates:
+    ///
+    /// ```markdown
+    ///                   (0,360)
+    ///                     ^
+    ///                     |
+    ///                     y
+    ///                     |
+    /// (0,-640) <-- x -- (0,0) -- x --> (640,0)
+    ///                     |
+    ///                     y
+    ///                     |
+    ///                     v
+    ///                   (0,-360)
+    /// ```
+    ///
+    ///  Origin the middle of all screens
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    ///  use screen_map::Map;
+    ///  use screen_map::Screen;
+    ///  use bevy::math::Vec2;
+    ///
+    ///  let screen_map = "XXO\nSOO\nOXX";
+    ///  let screen_width = 1280;
+    ///  let screen_height = 720;
+    ///
+    ///  let map = Map::new(screen_map, screen_width, screen_height);
+    ///
+    ///  assert_eq!(
+    ///      map.tiled_to_bevy_coord(Vec2::new(1920.0,1079.0)),
+    ///      Vec2::new(0.0, 0.0)
+    ///  );
+    /// ```
     pub fn tiled_to_bevy_coord(&self, tiled_coord: Vec2) -> Vec2 {
         Vec2::new(
             tiled_coord.x - (self.width / 2) as f32,
@@ -235,6 +292,35 @@ impl Map {
         )
     }
 
+    /// Get the screen that contains the point
+    ///
+    /// `margin_x` and `margin_y` (in pixels) define the margins added to the screen to ensure that
+    /// the top of a sprite (with its origin at the center) is positioned off-screen.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    ///  use screen_map::Map;
+    ///  use screen_map::Screen;
+    ///  use bevy::math::Vec2;
+    ///  use screen_map::Transition;
+    ///
+    ///  let screen_map = "XXO\nSOO\nOXX";
+    ///  let screen_width = 1280;
+    ///  let screen_height = 720;
+    ///
+    ///  let map = Map::new(screen_map, screen_width, screen_height);
+    ///
+    ///  let screen = map.get_screen(Vec2::new(0.0,0.0), 0.0, 0.0).unwrap();
+    ///  assert_eq!(screen.get_indices(), (1,1));
+    ///
+    ///  let screen = map.get_screen(Vec2::new(0.0,-1090.0), 0.0, 20.0);
+    ///  assert!(screen.is_some());
+    ///  assert_eq!(screen.unwrap().get_indices(), (1,2));
+    ///
+    ///  let screen = map.get_screen(Vec2::new(0.0,-1090.0), 0.0, 0.0);
+    ///  assert!(screen.is_none());
+    /// ```
     pub fn get_screen(&self, point: Vec2, margin_x: f32, margin_y: f32) -> Option<&Screen> {
         self.data.iter().flatten().find(|screen| {
             let x_range_margin = screen.x_range.start - margin_x..screen.x_range.end + margin_x;
@@ -243,6 +329,26 @@ impl Map {
         })
     }
 
+    /// Retrieves the screen located above the current screen that contains the specified point.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    ///  use screen_map::Map;
+    ///  use screen_map::Screen;
+    ///  use bevy::math::Vec2;
+    ///  use screen_map::Transition;
+    ///
+    ///  let screen_map = "XXO\nSOO\nOXX";
+    ///  let screen_width = 1280;
+    ///  let screen_height = 720;
+    ///
+    ///  let map = Map::new(screen_map, screen_width, screen_height);
+    ///
+    ///  let screen = map.get_above_screen(Vec2::new(0.0,0.0));
+    ///  assert!(screen.is_some());
+    ///  assert_eq!(screen.unwrap().get_indices(), (1,0));
+    /// ```
     pub fn get_above_screen(&self, point: Vec2) -> Option<&Screen> {
         let screen = match self.get_screen(point, 0.0, 0.0) {
             Some(screen) => screen,
@@ -297,15 +403,16 @@ impl Map {
             None => None,
         }
     }
-    fn get_camera_points_coords(&self, point: Vec2) -> Vec<Vec2> {
-        // Clockwise
-        /*
-          p2 +------------+ p3
-             |            |
-             |            |
-          p1 +------------+ p0
 
-        */
+    /// Get the coordinates of the four corners of the screen
+    ///
+    /// Points are ordered clockwise
+    ///  p2 +------------+ p3
+    ///     |            |
+    ///     |            |
+    ///  p1 +------------+ p0
+    ///
+    fn get_camera_points_coords(&self, point: Vec2) -> Vec<Vec2> {
         let p0 = Vec2::from((
             point.x + (self.screen_width / 2 - 1) as f32,
             point.y - (self.screen_height / 2) as f32 + 1f32,
@@ -326,6 +433,46 @@ impl Map {
         vec![p0, p1, p2, p3]
     }
 
+    /// Move the camera to the new position
+    ///
+    /// If the camera reaches the boundary of the allowed screen area, it is reset to the center of the screen.
+    ///
+    /// Otherwise, the camera smoothly transitions (using linear interpolation) to the new position.
+    ///
+    /// Warning: the SMOOTH_FACTOR is not the same in prod and test.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    ///  use screen_map::Map;
+    ///  use bevy::prelude::*;
+    ///
+    ///  let screen_map = "XXO\nSOO\nOXX";
+    ///  let screen_width = 1280;
+    ///  let screen_height = 720;
+    ///
+    ///  let mut world = World::default();
+    ///  let mut time: Time = Time::default();
+    ///
+    ///  time.advance_by(std::time::Duration::from_secs(1));
+    ///  world.insert_resource(time);
+    ///  let time = world.resource_ref::<Time>();
+    ///
+    ///  let map = Map::new(screen_map, screen_width, screen_height);
+    ///
+    ///  // From left middle screen
+    ///  // Move to right
+    ///  assert_eq!(
+    ///      map.move_camera(&time, Vec2::new(-1280.0, 0.0), Vec2::new(-1240.0, 0.0)),
+    ///      Vec2::new(-1160.0, 0.0)
+    ///  );
+    ///  // Move to left
+    ///  // Camera should not move and remain at the screen center
+    ///  assert_eq!(
+    ///      map.move_camera(&time, Vec2::new(-1280.0, 0.0), Vec2::new(-1300.0, 0.0)),
+    ///      Vec2::new(-1280.0, 0.0)
+    ///  );
+    /// ```
     pub fn move_camera(&self, time: &Res<Time>, old_pos: Vec2, new_pos: Vec2) -> Vec2 {
         let mut camera_pos = old_pos;
         let direction = new_pos - old_pos;
@@ -355,13 +502,13 @@ impl Map {
         } else if
         // move to right
         direction.x > 0.0
-            && self.check_points(
+            && self.is_camera_edge_on_screen(
                 &camera_points,
                 Direction::get_points(Direction::Right),
         )
         // move to left
         || direction.x < 0.0
-            && self.check_points(
+            && self.is_camera_edge_on_screen(
                 &camera_points,
                 Direction::get_points(Direction::Left),
             )
@@ -381,13 +528,13 @@ impl Map {
         } else if
         // move up
         direction.y > 0.0
-            && self.check_points(
+            && self.is_camera_edge_on_screen(
                 &camera_points,
                 Direction::get_points(Direction::Up),
             )
         // move down
         || direction.y < 0.0
-            && self.check_points(
+            && self.is_camera_edge_on_screen(
                 &camera_points,
                 Direction::get_points(Direction::Down),
             )
@@ -415,7 +562,17 @@ impl Map {
         camera_pos
     }
 
-    fn check_points(&self, camera_points: &[Vec2], (p1, p2): (usize, usize)) -> bool {
+    /// Checks whether an edge of the camera's rectangle is visible on the screen.
+    ///
+    /// The `(usize, usize)` tuple represents the indices of the points defining the edge.
+    ///
+    /// Points are ordered clockwise
+    ///  p2 +------------+ p3
+    ///     |            |
+    ///     |            |
+    ///  p1 +------------+ p0
+    ///
+    fn is_camera_edge_on_screen(&self, camera_points: &[Vec2], (p1, p2): (usize, usize)) -> bool {
         self.get_screen(camera_points[p1], 0.0, 0.0).is_some()
             && self.get_screen(camera_points[p2], 0.0, 0.0).is_some()
             && self
@@ -430,7 +587,7 @@ impl Map {
 
     /// Returns the start screen
     ///
-    /// # Examples
+    /// # Example
     ///
     /// ```rust
     ///  use screen_map::Map;
@@ -460,7 +617,7 @@ impl Map {
 
     /// Returns the screen at index (index_x, index_y) or None if it doesn't exist
     ///
-    /// # Examples
+    /// # Example
     ///
     /// ```rust
     ///  use screen_map::Map;
@@ -836,13 +993,14 @@ mod tests {
 
         assert_eq!(map.get_start_screen().get_center(), Vec2::new(-1280.0, 0.0));
 
-        // From middle screen
+        // From left middle screen
         // Move to right
         assert_eq!(
             map.move_camera(&time, Vec2::new(-1280.0, 0.0), Vec2::new(-1240.0, 0.0)),
             Vec2::new(-1240.0, 0.0)
         );
         // Move to left
+        // Camera should not move and remain at the screen center
         assert_eq!(
             map.move_camera(&time, Vec2::new(-1280.0, 0.0), Vec2::new(-1300.0, 0.0)),
             Vec2::new(-1280.0, 0.0)
