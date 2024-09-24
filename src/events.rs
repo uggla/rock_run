@@ -30,6 +30,9 @@ pub struct Restart;
 pub struct NextLevel;
 
 #[derive(Event)]
+pub struct ShakeCamera;
+
+#[derive(Event)]
 pub enum LifeEvent {
     Win,
     Lost,
