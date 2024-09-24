@@ -262,6 +262,41 @@ impl Map {
         }
     }
 
+    /// Retrieves the screen located below the current screen that contains the specified point.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    ///  use screen_map::Map;
+    ///  use screen_map::Screen;
+    ///  use bevy::math::Vec2;
+    ///  use screen_map::Transition;
+    ///
+    ///  let screen_map = "XXO\nSOO\nOXX";
+    ///  let screen_width = 1280;
+    ///  let screen_height = 720;
+    ///
+    ///  let map = Map::new(screen_map, screen_width, screen_height);
+    ///
+    ///  let screen = map.get_below_screen(Vec2::new(0.0,0.0));
+    ///  assert!(screen.is_some());
+    ///  assert_eq!(screen.unwrap().get_indices(), (1,2));
+    /// ```
+    pub fn get_below_screen(&self, point: Vec2) -> Option<&Screen> {
+        let screen = match self.get_screen(point, 0.0, 0.0) {
+            Some(screen) => screen,
+            None => return None,
+        };
+
+        let (x_index, y_index) = screen.get_indices();
+
+        let below_screen_y_index = y_index + 1;
+
+        match self.get_screen_from_index(x_index, below_screen_y_index) {
+            Some(below_screen) => Some(below_screen),
+            None => None,
+        }
+    }
     fn get_camera_points_coords(&self, point: Vec2) -> Vec<Vec2> {
         // Clockwise
         /*
