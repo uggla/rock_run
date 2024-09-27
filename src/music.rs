@@ -17,7 +17,8 @@ impl Plugin for MusicPlugin {
         app.add_systems(OnEnter(AppState::GameCreate), setup_music)
             .add_systems(OnEnter(AppState::NextLevel), setup_music)
             .add_systems(OnEnter(AppState::StartMenu), despawn_music)
-            .add_systems(OnEnter(AppState::FinishLevel), despawn_music);
+            .add_systems(OnEnter(AppState::FinishLevel), despawn_music)
+            .add_systems(OnEnter(AppState::GameOver), despawn_music);
     }
 }
 
