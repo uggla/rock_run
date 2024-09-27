@@ -564,6 +564,7 @@ fn gameover_menu(mut commands: Commands, rock_run_assets: Res<RockRunAssets>) {
         source: rock_run_assets.loose_sound.clone(),
         settings: PlaybackSettings {
             mode: PlaybackMode::Despawn,
+            volume: Volume::new(2.5),
             ..default()
         },
     });
