@@ -108,7 +108,7 @@ fn toggle_perf_ui(
 // TODO: remove as this is for debugging purpose
 #[allow(unused)]
 fn update_text(
-    mut msg_event: EventWriter<StoryMessages>,
+    mut event: EventWriter<events::ShakeCamera>,
     input: Query<
         &leafwing_input_manager::action_state::ActionState<player::PlayerMovement>,
         With<player::Player>,
@@ -121,5 +121,6 @@ fn update_text(
 
     if input_state.just_pressed(&player::PlayerMovement::Crouch) {
         debug!("debugging you press crouch(down array key)");
+        // event.send(events::ShakeCamera);
     }
 }

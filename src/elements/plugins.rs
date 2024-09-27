@@ -1,6 +1,6 @@
 use bevy::{app::PluginGroupBuilder, prelude::*};
 
-use crate::elements::{enigma, moving_platform, rock, story};
+use crate::elements::{enigma, moving_platform, rock, story, volcano};
 
 pub struct ElementsPlugins;
 
@@ -11,5 +11,6 @@ impl PluginGroup for ElementsPlugins {
             .add(moving_platform::MovingPlatformPlugin)
             .add(rock::RockPlugin)
             .add(story::StoryPlugin::default())
+            .add(volcano::VolcanoPlugin)
     }
 }

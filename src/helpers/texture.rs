@@ -23,23 +23,23 @@ pub fn cycle_texture(texture: &mut TextureAtlas, texture_index_range: RangeInclu
 pub fn swing_texture(
     texture: &mut TextureAtlas,
     texture_index_range: RangeInclusive<usize>,
-    direction: &mut Local<IndexDirection>,
+    index_direction: &mut Local<IndexDirection>,
 ) {
     if !texture_index_range.contains(&texture.index) {
         texture.index = *texture_index_range.start();
     }
 
-    if texture.index == *texture_index_range.end() && **direction == IndexDirection::Up {
-        **direction = IndexDirection::Down;
+    if texture.index == *texture_index_range.end() && **index_direction == IndexDirection::Up {
+        **index_direction = IndexDirection::Down;
     }
 
-    if texture.index == *texture_index_range.start() && **direction == IndexDirection::Down {
-        **direction = IndexDirection::Up;
+    if texture.index == *texture_index_range.start() && **index_direction == IndexDirection::Down {
+        **index_direction = IndexDirection::Up;
     }
 
-    trace!("tdirection: {:?}", direction);
+    trace!("tdirection: {:?}", index_direction);
     trace!("tindex: {}", texture.index);
-    texture.index = if **direction == IndexDirection::Up {
+    texture.index = if **index_direction == IndexDirection::Up {
         texture.index + 1
     } else {
         texture.index - 1

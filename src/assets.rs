@@ -51,7 +51,6 @@ pub struct RockRunAssets {
     pub squirel: Handle<Image>,
     #[asset(path = "sprites/nut.png")]
     pub nut: Handle<Image>,
-
     #[asset(path = "sprites/vine1.png")]
     pub vine1: Handle<Image>,
     #[asset(path = "sprites/vine2.png")]
@@ -66,6 +65,10 @@ pub struct RockRunAssets {
     pub vine_right: Handle<Image>,
     #[asset(path = "sprites/vine_right_end.png")]
     pub vine_right_end: Handle<Image>,
+    #[asset(path = "sprites/volcano.png")]
+    pub volcano: Handle<Image>,
+    #[asset(path = "sprites/fireball.png")]
+    pub fireball: Handle<Image>,
 
     // Images
     #[asset(path = "images/menu.jpg")]
@@ -114,6 +117,8 @@ pub struct RockRunAssets {
     pub pause_out_sound: Handle<AudioSource>,
     #[asset(path = "sounds/victory.ogg")]
     pub victory_sound: Handle<AudioSource>,
+    #[asset(path = "sounds/eruption.ogg")]
+    pub eruption_sound: Handle<AudioSource>,
 
     // Music
     #[asset(path = "musics/theme_01.ogg")]

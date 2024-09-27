@@ -21,6 +21,7 @@ use crate::{
         moving_platform::MovingPlatform,
         rock::Rock,
         story::{compose_selection_msg, UserSelection},
+        volcano::Fireball,
     },
     events::{
         ExtraLifeCollision, Hit, LadderCollisionStart, LadderCollisionStop, LifeEvent,
@@ -50,7 +51,8 @@ impl Plugin for CollisionsPlugin {
         app.add_systems(
             Update,
             (
-                player_collisions,
+                player_collisions_with_elements,
+                player_collisions_with_beasts,
                 triceratops_collisions,
                 story_collisions,
                 display_story,
@@ -58,6 +60,7 @@ impl Plugin for CollisionsPlugin {
                 ladder_collisions,
                 extra_life_collisions,
                 nut_collisions,
+                fireball_collisions,
             )
                 .in_set(CollisionSet)
                 .run_if(in_state(AppState::GameRunning)),
@@ -76,7 +79,7 @@ impl Plugin for CollisionsPlugin {
 }
 
 #[allow(clippy::too_many_arguments)]
-fn player_collisions(
+fn player_collisions_with_elements(
     player_controller: Query<(Entity, &KinematicCharacterControllerOutput), With<Player>>,
     state: Res<State<PlayerState>>,
     mut next_state: ResMut<NextState<PlayerState>>,
@@ -84,10 +87,6 @@ fn player_collisions(
     platforms: Query<Entity, With<Platform>>,
     spikes: Query<Entity, With<Spike>>,
     moving_platforms: Query<Entity, With<MovingPlatform>>,
-    bats: Query<Entity, With<Bat>>,
-    pterodactyls: Query<Entity, With<Pterodactyl>>,
-    triceratops: Query<Entity, With<Triceratops>>,
-    trexes: Query<Entity, With<Trex>>,
     rocks: Query<(Entity, &Velocity), With<Rock>>,
     rockgates: Query<(Entity, &Velocity), With<RockGate>>,
     mut hit: EventWriter<Hit>,
@@ -152,6 +151,60 @@ fn player_collisions(
             }
         }
 
+        // Player collides with fast moving rocks or rockgates
+        // If rocks are moving slowly, we can stay on it
+        for (rock, velocity) in rocks.iter().chain(rockgates.iter()) {
+            if character_collision.entity == rock {
+                debug!("hit velocity: {:?}", velocity);
+                if velocity.linvel.x.abs() > 175.0 || velocity.linvel.y.abs() > 20.0 {
+                    hit.send(Hit);
+                }
+
+                if output.grounded && state.get() != &PlayerState::Jumping {
+                    next_state.set(PlayerState::Idling);
+                }
+            }
+        }
+
+        // Player is falling
+        if !output.grounded
+            && state.get() == &PlayerState::Idling
+            && output.effective_translation.y < -1.0
+        {
+            next_state.set(PlayerState::Falling);
+        }
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn player_collisions_with_beasts(
+    player_controller: Query<(Entity, &KinematicCharacterControllerOutput), With<Player>>,
+    state: Res<State<PlayerState>>,
+    bats: Query<Entity, With<Bat>>,
+    pterodactyls: Query<Entity, With<Pterodactyl>>,
+    triceratops: Query<Entity, With<Triceratops>>,
+    trexes: Query<Entity, With<Trex>>,
+    mut hit: EventWriter<Hit>,
+    mut life_event: EventReader<LifeEvent>,
+) {
+    if state.get() == &PlayerState::Hit {
+        return;
+    }
+
+    // This should avoid to loose 2 lives at the same time if the player hits
+    // something in the hit animation phase.
+    for ev in life_event.read() {
+        if let LifeEvent::Lost = ev {
+            return;
+        }
+    }
+
+    let (_player_entity, output) = match player_controller.get_single() {
+        Ok(controller) => controller,
+        Err(_) => return,
+    };
+
+    for character_collision in output.collisions.iter() {
         // Player collides with bats
         for bat in bats.iter() {
             if character_collision.entity == bat {
@@ -183,28 +236,6 @@ fn player_collisions(
                 hit.send(Hit);
             }
         }
-
-        // Player collides with fast moving rocks or rockgates
-        // If rocks are moving slowly, we can stay on it
-        for (rock, velocity) in rocks.iter().chain(rockgates.iter()) {
-            if character_collision.entity == rock {
-                debug!("hit velocity: {:?}", velocity);
-                if velocity.linvel.x.abs() > 175.0 || velocity.linvel.y.abs() > 20.0 {
-                    hit.send(Hit);
-                }
-
-                if output.grounded && state.get() != &PlayerState::Jumping {
-                    next_state.set(PlayerState::Idling);
-                }
-            }
-        }
-    }
-    // Player is falling
-    if !output.grounded
-        && state.get() == &PlayerState::Idling
-        && output.effective_translation.y < -1.0
-    {
-        next_state.set(PlayerState::Falling);
     }
 }
 
@@ -531,6 +562,53 @@ fn ladder_collisions(
     }
 }
 
+fn fireball_collisions(
+    fireballs: Query<(Entity, &ColliderName), With<Fireball>>,
+    mut collision_events: EventReader<CollisionEvent>,
+    player: Query<Entity, With<Player>>,
+    mut hit: EventWriter<Hit>,
+) {
+    let player_entity = match player.get_single() {
+        Ok(entity) => entity,
+        Err(_) => return,
+    };
+
+    for collision_event in collision_events.read() {
+        match collision_event {
+            CollisionEvent::Started(e1, e2, _cf) => {
+                // Warning, e1 and e2 can be swapped.
+                if let Some((_entity, collider_name)) =
+                    fireballs.iter().find(|(entity, _collider_name)| {
+                        (entity == e1 && player_entity == *e2)
+                            || (entity == e2 && player_entity == *e1)
+                    })
+                {
+                    debug!(
+                        "Received collision event: {:?}, collider name: {:?}",
+                        collision_event, collider_name
+                    );
+
+                    hit.send(Hit);
+                };
+            }
+            CollisionEvent::Stopped(e1, e2, _cf) => {
+                // Warning, e1 and e2 can be swapped.
+                if let Some((_entity, collider_name)) =
+                    fireballs.iter().find(|(entity, _collider_name)| {
+                        (entity == e1 && player_entity == *e2)
+                            || (entity == e2 && player_entity == *e1)
+                    })
+                {
+                    debug!(
+                        "Received collision event: {:?}, collider name: {:?}",
+                        collision_event, collider_name
+                    );
+                };
+            }
+        }
+    }
+}
+
 #[allow(clippy::too_many_arguments)]
 fn position_sensor_collisions(
     mut position_sensors: Query<
@@ -591,6 +669,22 @@ fn position_sensor_collisions(
                         start_pos: Vec2::ZERO,
                         end_pos: Vec2::ZERO,
                         disable_next_collision: false,
+                    },
+                ),
+                (
+                    "volcano01_01".to_string(),
+                    SensorValues {
+                        start_pos: level.map.tiled_to_bevy_coord(Vec2::new(10000.0, 150.0)),
+                        end_pos: level.map.tiled_to_bevy_coord(Vec2::new(10000.0, 740.0)),
+                        disable_next_collision: true,
+                    },
+                ),
+                (
+                    "volcano01_02".to_string(),
+                    SensorValues {
+                        start_pos: level.map.tiled_to_bevy_coord(Vec2::new(10000.0, 150.0)),
+                        end_pos: level.map.tiled_to_bevy_coord(Vec2::new(10000.0, 740.0)),
+                        disable_next_collision: true,
                     },
                 ),
             ]),

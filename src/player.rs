@@ -172,6 +172,12 @@ fn setup_player(
                 //     .map
                 //     .tiled_to_bevy_coord(Vec2::new(7792.0, 481.0))
                 //     .extend(20.0),
+                // ..default()
+                // translation: level
+                //     .map
+                //     .tiled_to_bevy_coord(Vec2::new(9800.0, 481.0))
+                //     .extend(20.0),
+                // ..default()
                 ..default()
             },
             ..default()
@@ -219,7 +225,7 @@ fn move_player(
     state: Res<State<PlayerState>>,
     mut next_state: ResMut<NextState<PlayerState>>,
     mut jump_timer: Query<&mut JumpTimer>,
-    mut direction: Local<IndexDirection>,
+    mut index_direction: Local<IndexDirection>,
     mut ladder_collision_start: EventReader<LadderCollisionStart>,
     mut ladder_collision_stop: EventReader<LadderCollisionStop>,
     mut moving_platform_descending: EventReader<MovingPlatformDescending>,
@@ -279,7 +285,7 @@ fn move_player(
                         cycle_texture(&mut texture, 14..=16);
                     }
                     _ => {
-                        swing_texture(&mut texture, 0..=4, &mut direction);
+                        swing_texture(&mut texture, 0..=4, &mut index_direction);
                     }
                 }
             }
