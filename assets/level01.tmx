@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="800" height="45" tilewidth="16" tileheight="16" infinite="0" nextlayerid="13" nextobjectid="101">
+<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="800" height="45" tilewidth="16" tileheight="16" infinite="0" nextlayerid="13" nextobjectid="102">
  <tileset firstgid="1" name="tileset-1" tilewidth="16" tileheight="16" tilecount="2030" columns="58">
   <image source="tileset-1.png" width="928" height="560"/>
  </tileset>
@@ -302,7 +302,7 @@
   <object id="53" name="s10" x="6208" y="608" width="32" height="16"/>
   <object id="54" name="s11" x="6558" y="592" width="3.99997" height="32"/>
   <object id="55" name="s12" x="6686" y="592" width="3.99997" height="32"/>
-  <object id="68" name="s13" x="7374" y="132.5">
+  <object id="68" name="s13" x="7366" y="132">
    <properties>
     <property name="note" value="this is to make squirel jump"/>
    </properties>
@@ -323,6 +323,12 @@
   <object id="90" name="s26" x="7951" y="73.5" width="48" height="6.5"/>
   <object id="92" name="s27" x="7999" y="80" width="6" height="112"/>
   <object id="96" name="s28" x="7824" y="480" width="176" height="4"/>
+  <object id="101" name="s29" x="7328.33" y="132">
+   <properties>
+    <property name="note" value="this is to make squirel jump"/>
+   </properties>
+   <point/>
+  </object>
  </objectgroup>
  <objectgroup id="5" name="Platforms">
   <object id="2" name="p01" x="480" y="591" width="64" height="34"/>

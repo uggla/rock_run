@@ -10,19 +10,19 @@
     "file.lastUsedOpenFilter": "All Files (*)",
     "fileStates": {
         "": {
-            "scaleInDock": 0.33
+            "scaleInDock": 1
         },
         "level01.tmx": {
             "expandedObjectLayers": [
-                5,
                 6,
+                5,
                 8
             ],
-            "scale": 0.33,
-            "selectedLayer": 6,
+            "scale": 5.5,
+            "selectedLayer": 8,
             "viewCenter": {
-                "x": 7775.757575757576,
-                "y": 407.5757575757576
+                "x": 7328.272727272728,
+                "y": 132.09090909090907
             }
         },
         "level01.tmx#backgrounds": {
@@ -109,7 +109,7 @@
             "scaleInDock": 1
         }
     },
-    "last.imagePath": "/home/uggla/workspace/rust/rock_run/assets",
+    "last.imagePath": "/home/rribaud/workspace/rust/rock_run/assets",
     "last.worldFilePath": "/home/rribaud/workspace/rust/rock_run/assets",
     "loadedWorlds": [
         "/home/rribaud/workspace/rust/rock_run/assets/level01.tmx"
