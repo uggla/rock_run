@@ -18,7 +18,7 @@ use crate::{
 const TRICERATOPS_SPEED: f32 = 300.0;
 const TRICERATOPS_SCALE_FACTOR: f32 = 1.0;
 const TRICERATOPS_WIDTH: f32 = 175.0;
-const TRICERATOPS_HEIGHT: f32 = 120.0;
+const TRICERATOPS_HEIGHT: f32 = 115.0;
 
 #[derive(Component)]
 pub struct Triceratops {
@@ -73,7 +73,7 @@ fn get_collider_shapes(y_mirror: bool) -> Vec<(Vec2, f32, Collider)> {
         ),
         (
             // body
-            Vec2::new(4.0, -25.0),
+            Vec2::new(4.0, -23.0),
             0.0,
             Collider::cuboid(68.0 / 2.0, 68.0 / 2.0),
         ),
