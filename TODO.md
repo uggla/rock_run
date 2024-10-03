@@ -25,8 +25,9 @@
 - [ ] Add dragon throwing fireballs.
 - [ ] Add wolf.
 - [ ] Add more sound effects. (in progress...)
-- [ ] Add a volcano that throws rocks.
+- [x] Add a volcano that throws rocks.
 - [ ] Add more levels.
 - [ ] Add more beasts.
 - [x] Check hit collision bugs.
 - [ ] Refactor to use despawn with ForState method ?
+- [ ] Add a link to kenney.nl within doc.
