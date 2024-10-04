@@ -49,7 +49,7 @@ impl Screen {
     /// Returns the indices of the screen
     ///
     /// Note: The origin is at the top left
-    pub fn get_indices(&self) -> (usize, usize) {
+    pub const fn get_indices(&self) -> (usize, usize) {
         (self.x_index, self.y_index)
     }
 
@@ -59,22 +59,22 @@ impl Screen {
     }
 
     /// Returns `true` if the screen is a start screen (defined in map with a 'S')
-    pub fn is_start_screen(&self) -> bool {
+    pub const fn is_start_screen(&self) -> bool {
         self.start_screen
     }
 
     /// Returns `true` if the screen is an allowed screen (defined in map with an 'O')
-    pub fn is_allowed_screen(&self) -> bool {
+    pub const fn is_allowed_screen(&self) -> bool {
         self.allowed_screen
     }
 
     /// Returns `true` if the screen is a fixed screen (defined in map with a 'F' or 'H')
-    pub fn is_fixed_screen(&self) -> bool {
+    pub const fn is_fixed_screen(&self) -> bool {
         self.fixed_screen
     }
 
     /// Returns the transition type (smooth or hard)
-    pub fn get_transition(&self) -> Transition {
+    pub const fn get_transition(&self) -> Transition {
         self.transition
     }
 }
@@ -362,10 +362,7 @@ impl Map {
             _ => y_index - 1,
         };
 
-        match self.get_screen_from_index(x_index, above_screen_y_index) {
-            Some(above_screen) => Some(above_screen),
-            None => None,
-        }
+        self.get_screen_from_index(x_index, above_screen_y_index)
     }
 
     /// Retrieves the screen located below the current screen that contains the specified point.
@@ -398,10 +395,7 @@ impl Map {
 
         let below_screen_y_index = y_index + 1;
 
-        match self.get_screen_from_index(x_index, below_screen_y_index) {
-            Some(below_screen) => Some(below_screen),
-            None => None,
-        }
+        self.get_screen_from_index(x_index, below_screen_y_index)
     }
 
     /// Get the coordinates of the four corners of the screen
@@ -485,12 +479,12 @@ impl Map {
         }
 
         impl Direction {
-            fn get_points(direction: Direction) -> (usize, usize) {
+            const fn get_points(direction: Self) -> (usize, usize) {
                 match direction {
-                    Direction::Right => (0, 3),
-                    Direction::Down => (0, 1),
-                    Direction::Left => (1, 2),
-                    Direction::Up => (2, 3),
+                    Self::Right => (0, 3),
+                    Self::Down => (0, 1),
+                    Self::Left => (1, 2),
+                    Self::Up => (2, 3),
                 }
             }
         }
