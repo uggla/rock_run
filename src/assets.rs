@@ -125,6 +125,8 @@ pub struct RockRunAssets {
     // Music
     #[asset(path = "musics/theme_01.ogg")]
     pub music_level01: Handle<AudioSource>,
-    #[asset(path = "musics/theme_03.ogg")]
+    #[asset(path = "musics/theme_07.ogg")]
     pub music_level02: Handle<AudioSource>,
+    #[asset(path = "musics/theme_03.ogg")]
+    pub music_level03: Handle<AudioSource>,
 }
