@@ -11,8 +11,7 @@ mod music;
 mod player;
 mod screen_map;
 
-use bevy::prelude::*;
-use bevy::window::WindowResolution;
+use bevy::{prelude::*, window::WindowResolution};
 
 use crate::{
     assets::RockRunAssets,

@@ -7,10 +7,20 @@ use crate::{
     },
     events::{NextLevel, PositionSensorCollisionStart, Restart, ShakeCamera, StartGame},
 };
-use bevy::{audio::PlaybackMode, prelude::*, utils::HashMap};
+
+use bevy::{
+    audio::PlaybackMode,
+    color,
+    prelude::*,
+    render::render_resource::{AsBindGroup, ShaderRef},
+    sprite::{Material2d, Material2dPlugin, MaterialMesh2dBundle},
+    utils::HashMap,
+};
+
 use bevy_rapier2d::prelude::{
     ActiveCollisionTypes, ActiveEvents, Collider, ExternalImpulse, RigidBody, Sensor,
 };
+
 use rand::{thread_rng, Rng};
 
 const FIREBALL_SCALE_FACTOR: f32 = 1.0;
@@ -26,7 +36,7 @@ pub struct VolcanoPlugin;
 
 impl Plugin for VolcanoPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(AppState::GameCreate), setup_volcano)
+        app.add_systems(OnEnter(AppState::GameCreate), (setup_volcano, setup))
             .add_systems(OnEnter(AppState::NextLevel), setup_volcano)
             .add_systems(
                 OnEnter(AppState::StartMenu),
@@ -40,6 +50,7 @@ impl Plugin for VolcanoPlugin {
                 Update,
                 (spawn_fireball,).run_if(in_state(AppState::GameRunning)),
             );
+        app.add_plugins(Material2dPlugin::<WaterMaterial>::default());
     }
 }
 
@@ -190,5 +201,43 @@ fn despawn_volcano(mut commands: Commands, volcano: Query<Entity, With<Volcano>>
 fn despawn_fireballs(mut commands: Commands, fireballs: Query<Entity, With<Fireball>>) {
     for fireball in fireballs.iter() {
         commands.entity(fireball).despawn_recursive();
+    }
+}
+
+fn setup(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut water: ResMut<Assets<WaterMaterial>>,
+) {
+    // camera
+    // commands.spawn(Camera2dBundle::default());
+
+    // quad
+    commands.spawn(MaterialMesh2dBundle {
+        mesh: meshes.add(Rectangle::default()).into(),
+        transform: Transform::default().with_scale(Vec3::splat(720.)),
+        material: water.add(WaterMaterial {
+            // color_texture: Some(asset_server.load("icon.png")),
+            color: LinearRgba::from(color::palettes::css::GOLD),
+        }),
+        ..default()
+    });
+}
+
+// This is the struct that will be passed to your shader
+#[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
+struct WaterMaterial {
+    #[uniform(0)]
+    color: LinearRgba,
+    // #[texture(1)]
+    // #[sampler(2)]
+    // color_texture: Option<Handle<Image>>,
+}
+
+/// The Material2d trait is very configurable, but comes with sensible defaults for all methods.
+/// You only need to implement functions for features that need non-default behavior. See the Material2d api docs for details!
+impl Material2d for WaterMaterial {
+    fn fragment_shader() -> ShaderRef {
+        "shaders/water_material.wgsl".into()
     }
 }
