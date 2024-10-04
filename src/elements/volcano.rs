@@ -30,27 +30,30 @@ const VOLCANO_SCALE_FACTOR: f32 = 0.48;
 pub struct Volcano;
 
 #[derive(Component)]
+pub struct Lava;
+
+#[derive(Component)]
 pub struct Fireball;
 
 pub struct VolcanoPlugin;
 
 impl Plugin for VolcanoPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(AppState::GameCreate), (setup_volcano, setup))
-            .add_systems(OnEnter(AppState::NextLevel), setup_volcano)
+        app.add_systems(OnEnter(AppState::GameCreate), (setup_volcano, setup_lava))
+            .add_systems(OnEnter(AppState::NextLevel), (setup_volcano, setup_lava))
             .add_systems(
                 OnEnter(AppState::StartMenu),
-                (despawn_volcano, despawn_fireballs),
+                (despawn_volcano, despawn_fireballs, despawn_lava),
             )
             .add_systems(
                 OnEnter(AppState::FinishLevel),
-                (despawn_volcano, despawn_fireballs),
+                (despawn_volcano, despawn_fireballs, despawn_lava),
             )
             .add_systems(
                 Update,
-                (spawn_fireball,).run_if(in_state(AppState::GameRunning)),
+                (spawn_fireball).run_if(in_state(AppState::GameRunning)),
             );
-        app.add_plugins(Material2dPlugin::<WaterMaterial>::default());
+        app.add_plugins(Material2dPlugin::<LavaMaterial>::default());
     }
 }
 
@@ -192,6 +195,69 @@ fn spawn_fireball(
     }
 }
 
+fn setup_lava(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut lava: ResMut<Assets<LavaMaterial>>,
+    levels: Query<&Level, With<Level>>,
+    current_level: Res<CurrentLevel>,
+) {
+    info!("setup_lava");
+
+    let level = levels
+        .iter()
+        .find(|level| level.id == current_level.id)
+        .unwrap();
+
+    let mut level_volcano_pos: HashMap<u8, Vec<Vec2>> = HashMap::new();
+    level_volcano_pos.insert(
+        2,
+        vec![level.map.tiled_to_bevy_coord(Vec2::new(1500.0, 2000.0))],
+    );
+
+    let start_positions = match level_volcano_pos.get(&current_level.id) {
+        Some(positions) => positions,
+        None => return,
+    };
+
+    for start_pos in start_positions {
+        commands.spawn((
+            MaterialMesh2dBundle {
+                mesh: meshes.add(Rectangle::default()).into(),
+                transform: Transform {
+                    translation: start_pos.extend(100.0),
+                    scale: Vec3::splat(100.0),
+                    ..default()
+                },
+                material: lava.add(LavaMaterial {
+                    // color_texture: Some(asset_server.load("icon.png")),
+                    color: LinearRgba::from(color::palettes::css::GOLD),
+                }),
+                ..default()
+            },
+            Lava,
+        ));
+    }
+}
+
+// This is the struct that will be passed to your shader
+#[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
+struct LavaMaterial {
+    #[uniform(0)]
+    color: LinearRgba,
+    // #[texture(1)]
+    // #[sampler(2)]
+    // color_texture: Option<Handle<Image>>,
+}
+
+/// The Material2d trait is very configurable, but comes with sensible defaults for all methods.
+/// You only need to implement functions for features that need non-default behavior. See the Material2d api docs for details!
+impl Material2d for LavaMaterial {
+    fn fragment_shader() -> ShaderRef {
+        "shaders/lava_material.wgsl".into()
+    }
+}
+
 fn despawn_volcano(mut commands: Commands, volcano: Query<Entity, With<Volcano>>) {
     for volcano in volcano.iter() {
         commands.entity(volcano).despawn_recursive();
@@ -204,40 +270,8 @@ fn despawn_fireballs(mut commands: Commands, fireballs: Query<Entity, With<Fireb
     }
 }
 
-fn setup(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut water: ResMut<Assets<WaterMaterial>>,
-) {
-    // camera
-    // commands.spawn(Camera2dBundle::default());
-
-    // quad
-    commands.spawn(MaterialMesh2dBundle {
-        mesh: meshes.add(Rectangle::default()).into(),
-        transform: Transform::default().with_scale(Vec3::splat(720.)),
-        material: water.add(WaterMaterial {
-            // color_texture: Some(asset_server.load("icon.png")),
-            color: LinearRgba::from(color::palettes::css::GOLD),
-        }),
-        ..default()
-    });
-}
-
-// This is the struct that will be passed to your shader
-#[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
-struct WaterMaterial {
-    #[uniform(0)]
-    color: LinearRgba,
-    // #[texture(1)]
-    // #[sampler(2)]
-    // color_texture: Option<Handle<Image>>,
-}
-
-/// The Material2d trait is very configurable, but comes with sensible defaults for all methods.
-/// You only need to implement functions for features that need non-default behavior. See the Material2d api docs for details!
-impl Material2d for WaterMaterial {
-    fn fragment_shader() -> ShaderRef {
-        "shaders/water_material.wgsl".into()
+fn despawn_lava(mut commands: Commands, lavas: Query<Entity, With<Lava>>) {
+    for lava in lavas.iter() {
+        commands.entity(lava).despawn_recursive();
     }
 }
