@@ -174,7 +174,7 @@ fn setup_squirels(
                     5189.0,
                     461.0 - SQUIREL_HEIGHT * SQUIREL_SCALE_FACTOR / 2.0,
                 )),
-                end_pos: level.map.tiled_to_bevy_coord(Vec2::new(7360.0, 600.0)),
+                end_pos: level.map.tiled_to_bevy_coord(Vec2::new(7300.0, 600.0)),
                 visibility: Visibility::Visible,
             },
             Squirels {
