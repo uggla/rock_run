@@ -1,3 +1,5 @@
+use std::env;
+
 use bevy::{prelude::*, utils::HashMap};
 use bevy_rapier2d::{
     control::KinematicCharacterControllerOutput, dynamics::Velocity,
@@ -32,7 +34,8 @@ use crate::{
     player::{self, Player, PlayerState, PLAYER_HEIGHT},
 };
 
-pub struct CollisionsPlugin;
+#[derive(Debug, Resource)]
+pub struct Godmode(bool);
 
 struct SensorValues {
     start_pos: Vec2,
@@ -46,35 +49,46 @@ pub struct StoryQM(String);
 #[derive(SystemSet, Clone, Hash, Debug, PartialEq, Eq)]
 pub struct CollisionSet;
 
+pub struct CollisionsPlugin;
+
 impl Plugin for CollisionsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(
-            Update,
-            (
-                player_collisions_with_elements,
-                player_collisions_with_beasts,
-                triceratops_collisions,
-                story_collisions,
-                display_story,
-                position_sensor_collisions,
-                ladder_collisions,
-                extra_life_collisions,
-                nut_collisions,
-                fireball_collisions,
+        app.add_systems(OnEnter(AppState::Loading), god_mode)
+            .add_systems(
+                Update,
+                (
+                    player_collisions_with_elements,
+                    player_collisions_with_beasts,
+                    triceratops_collisions,
+                    story_collisions,
+                    display_story,
+                    position_sensor_collisions,
+                    ladder_collisions,
+                    extra_life_collisions,
+                    nut_collisions,
+                    fireball_collisions,
+                )
+                    .in_set(CollisionSet)
+                    .run_if(in_state(AppState::GameRunning)),
             )
-                .in_set(CollisionSet)
-                .run_if(in_state(AppState::GameRunning)),
-        )
-        .add_systems(OnEnter(AppState::StartMenu), despawn_qm)
-        .add_event::<Hit>()
-        .add_event::<TriceratopsCollision>()
-        .add_event::<PositionSensorCollisionStart>()
-        .add_event::<PositionSensorCollisionStop>()
-        .add_event::<LadderCollisionStart>()
-        .add_event::<LadderCollisionStop>()
-        .add_event::<MovingPlatformCollision>()
-        .add_event::<ExtraLifeCollision>()
-        .add_event::<NutCollision>();
+            .add_systems(OnEnter(AppState::StartMenu), despawn_qm)
+            .add_event::<Hit>()
+            .add_event::<TriceratopsCollision>()
+            .add_event::<PositionSensorCollisionStart>()
+            .add_event::<PositionSensorCollisionStop>()
+            .add_event::<LadderCollisionStart>()
+            .add_event::<LadderCollisionStop>()
+            .add_event::<MovingPlatformCollision>()
+            .add_event::<ExtraLifeCollision>()
+            .add_event::<NutCollision>()
+            .insert_resource(Godmode(false));
+    }
+}
+
+fn god_mode(mut godmode: ResMut<Godmode>) {
+    match env::var("ROCKRUN_GOD_MODE") {
+        Ok(_) => godmode.0 = true,
+        Err(_) => godmode.0 = false,
     }
 }
 
@@ -92,6 +106,7 @@ fn player_collisions_with_elements(
     mut hit: EventWriter<Hit>,
     mut moving_platform_collision: EventWriter<MovingPlatformCollision>,
     mut life_event: EventReader<LifeEvent>,
+    god_mode: Res<Godmode>,
 ) {
     if state.get() == &PlayerState::Hit {
         return;
@@ -135,11 +150,6 @@ fn player_collisions_with_elements(
             next_state.set(PlayerState::Idling);
         }
 
-        // Player collides with spikes
-        if spikes.contains(character_collision.entity) {
-            hit.send(Hit);
-        }
-
         // Player collides with moving platforms
         for moving_platform in moving_platforms.iter() {
             if character_collision.entity == moving_platform && state.get() != &PlayerState::Jumping
@@ -151,12 +161,19 @@ fn player_collisions_with_elements(
             }
         }
 
+        // Player collides with spikes
+        if spikes.contains(character_collision.entity) && !god_mode.0 {
+            hit.send(Hit);
+        }
+
         // Player collides with fast moving rocks or rockgates
         // If rocks are moving slowly, we can stay on it
         for (rock, velocity) in rocks.iter().chain(rockgates.iter()) {
             if character_collision.entity == rock {
                 debug!("hit velocity: {:?}", velocity);
-                if velocity.linvel.x.abs() > 175.0 || velocity.linvel.y.abs() > 20.0 {
+                if (velocity.linvel.x.abs() > 175.0 || velocity.linvel.y.abs() > 20.0)
+                    && !god_mode.0
+                {
                     hit.send(Hit);
                 }
 
@@ -186,7 +203,12 @@ fn player_collisions_with_beasts(
     trexes: Query<Entity, With<Trex>>,
     mut hit: EventWriter<Hit>,
     mut life_event: EventReader<LifeEvent>,
+    god_mode: Res<Godmode>,
 ) {
+    if god_mode.0 {
+        return;
+    }
+
     if state.get() == &PlayerState::Hit {
         return;
     }
