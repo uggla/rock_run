@@ -2,12 +2,17 @@ use bevy::prelude::*;
 use bevy_rapier2d::{
     dynamics::{Ccd, ExternalImpulse, GravityScale, RigidBody, Velocity},
     geometry::{ActiveCollisionTypes, Collider},
+    prelude::Damping,
 };
+use rand::{thread_rng, Rng};
 
 use crate::{
     assets::RockRunAssets,
     collisions::CollisionSet,
-    coregame::state::AppState,
+    coregame::{
+        level::{CurrentLevel, Level},
+        state::AppState,
+    },
     events::{PositionSensorCollisionStart, Restart},
 };
 
@@ -44,7 +49,7 @@ impl Plugin for RockPlugin {
             .add_systems(OnEnter(AppState::FinishLevel), despawn_rock)
             .add_systems(
                 Update,
-                (spawn_rock, despawn_rock_on_restart)
+                (spawn_rock, spawn_small_rocks, despawn_rock_on_restart)
                     .after(CollisionSet)
                     .run_if(in_state(AppState::GameRunning)),
             );
@@ -105,6 +110,81 @@ fn spawn_rock(
                 impulse: Vec2::new(-4096.0 * 120.0, 0.0),
                 ..default()
             });
+    }
+}
+
+fn spawn_small_rocks(
+    mut commands: Commands,
+    time: Res<Time>,
+    rock_run_assets: Res<RockRunAssets>,
+    mut spawn_timer: Local<Timer>,
+    levels: Query<&Level, With<Level>>,
+    current_level: Res<CurrentLevel>,
+) {
+    spawn_timer.tick(time.delta());
+    let level = levels
+        .iter()
+        .find(|level| level.id == current_level.id)
+        .unwrap();
+
+    if spawn_timer.finished() {
+        let mut rng = thread_rng();
+        let spawn_time: f32 = rng.gen_range(1.0..=3.5);
+        *spawn_timer = Timer::from_seconds(spawn_time, TimerMode::Once);
+        let texture = rock_run_assets.small_rock.clone();
+        commands.spawn((
+            SpriteBundle {
+                texture: texture.clone(),
+                sprite: Sprite { ..default() },
+                transform: Transform {
+                    scale: Vec3::splat(1.0),
+                    translation: level
+                        .map
+                        .tiled_to_bevy_coord(Vec2::new(1475.0, 720.0))
+                        .extend(4.0),
+                    ..default()
+                },
+                ..default()
+            },
+            RigidBody::Dynamic,
+            GravityScale(20.0),
+            Velocity::zero(),
+            Collider::ball(16.0),
+            ActiveCollisionTypes::DYNAMIC_KINEMATIC | ActiveCollisionTypes::DYNAMIC_DYNAMIC,
+            Ccd::enabled(),
+            Damping {
+                angular_damping: 7.0,
+                ..default()
+            },
+            // }, // Rock,
+        ));
+
+        commands.spawn((
+            SpriteBundle {
+                texture: texture.clone(),
+                sprite: Sprite { ..default() },
+                transform: Transform {
+                    scale: Vec3::splat(1.0),
+                    translation: level
+                        .map
+                        .tiled_to_bevy_coord(Vec2::new(5600.0, 750.0))
+                        .extend(4.0),
+                    ..default()
+                },
+                ..default()
+            },
+            RigidBody::Dynamic,
+            GravityScale(20.0),
+            Velocity::zero(),
+            Collider::ball(16.0),
+            ActiveCollisionTypes::DYNAMIC_KINEMATIC | ActiveCollisionTypes::DYNAMIC_DYNAMIC,
+            Ccd::enabled(),
+            Damping {
+                angular_damping: 7.5,
+                ..default()
+            },
+            // }, // Rock,
+        ));
     }
 }
 

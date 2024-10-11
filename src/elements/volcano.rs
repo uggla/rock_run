@@ -209,13 +209,13 @@ fn setup_lava(
         .find(|level| level.id == current_level.id)
         .unwrap();
 
-    let mut level_volcano_pos: HashMap<u8, Vec<Vec2>> = HashMap::new();
-    level_volcano_pos.insert(
+    let mut level_lava_pos: HashMap<u8, Vec<Vec2>> = HashMap::new();
+    level_lava_pos.insert(
         2,
-        vec![level.map.tiled_to_bevy_coord(Vec2::new(2832.0, 2128.0))],
+        vec![level.map.tiled_to_bevy_coord(Vec2::new(3520.0, 2128.0))],
     );
 
-    let start_positions = match level_volcano_pos.get(&current_level.id) {
+    let start_positions = match level_lava_pos.get(&current_level.id) {
         Some(positions) => positions,
         None => return,
     };
@@ -225,8 +225,8 @@ fn setup_lava(
             MaterialMesh2dBundle {
                 mesh: meshes.add(Rectangle::default()).into(),
                 transform: Transform {
-                    translation: start_pos.extend(2.0),
-                    scale: Vec3::new(600.0, 200.0, 1.0),
+                    translation: start_pos.extend(5.0),
+                    scale: Vec3::new(2000.0, 66.0, 1.0),
                     ..default()
                 },
                 material: lava.add(LavaMaterial {
