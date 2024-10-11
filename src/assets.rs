@@ -73,6 +73,8 @@ pub struct RockRunAssets {
     pub fireball: Handle<Image>,
     #[asset(path = "sprites/small_rock.png")]
     pub small_rock: Handle<Image>,
+    #[asset(path = "sprites/monkey.png")]
+    pub monkey: Handle<Image>,
 
     // Images
     #[asset(path = "images/menu.jpg")]
