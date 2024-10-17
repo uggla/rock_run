@@ -92,3 +92,6 @@ pub struct ExtraLifeCollision {
 pub struct NutCollision {
     pub entity: Entity,
 }
+
+#[derive(Event)]
+pub struct SmallRockAboutToRelease;

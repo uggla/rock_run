@@ -11,7 +11,8 @@ use rand::thread_rng;
 use crate::{
     assets::RockRunAssets,
     beasts::{
-        bat::Bat, pterodactyl::Pterodactyl, squirel::Nut, trex::Trex, triceratops::Triceratops,
+        bat::Bat, monkey::Monkey, pterodactyl::Pterodactyl, squirel::Nut, trex::Trex,
+        triceratops::Triceratops,
     },
     coregame::{
         colliders::{ColliderName, Ground, Ladder, Platform, PositionSensor, Spike, Story},
@@ -201,6 +202,7 @@ fn player_collisions_with_beasts(
     pterodactyls: Query<Entity, With<Pterodactyl>>,
     triceratops: Query<Entity, With<Triceratops>>,
     trexes: Query<Entity, With<Trex>>,
+    monkeys: Query<Entity, With<Monkey>>,
     mut hit: EventWriter<Hit>,
     mut life_event: EventReader<LifeEvent>,
     god_mode: Res<Godmode>,
@@ -255,6 +257,14 @@ fn player_collisions_with_beasts(
         for trex in trexes.iter() {
             if character_collision.entity == trex {
                 debug!("hit trex {:?}", trex);
+                hit.send(Hit);
+            }
+        }
+
+        // Player collides with monkeys
+        for monkey in monkeys.iter() {
+            if character_collision.entity == monkey {
+                debug!("hit monkey {:?}", monkey);
                 hit.send(Hit);
             }
         }
@@ -714,14 +724,32 @@ fn position_sensor_collisions(
 
         level_sensor_pos.insert(
             2,
-            HashMap::from([(
-                "exit01".to_string(),
-                SensorValues {
-                    start_pos: Vec2::ZERO,
-                    end_pos: Vec2::ZERO,
-                    disable_next_collision: false,
-                },
-            )]),
+            HashMap::from([
+                (
+                    "exit01".to_string(),
+                    SensorValues {
+                        start_pos: Vec2::ZERO,
+                        end_pos: Vec2::ZERO,
+                        disable_next_collision: false,
+                    },
+                ),
+                (
+                    "pterodactyl_attack02".to_string(),
+                    SensorValues {
+                        start_pos: level.map.tiled_to_bevy_coord(Vec2::new(3520.0, 820.0)),
+                        end_pos: level.map.tiled_to_bevy_coord(Vec2::new(1500.0, 820.0)),
+                        disable_next_collision: true,
+                    },
+                ),
+                (
+                    "pterodactyl_attack03".to_string(),
+                    SensorValues {
+                        start_pos: level.map.tiled_to_bevy_coord(Vec2::new(4800.0, 820.0)),
+                        end_pos: level.map.tiled_to_bevy_coord(Vec2::new(1500.0, 820.0)),
+                        disable_next_collision: true,
+                    },
+                ),
+            ]),
         );
 
         level_sensor_pos.insert(

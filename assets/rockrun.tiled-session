@@ -10,20 +10,21 @@
     "file.lastUsedOpenFilter": "All Files (*)",
     "fileStates": {
         "": {
-            "scaleInDock": 0.33
+            "scaleInDock": 1
         },
         "level01.tmx": {
             "expandedObjectLayers": [
-                8,
-                6,
                 5,
-                4
+                4,
+                6,
+                9,
+                8
             ],
-            "scale": 1.5,
-            "selectedLayer": 6,
+            "scale": 0.25,
+            "selectedLayer": 10,
             "viewCenter": {
-                "x": 12698,
-                "y": 655
+                "x": 6408,
+                "y": 358
             }
         },
         "level01.tmx#backgrounds": {
@@ -72,14 +73,20 @@
         },
         "level02.tmx": {
             "expandedObjectLayers": [
-                3
+                10,
+                13,
+                3,
+                8
             ],
-            "scale": 3,
-            "selectedLayer": 4,
+            "scale": 0.5,
+            "selectedLayer": 10,
             "viewCenter": {
-                "x": 2312.6666666666665,
-                "y": 618.8333333333333
+                "x": 6392,
+                "y": 1985
             }
+        },
+        "level02.tmx#cloud-1": {
+            "scaleInDock": 1
         },
         "level02.tmx#grad-1": {
             "scaleInDock": 1
@@ -92,6 +99,9 @@
         },
         "level02.tmx#grass-3": {
             "scaleInDock": 2
+        },
+        "level02.tmx#monkey-1": {
+            "scaleInDock": 1
         },
         "level02.tmx#mountain-2": {
             "scaleInDock": 0.33
@@ -112,21 +122,25 @@
             "scaleInDock": 2
         },
         "level02.tmx#tileset-01": {
-            "scaleInDock": 1
+            "scaleInDock": 0.75
         },
         "level02.tmx#tileset-1": {
             "scaleInDock": 1
         },
+        "level02.tmx#wood-1": {
+            "scaleInDock": 1
+        },
         "level03.tmx": {
             "expandedObjectLayers": [
-                8,
-                3
+                3,
+                4,
+                8
             ],
             "scale": 0.5,
-            "selectedLayer": 6,
+            "selectedLayer": 3,
             "viewCenter": {
-                "x": 4868,
-                "y": 321
+                "x": 3200,
+                "y": 721
             }
         },
         "level03.tmx#grad-1": {
@@ -156,7 +170,7 @@
             "scaleInDock": 1
         }
     },
-    "last.imagePath": "/home/rribaud/workspace/rust/rock_run/assets",
+    "last.imagePath": "/home/rribaud/workspace/rust/rock_run/assets/sprites",
     "last.worldFilePath": "/home/rribaud/workspace/rust/rock_run/assets",
     "loadedWorlds": [
         "/home/rribaud/workspace/rust/rock_run/assets/level01.tmx"
@@ -168,8 +182,8 @@
     "map.width": 160,
     "openFiles": [
         "level01.tmx",
-        "level03.tmx",
-        "level02.tmx"
+        "level02.tmx",
+        "level03.tmx"
     ],
     "project": "rockrun.tiled-project",
     "recentFiles": [

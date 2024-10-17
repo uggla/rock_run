@@ -71,6 +71,12 @@ pub struct RockRunAssets {
     pub volcano: Handle<Image>,
     #[asset(path = "sprites/fireball.png")]
     pub fireball: Handle<Image>,
+    #[asset(path = "sprites/small_rock.png")]
+    pub small_rock: Handle<Image>,
+    #[asset(path = "sprites/monkey.png")]
+    pub monkey: Handle<Image>,
+    #[asset(path = "sprites/monkey2.png")]
+    pub monkey2: Handle<Image>,
 
     // Images
     #[asset(path = "images/menu.jpg")]
@@ -125,6 +131,8 @@ pub struct RockRunAssets {
     // Music
     #[asset(path = "musics/theme_01.ogg")]
     pub music_level01: Handle<AudioSource>,
-    #[asset(path = "musics/theme_03.ogg")]
+    #[asset(path = "musics/theme_07.ogg")]
     pub music_level02: Handle<AudioSource>,
+    #[asset(path = "musics/theme_03.ogg")]
+    pub music_level03: Handle<AudioSource>,
 }

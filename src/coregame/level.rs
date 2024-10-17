@@ -90,7 +90,11 @@ fn setup_background(mut commands: Commands, rock_run_assets: Res<RockRunAssets>)
         Level {
             id: 2,
             handle: map_handle.clone(),
-            map: Map::new("SO", WINDOW_WIDTH as usize, WINDOW_HEIGHT as usize),
+            map: Map::new(
+                "OOOOOOOOOO\nOOOOOOOOOO\nSOOOOOOOOO",
+                WINDOW_WIDTH as usize,
+                WINDOW_HEIGHT as usize,
+            ),
         },
     ));
 

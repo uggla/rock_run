@@ -30,11 +30,6 @@ fn setup_music(
 ) {
     info!("setup_music");
 
-    // let level = levels
-    //     .iter()
-    //     .find(|level| level.id == current_level.id)
-    //     .unwrap();
-
     match current_level.id {
         1 => {
             commands.spawn((
@@ -49,10 +44,23 @@ fn setup_music(
                 Music,
             ));
         }
-        3 => {
+        2 => {
             commands.spawn((
                 AudioBundle {
                     source: rock_run_assets.music_level02.clone(),
+                    settings: PlaybackSettings {
+                        mode: PlaybackMode::Loop,
+                        volume: Volume::new(0.3),
+                        ..default()
+                    },
+                },
+                Music,
+            ));
+        }
+        3 => {
+            commands.spawn((
+                AudioBundle {
+                    source: rock_run_assets.music_level03.clone(),
                     settings: PlaybackSettings {
                         mode: PlaybackMode::Loop,
                         volume: Volume::new(0.3),
