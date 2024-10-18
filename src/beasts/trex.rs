@@ -18,7 +18,7 @@ use crate::{
     WINDOW_WIDTH,
 };
 
-const TREX_SPEED: f32 = 500.0;
+const TREX_SPEED: f32 = 550.0;
 const TREX_SCALE_FACTOR: f32 = 1.0;
 const TREX_WIDTH: f32 = 150.0;
 const TREX_HEIGHT: f32 = 105.0;
