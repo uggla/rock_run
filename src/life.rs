@@ -1,4 +1,8 @@
-use bevy::{prelude::*, utils::HashMap};
+use bevy::{
+    audio::{PlaybackMode, Volume},
+    prelude::*,
+    utils::HashMap,
+};
 use bevy_rapier2d::geometry::{ActiveCollisionTypes, ActiveEvents, Collider, Sensor};
 
 use crate::{
@@ -39,14 +43,17 @@ impl Plugin for LifePlugin {
                 (despawn_life, despawn_extralife),
             )
             .add_systems(OnEnter(AppState::FinishLevel), despawn_extralife)
-            .add_systems(Update, life_management)
-            .insert_resource(Life::default())
+            .add_systems(
+                Update,
+                life_management.run_if(not(in_state(AppState::Loading))),
+            )
             .add_systems(
                 Update,
                 (show_life, check_get_extralife)
                     .after(CameraSet)
                     .run_if(in_state(AppState::GameRunning)),
             )
+            .insert_resource(Life::default())
             .add_event::<LifeEvent>();
     }
 }
@@ -113,6 +120,7 @@ fn show_life(
 
 fn life_management(
     mut commands: Commands,
+    rock_run_assets: Res<RockRunAssets>,
     mut life_ui: Query<&Handle<Image>, With<LifeUI>>,
     mut life: ResMut<Life>,
     mut life_event: EventReader<LifeEvent>,
@@ -125,6 +133,14 @@ fn life_management(
                 let child = spawn_life_entity(&mut commands, &life, texture);
                 commands.entity(life.entities[0]).add_child(child);
                 life.entities.push(child);
+                commands.spawn(AudioBundle {
+                    source: rock_run_assets.get_something_sound.clone(),
+                    settings: PlaybackSettings {
+                        mode: PlaybackMode::Despawn,
+                        volume: Volume::new(0.8),
+                        ..default()
+                    },
+                });
             }
             LifeEvent::Lost => match life.entities.pop() {
                 Some(entity) => {
@@ -171,6 +187,11 @@ fn setup_extralife(
     extra_life_pos.insert(
         1,
         vec![level.map.tiled_to_bevy_coord(Vec2::new(1056.0, 112.0))],
+    );
+
+    extra_life_pos.insert(
+        2,
+        vec![level.map.tiled_to_bevy_coord(Vec2::new(5416.0, 1518.0))],
     );
 
     let start_positions = match extra_life_pos.get(&current_level.id) {
