@@ -150,10 +150,10 @@ fn setup_trex(
     );
     let texture_atlas_layout = texture_atlases.add(layout);
     let mut level_trex_pos: HashMap<u8, Vec<Vec2>> = HashMap::new();
-    // level_trex_pos.insert(
-    //     1,
-    //     vec![level.map.tiled_to_bevy_coord(Vec2::new(4720.0, 576.0))],
-    // );
+    level_trex_pos.insert(
+        2,
+        vec![level.map.tiled_to_bevy_coord(Vec2::new(9200.0, 2030.0))],
+    );
 
     let start_positions = match level_trex_pos.get(&current_level.id) {
         Some(positions) => positions,
