@@ -24,10 +24,13 @@ use bevy_rapier2d::prelude::{
 use rand::{thread_rng, Rng};
 
 const FIREBALL_SCALE_FACTOR: f32 = 1.0;
-const VOLCANO_SCALE_FACTOR: f32 = 0.48;
 
 #[derive(Component)]
-pub struct Volcano;
+struct Volcano {
+    start_pos: Vec2,
+    scale_factor: f32,
+    depth: f32,
+}
 
 #[derive(Component)]
 pub struct Lava;
@@ -71,30 +74,47 @@ fn setup_volcano(
         .unwrap();
 
     let texture = rock_run_assets.volcano.clone();
-    let mut level_volcano_pos: HashMap<u8, Vec<Vec2>> = HashMap::new();
-    level_volcano_pos.insert(
+    let mut level_volcano: HashMap<u8, Vec<Volcano>> = HashMap::new();
+    level_volcano.insert(
         1,
-        vec![level.map.tiled_to_bevy_coord(Vec2::new(10000.0, 250.0))],
+        vec![Volcano {
+            start_pos: level.map.tiled_to_bevy_coord(Vec2::new(10000.0, 250.0)),
+            scale_factor: 0.48,
+            depth: 2.0,
+        }],
     );
 
-    let start_positions = match level_volcano_pos.get(&current_level.id) {
+    level_volcano.insert(
+        2,
+        vec![Volcano {
+            start_pos: level.map.tiled_to_bevy_coord(Vec2::new(2780.0, 1920.0)),
+            scale_factor: 0.30,
+            depth: 3.0,
+        }],
+    );
+
+    let volcanos = match level_volcano.get(&current_level.id) {
         Some(positions) => positions,
         None => return,
     };
 
-    for start_pos in start_positions {
+    for volcano in volcanos {
         commands.spawn((
             SpriteBundle {
                 texture: texture.clone(),
                 sprite: Sprite { ..default() },
                 transform: Transform {
-                    scale: Vec3::splat(VOLCANO_SCALE_FACTOR),
-                    translation: start_pos.extend(2.0),
+                    scale: Vec3::splat(volcano.scale_factor),
+                    translation: volcano.start_pos.extend(volcano.depth),
                     ..default()
                 },
                 ..default()
             },
-            Volcano,
+            Volcano {
+                start_pos: volcano.start_pos,
+                scale_factor: volcano.scale_factor,
+                depth: volcano.depth,
+            },
         ));
     }
 }
