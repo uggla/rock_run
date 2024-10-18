@@ -1,3 +1,5 @@
+use std::mem;
+
 use crate::{
     assets::RockRunAssets,
     beasts::squirel::Nuts,
@@ -14,7 +16,7 @@ use crate::{
     },
     events::{EnigmaResult, NoMoreStoryMessages},
     helpers::texture::cycle_texture,
-    key::{Key, KEY_HEIGHT, KEY_SCALE_FACTOR, KEY_WIDTH},
+    key::{Key, Keys, KEY_HEIGHT, KEY_SCALE_FACTOR, KEY_WIDTH},
 };
 use bevy::{
     audio::{PlaybackMode, Volume},
@@ -194,9 +196,31 @@ fn spawn_enigma_materials(
         ]),
     });
 
+    let mut n1 = rng.gen_range(0..=50);
+    let mut n2 = rng.gen_range(0..=50);
+    if n2 > n1 {
+        mem::swap(&mut n1, &mut n2);
+    }
+
+    enigmas_builder.push(Enigma {
+        associated_story: "story08-03".to_string(),
+        kind: EnigmaKind::Numbers(HashMap::from([
+            ("n1".to_string(), n1.to_string()),
+            ("n2".to_string(), n2.to_string()),
+        ])),
+    });
+
     enigmas_builder.push(Enigma {
         associated_story: "story100-03".to_string(),
         kind: EnigmaKind::Mcq(vec![]),
+    });
+
+    enigmas_builder.push(Enigma {
+        associated_story: "story101-03".to_string(),
+        kind: EnigmaKind::Numbers(HashMap::from([(
+            "n1".to_string(),
+            (rng.gen_range(0..=49) * 2).to_string(),
+        )])),
     });
 
     *enigmas = Enigmas {
@@ -295,6 +319,33 @@ fn spawn_enigma_materials(
             ));
         }
 
+        2 => {
+            let texture = rock_run_assets.gate.clone();
+            commands.spawn((
+                SpriteBundle {
+                    texture,
+                    sprite: Sprite {
+                        flip_y: true,
+                        ..default()
+                    },
+                    transform: Transform {
+                        scale: Vec3::splat(GATE_SCALE_FACTOR),
+                        translation: level
+                            .map
+                            .tiled_to_bevy_coord(Vec2::new(12144.0, 2135.0))
+                            .extend(4.0),
+                        ..default()
+                    },
+                    ..default()
+                },
+                Collider::cuboid(GATE_WIDTH / 2.0, GATE_HEIGHT / 2.0),
+                AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
+                Gate {
+                    associated_story: "story08-03".to_string(),
+                },
+            ));
+        }
+
         3 => {
             let texture = rock_run_assets.warrior.clone();
             let layout = TextureAtlasLayout::from_grid(
@@ -365,6 +416,7 @@ fn check_enigma(
     nuts: Res<Nuts>,
     levels: Query<&Level, With<Level>>,
     current_level: Res<CurrentLevel>,
+    collected_keys: Res<Keys>,
 ) {
     for ev in no_more_msg_event.read() {
         debug!("No more story messages: {:?}", ev.latest);
@@ -464,6 +516,40 @@ fn check_enigma(
                     spawn_key,
                 );
             }
+            "story08-03" => {
+                let story = "story08-03";
+                let numbers = enigmas
+                    .enigmas
+                    .iter()
+                    .filter(|e| e.associated_story == story)
+                    .map(|e| match e.kind.clone() {
+                        EnigmaKind::Numbers(n) => n,
+                        EnigmaKind::Mcq(_) => unreachable!(),
+                    })
+                    .last()
+                    .unwrap();
+
+                let n1 = numbers.get("n1").unwrap().parse::<usize>().unwrap();
+                let n2 = numbers.get("n2").unwrap().parse::<usize>().unwrap();
+
+                let (_ltext, selection, _rtext) = decompose_selection_msg(&params.text).unwrap();
+                let user_answer = selection.selection_items.join("").parse::<usize>().unwrap();
+
+                if n1 - n2 == user_answer && collected_keys.numbers == 1 {
+                    debug!(
+                        "Correct answer: {} - {} = {} | Collected keys: {}",
+                        n1, n2, user_answer, collected_keys.numbers
+                    );
+                    correct_answer(&mut enigna_result, story, &mut commands, &rock_run_assets);
+                    spawn_story_101(level, &rock_run_assets, &mut commands);
+                } else {
+                    debug!(
+                        "Incorrect answer: {} - {} = {} | Collected keys: {}",
+                        n1, n2, user_answer, collected_keys.numbers
+                    );
+                    wrong_answer(&mut enigna_result, story, &mut commands, &rock_run_assets);
+                }
+            }
             "story100-03" => {
                 let story = "story100-03";
                 if nuts.len() == 11 {
@@ -471,6 +557,38 @@ fn check_enigma(
                     correct_answer(&mut enigna_result, story, &mut commands, &rock_run_assets);
                 } else {
                     debug!("Incorrect answer: {}", nuts.len());
+                    wrong_answer(&mut enigna_result, story, &mut commands, &rock_run_assets);
+                }
+            }
+            "story101-03" => {
+                let story = "story101-03";
+                let numbers = enigmas
+                    .enigmas
+                    .iter()
+                    .filter(|e| e.associated_story == story)
+                    .map(|e| match e.kind.clone() {
+                        EnigmaKind::Numbers(n) => n,
+                        EnigmaKind::Mcq(_) => unreachable!(),
+                    })
+                    .last()
+                    .unwrap();
+
+                let n1 = numbers.get("n1").unwrap().parse::<usize>().unwrap();
+
+                let (_ltext, selection, _rtext) = decompose_selection_msg(&params.text).unwrap();
+                let user_answer = selection.selection_items.join("").parse::<usize>().unwrap();
+
+                if n1 / 2 == user_answer {
+                    debug!(
+                        "Correct answer: {} / 2 = {} | Collected keys: {}",
+                        n1, user_answer, collected_keys.numbers
+                    );
+                    correct_answer(&mut enigna_result, story, &mut commands, &rock_run_assets);
+                } else {
+                    debug!(
+                        "Incorrect answer: {} - / 2 = {} | Collected keys: {}",
+                        n1, user_answer, collected_keys.numbers
+                    );
                     wrong_answer(&mut enigna_result, story, &mut commands, &rock_run_assets);
                 }
             }
@@ -491,6 +609,20 @@ fn spawn_story_100(level: &Level, _rock_run_assets: &Res<RockRunAssets>, command
         .insert(ActiveEvents::COLLISION_EVENTS)
         .insert(ActiveCollisionTypes::KINEMATIC_STATIC)
         .insert(ColliderName("story100".to_string()));
+}
+
+fn spawn_story_101(level: &Level, _rock_run_assets: &Res<RockRunAssets>, commands: &mut Commands) {
+    let Vec2 { x, y } = level.map.tiled_to_bevy_coord(Vec2::new(12496.0, 2064.0));
+    commands
+        .spawn((
+            Collider::cuboid(1.0, 1.0),
+            Story,
+            TransformBundle::from(Transform::from_xyz(x, y, 0.0)),
+        ))
+        .insert(Sensor)
+        .insert(ActiveEvents::COLLISION_EVENTS)
+        .insert(ActiveCollisionTypes::KINEMATIC_STATIC)
+        .insert(ColliderName("story101".to_string()));
 }
 
 fn spawn_key(level: &Level, rock_run_assets: &Res<RockRunAssets>, commands: &mut Commands) {

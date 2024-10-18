@@ -16,7 +16,7 @@ japan-capital-question = What is the ca-pi-tal of Ja-pan?
 non-japan-capital = Osaka, Kyoto, Hiroshima, Nagoya, Sapporo, Yokohama, Fukuoka, Nara, Kobe
 japan-capital = Tokyo
 who-is-napoleon-question = Who was Na-po-le-on Bo-na-par-te?
-non-napoleon-answer = A famous chef, An explorer, A king of England, A famous pirate, An inventor of toys, A Roman general, An artist painter,
+non-napoleon-answer = A famous chef, An explorer, A king of England, A famous pirate, An inventor of toys, A Roman general, An artist painter
 napoleon-answer = An emperor of France
 story01-01 = Hel-lo, my name is Rose.
 story01-02 = It's get-ting late, I need to go home be-cause the night is the do-main of pre-da-tors.
@@ -40,6 +40,12 @@ story07-01 = If you answer my question,
 story07-02 = I will give you a very useful key!
 story07-03 = { $question }
 story07-04 = { $values }
+story08-01 = It's writ-ten you need a key
+story08-02 =  and to find the right an-swer.
+story08-03 = { $n1 } \- { $n2 }=\("selection_items":["0","0"],"selected_item":0\)
 story100-01 = Oh! You were quick!
 story100-02 = Did you find all my nuts?
 story100-03 = I will count them.
+story101-01 = A-no-ther puz-zle!
+story101-02 = It's the last one be-fore the ex-it.
+story101-03 = What is half of { $n1 } =\("selection_items":["0","0"],"selected_item":0\)

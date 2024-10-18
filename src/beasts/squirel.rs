@@ -451,6 +451,15 @@ fn unroll_vine(
                     associated_enigma: "story100-03".to_string(),
                 },
             );
+
+            enigma_vine.insert(
+                "story101-03".to_string(),
+                VineData {
+                    pos: level.map.tiled_to_bevy_coord(Vec2::new(12568.0, 1538.0)),
+                    size: 31,
+                    associated_enigma: "story101-03".to_string(),
+                },
+            );
             match enigma_vine.get(enigma) {
                 Some(vine_data) => {
                     *animation_timer = Timer::from_seconds(0.1, TimerMode::Repeating);

@@ -15,7 +15,7 @@ pub const KEY_HEIGHT: f32 = 16.0;
 
 #[derive(Resource, Default)]
 pub struct Keys {
-    numbers: u8,
+    pub numbers: u8,
 }
 
 #[derive(Component)]

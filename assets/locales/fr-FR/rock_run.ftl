@@ -40,6 +40,12 @@ story07-01 = Si tu ré-ponds à ma ques-tion,
 story07-02 = je te don-ne-rais u-ne clef très u-ti-le !
 story07-03 = { $question }
 story07-04 = { $values }
+story08-01 = C'est é-crit il te faut u-ne clef
+story08-02 =  et trou-ver la bon-ne ré-pon-se.
+story08-03 = { $n1 } \- { $n2 }=\("selection_items":["0","0"],"selected_item":0\)
 story100-01 = Oh ! Tu as fait vi-te !
 story100-02 = As\-tu trou-vé toutes mes noi-set-tes ?
 story100-03 = Je vais les comp-ter.
+story101-01 = En-co-re u-ne é-ni-gme !
+story101-02 = Cou-ra-ge c'est la der-niè-re a-vant la sor-tie.
+story101-03 = Quel-le est la moi-tié de { $n1 } =\("selection_items":["0","0"],"selected_item":0\)

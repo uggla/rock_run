@@ -439,11 +439,29 @@ fn display_story(
                     ("story07-04".to_string(), Some(selection)),
                 ]));
             }
+            "story08" => {
+                let numbers = manage_numbers(&enigmas, "story08-03");
+
+                msg_event.send(StoryMessages::Display(vec![
+                    ("story08-01".to_string(), None),
+                    ("story08-02".to_string(), None),
+                    ("story08-03".to_string(), Some(numbers)),
+                ]));
+            }
             "story100" => {
                 msg_event.send(StoryMessages::Display(vec![
                     ("story100-01".to_string(), None),
                     ("story100-02".to_string(), None),
                     ("story100-03".to_string(), None),
+                ]));
+            }
+            "story101" => {
+                let numbers = manage_numbers(&enigmas, "story101-03");
+
+                msg_event.send(StoryMessages::Display(vec![
+                    ("story101-01".to_string(), None),
+                    ("story101-02".to_string(), None),
+                    ("story101-03".to_string(), Some(numbers)),
                 ]));
             }
             _ => {}
