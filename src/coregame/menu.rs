@@ -1,3 +1,5 @@
+use std::env;
+
 use bevy::audio::Volume;
 use bevy::{app::AppExit, audio::PlaybackMode};
 
@@ -56,6 +58,9 @@ pub enum MenuAction {
     Left,
 }
 
+#[derive(Debug, Resource)]
+pub struct Godmode(pub bool);
+
 pub struct MenuPlugin;
 impl Plugin for MenuPlugin {
     fn build(&self, app: &mut App) {
@@ -71,12 +76,19 @@ impl Plugin for MenuPlugin {
             )
             .add_systems(Update, update_menu.run_if(in_state(AppState::StartMenu)))
             .add_systems(OnEnter(AppState::Loading), setup)
-            .add_event::<StartGame>();
+            .add_event::<StartGame>()
+            .insert_resource(Godmode(false));
     }
 }
 
-fn setup(mut commands: Commands) {
+fn setup(mut commands: Commands, mut godmode: ResMut<Godmode>) {
     info!("setup");
+
+    match env::var("ROCKRUN_GOD_MODE") {
+        Ok(_) => godmode.0 = true,
+        Err(_) => godmode.0 = false,
+    }
+
     let mut input_map = InputMap::<MenuAction>::new([
         (MenuAction::Accept, KeyCode::Enter),
         (MenuAction::PauseUnpause, KeyCode::Escape),

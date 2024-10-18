@@ -1,5 +1,3 @@
-use std::env;
-
 use bevy::{prelude::*, utils::HashMap};
 use bevy_rapier2d::{
     control::KinematicCharacterControllerOutput, dynamics::Velocity,
@@ -17,6 +15,7 @@ use crate::{
     coregame::{
         colliders::{ColliderName, Ground, Ladder, Platform, PositionSensor, Spike, Story},
         level::{CurrentLevel, Level},
+        menu::Godmode,
         state::AppState,
     },
     elements::{
@@ -36,9 +35,6 @@ use crate::{
     player::{self, Player, PlayerState, PLAYER_HEIGHT},
 };
 
-#[derive(Debug, Resource)]
-pub struct Godmode(bool);
-
 struct SensorValues {
     start_pos: Vec2,
     end_pos: Vec2,
@@ -55,44 +51,35 @@ pub struct CollisionsPlugin;
 
 impl Plugin for CollisionsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(AppState::Loading), god_mode)
-            .add_systems(
-                Update,
-                (
-                    player_collisions_with_elements,
-                    player_collisions_with_beasts,
-                    triceratops_collisions,
-                    story_collisions,
-                    display_story,
-                    position_sensor_collisions,
-                    ladder_collisions,
-                    extra_life_collisions,
-                    nut_collisions,
-                    key_collisions,
-                    fireball_collisions,
-                )
-                    .in_set(CollisionSet)
-                    .run_if(in_state(AppState::GameRunning)),
+        app.add_systems(
+            Update,
+            (
+                player_collisions_with_elements,
+                player_collisions_with_beasts,
+                triceratops_collisions,
+                story_collisions,
+                display_story,
+                position_sensor_collisions,
+                ladder_collisions,
+                extra_life_collisions,
+                nut_collisions,
+                key_collisions,
+                fireball_collisions,
             )
-            .add_systems(OnEnter(AppState::StartMenu), despawn_qm)
-            .add_event::<Hit>()
-            .add_event::<TriceratopsCollision>()
-            .add_event::<PositionSensorCollisionStart>()
-            .add_event::<PositionSensorCollisionStop>()
-            .add_event::<LadderCollisionStart>()
-            .add_event::<LadderCollisionStop>()
-            .add_event::<MovingPlatformCollision>()
-            .add_event::<ExtraLifeCollision>()
-            .add_event::<NutCollision>()
-            .add_event::<KeyCollision>()
-            .insert_resource(Godmode(false));
-    }
-}
-
-fn god_mode(mut godmode: ResMut<Godmode>) {
-    match env::var("ROCKRUN_GOD_MODE") {
-        Ok(_) => godmode.0 = true,
-        Err(_) => godmode.0 = false,
+                .in_set(CollisionSet)
+                .run_if(in_state(AppState::GameRunning)),
+        )
+        .add_systems(OnEnter(AppState::StartMenu), despawn_qm)
+        .add_event::<Hit>()
+        .add_event::<TriceratopsCollision>()
+        .add_event::<PositionSensorCollisionStart>()
+        .add_event::<PositionSensorCollisionStop>()
+        .add_event::<LadderCollisionStart>()
+        .add_event::<LadderCollisionStop>()
+        .add_event::<MovingPlatformCollision>()
+        .add_event::<ExtraLifeCollision>()
+        .add_event::<NutCollision>()
+        .add_event::<KeyCollision>();
     }
 }
 
