@@ -12,6 +12,7 @@ use crate::{
     collisions::CollisionSet,
     coregame::{
         level::{CurrentLevel, Level},
+        menu::StartPos,
         state::AppState,
     },
     events::{
@@ -99,6 +100,7 @@ fn setup_player(
     mut texture_atlases: ResMut<Assets<TextureAtlasLayout>>,
     levels: Query<&Level, With<Level>>,
     current_level: Res<CurrentLevel>,
+    start_position: Res<StartPos>,
 ) {
     info!("setup_player");
 
@@ -150,34 +152,21 @@ fn setup_player(
         SingleAxis::negative_only(GamepadAxisType::LeftStickY, -0.4),
     );
 
+    let start_position: Vec3 = match start_position.0 {
+        Some(position) => {
+            info!("Tiled start_position: {:?}", position);
+            level.map.tiled_to_bevy_coord(position).extend(20.0)
+        }
+        None => level.map.get_start_screen().get_center().extend(20.0) + PLAYER_START_OFFSET,
+    };
+
     commands.spawn((
         SpriteBundle {
             texture,
             sprite: Sprite { ..default() },
             transform: Transform {
                 scale: Vec3::splat(PLAYER_SCALE_FACTOR),
-                translation: level.map.get_start_screen().get_center().extend(20.0)
-                    + PLAYER_START_OFFSET,
-                // translation: level
-                //     .map
-                //     .tiled_to_bevy_coord(Vec2::new(3840.0, 1100.0))
-                //     .extend(20.0),
-                // ..default()
-                // translation: level
-                //     .map
-                //     .tiled_to_bevy_coord(Vec2::new(4950.0, 575.0))
-                //     .extend(20.0),
-                // ..default()
-                // translation: level
-                //     .map
-                //     .tiled_to_bevy_coord(Vec2::new(7792.0, 481.0))
-                //     .extend(20.0),
-                // ..default()
-                // translation: level
-                //     .map
-                //     .tiled_to_bevy_coord(Vec2::new(9800.0, 481.0))
-                //     .extend(20.0),
-                // ..default()
+                translation: start_position,
                 ..default()
             },
             ..default()

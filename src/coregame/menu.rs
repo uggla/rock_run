@@ -64,6 +64,9 @@ pub struct Godmode(pub bool);
 #[derive(Debug, Resource)]
 struct StartLevel(u8);
 
+#[derive(Debug, Resource)]
+pub struct StartPos(pub Option<Vec2>);
+
 pub struct MenuPlugin;
 impl Plugin for MenuPlugin {
     fn build(&self, app: &mut App) {
@@ -81,7 +84,8 @@ impl Plugin for MenuPlugin {
             .add_systems(OnEnter(AppState::Loading), setup)
             .add_event::<StartGame>()
             .insert_resource(Godmode(false))
-            .insert_resource(StartLevel(1));
+            .insert_resource(StartLevel(1))
+            .insert_resource(StartPos(None));
     }
 }
 
@@ -89,6 +93,7 @@ fn setup(
     mut commands: Commands,
     mut godmode: ResMut<Godmode>,
     mut start_level: ResMut<StartLevel>,
+    mut start_position: ResMut<StartPos>,
 ) {
     info!("setup");
 
@@ -106,6 +111,18 @@ fn setup(
             }
         }
         Err(_) => start_level.0 = 1,
+    }
+
+    match env::var("ROCKRUN_START_POSITION") {
+        Ok(position) => {
+            let msg = "ROCKRUN_START_POSITION is not formated properly";
+            let position = position.split(',').collect::<Vec<&str>>();
+            start_position.0 = Some(Vec2::new(
+                position[0].trim().parse::<f32>().expect(msg),
+                position[1].trim().parse::<f32>().expect(msg),
+            ));
+        }
+        Err(_) => start_position.0 = None,
     }
 
     let mut input_map = InputMap::<MenuAction>::new([
