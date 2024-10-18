@@ -61,6 +61,9 @@ pub enum MenuAction {
 #[derive(Debug, Resource)]
 pub struct Godmode(pub bool);
 
+#[derive(Debug, Resource)]
+struct StartLevel(u8);
+
 pub struct MenuPlugin;
 impl Plugin for MenuPlugin {
     fn build(&self, app: &mut App) {
@@ -77,16 +80,32 @@ impl Plugin for MenuPlugin {
             .add_systems(Update, update_menu.run_if(in_state(AppState::StartMenu)))
             .add_systems(OnEnter(AppState::Loading), setup)
             .add_event::<StartGame>()
-            .insert_resource(Godmode(false));
+            .insert_resource(Godmode(false))
+            .insert_resource(StartLevel(1));
     }
 }
 
-fn setup(mut commands: Commands, mut godmode: ResMut<Godmode>) {
+fn setup(
+    mut commands: Commands,
+    mut godmode: ResMut<Godmode>,
+    mut start_level: ResMut<StartLevel>,
+) {
     info!("setup");
 
     match env::var("ROCKRUN_GOD_MODE") {
         Ok(_) => godmode.0 = true,
         Err(_) => godmode.0 = false,
+    }
+
+    match env::var("ROCKRUN_LEVEL") {
+        Ok(level) => {
+            let level = level.parse::<u8>().expect("ROCKRUN_LEVEL is not a number");
+            match level {
+                1..=3 => start_level.0 = level,
+                _ => start_level.0 = 1,
+            }
+        }
+        Err(_) => start_level.0 = 1,
     }
 
     let mut input_map = InputMap::<MenuAction>::new([
@@ -672,6 +691,7 @@ fn menu_input_system(
     mut game_event_start: EventWriter<StartGame>,
     mut game_event_level: EventWriter<NextLevel>,
     mut current_level: ResMut<CurrentLevel>,
+    start_level: Res<StartLevel>,
 ) {
     if state.get() != &AppState::StartMenu
         && menu_action_state.just_pressed(&MenuAction::ExitToMenu)
@@ -683,7 +703,7 @@ fn menu_input_system(
     } else {
         match state.get() {
             AppState::StartMenu => {
-                current_level.id = 2;
+                current_level.id = start_level.0;
                 if menu_action_state.just_pressed(&MenuAction::Quit) {
                     app_exit_events.send(AppExit::Success);
                 }
