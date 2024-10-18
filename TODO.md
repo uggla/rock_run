@@ -7,8 +7,8 @@
 - [ ] Add trex.
 - [x] Add an enigma that drop a rock allowing to go over spikes.
 - [x] Review enigmas colors.
-- [ ] Improve level 1.
-- [ ] Add level 3.
+- [x] Improve level 1.
+- [x] Add level 3.
 - [x] Check for compilation optimization.
 - [x] Review stories.
 - [x] Update doc about tiled.
