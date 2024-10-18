@@ -6,12 +6,14 @@ mod elements;
 mod events;
 mod external_plugins;
 mod helpers;
+mod key;
 mod life;
 mod music;
 mod player;
 mod screen_map;
 
 use bevy::{prelude::*, window::WindowResolution};
+use key::KeyPlugin;
 
 use crate::{
     assets::RockRunAssets,
@@ -55,6 +57,7 @@ fn main() {
         MusicPlugin,
         PlayerPlugin,
         LifePlugin,
+        KeyPlugin,
         CollisionsPlugin,
     ))
     // with 0.14, init_state needs to be declared after plugins

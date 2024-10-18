@@ -94,4 +94,9 @@ pub struct NutCollision {
 }
 
 #[derive(Event)]
+pub struct KeyCollision {
+    pub entity: Entity,
+}
+
+#[derive(Event)]
 pub struct SmallRockAboutToRelease;

@@ -16,15 +16,15 @@
             "expandedObjectLayers": [
                 5,
                 4,
-                6,
                 9,
-                8
+                8,
+                6
             ],
-            "scale": 0.25,
+            "scale": 0.75,
             "selectedLayer": 10,
             "viewCenter": {
-                "x": 6408,
-                "y": 358
+                "x": 6844,
+                "y": 518
             }
         },
         "level01.tmx#backgrounds": {
@@ -73,16 +73,17 @@
         },
         "level02.tmx": {
             "expandedObjectLayers": [
-                10,
-                13,
                 3,
+                17,
+                13,
+                10,
                 8
             ],
-            "scale": 0.5,
-            "selectedLayer": 10,
+            "scale": 1.5,
+            "selectedLayer": 12,
             "viewCenter": {
-                "x": 6392,
-                "y": 1985
+                "x": 6785.333333333333,
+                "y": 1866.9999999999998
             }
         },
         "level02.tmx#cloud-1": {
@@ -122,7 +123,7 @@
             "scaleInDock": 2
         },
         "level02.tmx#tileset-01": {
-            "scaleInDock": 0.75
+            "scaleInDock": 1
         },
         "level02.tmx#tileset-1": {
             "scaleInDock": 1
@@ -132,15 +133,15 @@
         },
         "level03.tmx": {
             "expandedObjectLayers": [
-                3,
                 4,
+                3,
                 8
             ],
-            "scale": 0.5,
+            "scale": 0.75,
             "selectedLayer": 3,
             "viewCenter": {
-                "x": 3200,
-                "y": 721
+                "x": 5457.333333333333,
+                "y": 695.3333333333333
             }
         },
         "level03.tmx#grad-1": {

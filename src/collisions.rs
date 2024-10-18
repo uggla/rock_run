@@ -27,10 +27,11 @@ use crate::{
         volcano::Fireball,
     },
     events::{
-        ExtraLifeCollision, Hit, LadderCollisionStart, LadderCollisionStop, LifeEvent,
-        MovingPlatformCollision, NutCollision, PositionSensorCollisionStart,
+        ExtraLifeCollision, Hit, KeyCollision, LadderCollisionStart, LadderCollisionStop,
+        LifeEvent, MovingPlatformCollision, NutCollision, PositionSensorCollisionStart,
         PositionSensorCollisionStop, Restart, StoryMessages, TriceratopsCollision,
     },
+    key::Key,
     life::ExtraLife,
     player::{self, Player, PlayerState, PLAYER_HEIGHT},
 };
@@ -67,6 +68,7 @@ impl Plugin for CollisionsPlugin {
                     ladder_collisions,
                     extra_life_collisions,
                     nut_collisions,
+                    key_collisions,
                     fireball_collisions,
                 )
                     .in_set(CollisionSet)
@@ -82,6 +84,7 @@ impl Plugin for CollisionsPlugin {
             .add_event::<MovingPlatformCollision>()
             .add_event::<ExtraLifeCollision>()
             .add_event::<NutCollision>()
+            .add_event::<KeyCollision>()
             .insert_resource(Godmode(false));
     }
 }
@@ -438,6 +441,15 @@ fn display_story(
                     ("story06-01".to_string(), None),
                     ("story06-02".to_string(), Some(question)),
                     ("story06-03".to_string(), Some(selection)),
+                ]));
+            }
+            "story07" => {
+                let (selection, question) = manage_mcq(enigmas, "story07-04");
+                msg_event.send(StoryMessages::Display(vec![
+                    ("story07-01".to_string(), None),
+                    ("story07-02".to_string(), None),
+                    ("story07-03".to_string(), Some(question)),
+                    ("story07-04".to_string(), Some(selection)),
                 ]));
             }
             "story100" => {
@@ -936,6 +948,52 @@ fn nut_collisions(
                 // Warning, e1 and e2 can be swapped.
                 if let Some((_entity, collider_name)) =
                     nuts.iter().find(|(entity, _collider_name)| {
+                        (entity == e1 && player_entity == *e2)
+                            || (entity == e2 && player_entity == *e1)
+                    })
+                {
+                    debug!(
+                        "Received collision event: {:?}, collider name: {:?}",
+                        collision_event, collider_name
+                    );
+                }
+            }
+        }
+    }
+}
+
+fn key_collisions(
+    keys: Query<(Entity, &ColliderName), With<Key>>,
+    mut collision_events: EventReader<CollisionEvent>,
+    mut key_collision: EventWriter<KeyCollision>,
+    player: Query<Entity, With<Player>>,
+) {
+    let player_entity = match player.get_single() {
+        Ok(player_entity) => player_entity,
+        Err(_) => return,
+    };
+    for collision_event in collision_events.read() {
+        match collision_event {
+            CollisionEvent::Started(e1, e2, _cf) => {
+                // Warning, e1 and e2 can be swapped.
+                if let Some((entity, collider_name)) =
+                    keys.iter().find(|(entity, _collider_name)| {
+                        (entity == e1 && player_entity == *e2)
+                            || (entity == e2 && player_entity == *e1)
+                    })
+                {
+                    debug!(
+                        "Received collision event: {:?}, collider name: {:?}",
+                        collision_event, collider_name
+                    );
+
+                    key_collision.send(KeyCollision { entity });
+                };
+            }
+            CollisionEvent::Stopped(e1, e2, _cf) => {
+                // Warning, e1 and e2 can be swapped.
+                if let Some((_entity, collider_name)) =
+                    keys.iter().find(|(entity, _collider_name)| {
                         (entity == e1 && player_entity == *e2)
                             || (entity == e2 && player_entity == *e1)
                     })

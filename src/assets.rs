@@ -77,6 +77,8 @@ pub struct RockRunAssets {
     pub monkey: Handle<Image>,
     #[asset(path = "sprites/monkey2.png")]
     pub monkey2: Handle<Image>,
+    #[asset(path = "sprites/key.png")]
+    pub key: Handle<Image>,
 
     // Images
     #[asset(path = "images/menu.jpg")]

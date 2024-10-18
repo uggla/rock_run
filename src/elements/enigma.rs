@@ -14,6 +14,7 @@ use crate::{
     },
     events::{EnigmaResult, NoMoreStoryMessages},
     helpers::texture::cycle_texture,
+    key::{Key, KEY_HEIGHT, KEY_SCALE_FACTOR, KEY_WIDTH},
 };
 use bevy::{
     audio::{PlaybackMode, Volume},
@@ -176,6 +177,16 @@ fn spawn_enigma_materials(
     let mcq = mcqs.pop().unwrap();
     enigmas_builder.push(Enigma {
         associated_story: "story06-03".to_string(),
+        kind: EnigmaKind::Mcq(vec![
+            localization::get_translation(&locale, &assets, &rock_run_assets, mcq.0, None),
+            localization::get_translation(&locale, &assets, &rock_run_assets, mcq.1, None),
+            localization::get_translation(&locale, &assets, &rock_run_assets, mcq.2, None),
+        ]),
+    });
+
+    let mcq = mcqs.pop().unwrap();
+    enigmas_builder.push(Enigma {
+        associated_story: "story07-04".to_string(),
         kind: EnigmaKind::Mcq(vec![
             localization::get_translation(&locale, &assets, &rock_run_assets, mcq.0, None),
             localization::get_translation(&locale, &assets, &rock_run_assets, mcq.1, None),
@@ -426,7 +437,7 @@ fn check_enigma(
                     &mut commands,
                     &rock_run_assets,
                     level,
-                    spawn_story,
+                    spawn_story_100,
                 );
             }
             "story06-03" => {
@@ -438,7 +449,19 @@ fn check_enigma(
                     &mut commands,
                     &rock_run_assets,
                     level,
-                    |_level, _commands| {},
+                    |_level, _assets, _commands| {},
+                );
+            }
+            "story07-04" => {
+                check_mcq(
+                    "story07-04",
+                    &enigmas,
+                    &params,
+                    &mut enigna_result,
+                    &mut commands,
+                    &rock_run_assets,
+                    level,
+                    spawn_key,
                 );
             }
             "story100-03" => {
@@ -456,7 +479,7 @@ fn check_enigma(
     }
 }
 
-fn spawn_story(level: &Level, commands: &mut Commands) {
+fn spawn_story_100(level: &Level, _rock_run_assets: &Res<RockRunAssets>, commands: &mut Commands) {
     let Vec2 { x, y } = level.map.tiled_to_bevy_coord(Vec2::new(7250.0, 608.0));
     commands
         .spawn((
@@ -470,6 +493,28 @@ fn spawn_story(level: &Level, commands: &mut Commands) {
         .insert(ColliderName("story100".to_string()));
 }
 
+fn spawn_key(level: &Level, rock_run_assets: &Res<RockRunAssets>, commands: &mut Commands) {
+    let start_pos = level.map.tiled_to_bevy_coord(Vec2::new(5984.0, 2064.0));
+    commands.spawn((
+        SpriteBundle {
+            texture: rock_run_assets.key.clone(),
+            sprite: Sprite { ..default() },
+            transform: Transform {
+                scale: Vec3::splat(KEY_SCALE_FACTOR),
+                translation: start_pos.extend(10.0),
+                ..default()
+            },
+            ..default()
+        },
+        Collider::cuboid(KEY_WIDTH / 2.0, KEY_HEIGHT / 2.0),
+        Sensor,
+        ActiveEvents::COLLISION_EVENTS,
+        ActiveCollisionTypes::KINEMATIC_STATIC,
+        Key,
+        ColliderName("key01".to_string()),
+    ));
+}
+
 #[allow(clippy::too_many_arguments)]
 fn check_mcq<F>(
     story: &str,
@@ -481,7 +526,7 @@ fn check_mcq<F>(
     level: &Level,
     correct_fn: F,
 ) where
-    F: Fn(&Level, &mut Commands),
+    F: Fn(&Level, &Res<RockRunAssets>, &mut Commands),
 {
     let mcq_values = enigmas
         .enigmas
@@ -504,7 +549,7 @@ fn check_mcq<F>(
 
     if mcq_values[2].contains(user_answer) {
         debug!("Correct answer: {}", user_answer);
-        correct_fn(level, commands);
+        correct_fn(level, rock_run_assets, commands);
         correct_answer(enigna_result, story, commands, rock_run_assets);
     } else {
         debug!("Incorrect answer: {}", user_answer);
