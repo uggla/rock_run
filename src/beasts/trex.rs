@@ -180,11 +180,14 @@ fn setup_trex(
             AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
             Collider::compound(get_collider_shapes(ColliderType::Normal, false)),
             KinematicCharacterController {
-                filter_flags: QueryFilterFlags::EXCLUDE_KINEMATIC,
+                filter_flags: QueryFilterFlags::ONLY_FIXED,
+                max_slope_climb_angle: 30.0f32.to_radians(),
+                // Automatically slide down on slopes smaller than 30 degrees.
+                min_slope_slide_angle: 30.0f32.to_radians(),
+                normal_nudge_factor: 1.0,
                 ..default()
             },
             Trex {
-                // current_movement: TrexMovement::Run(TrexDirection::default()),
                 current_movement: TrexMovement::default(),
             },
         ));
