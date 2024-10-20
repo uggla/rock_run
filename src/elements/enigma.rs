@@ -196,8 +196,8 @@ fn spawn_enigma_materials(
         ]),
     });
 
-    let mut n1 = rng.gen_range(0..=50);
-    let mut n2 = rng.gen_range(0..=50);
+    let mut n1 = rng.gen_range(0..=100);
+    let mut n2 = rng.gen_range(0..=100);
     if n2 > n1 {
         mem::swap(&mut n1, &mut n2);
     }
