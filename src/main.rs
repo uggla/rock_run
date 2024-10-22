@@ -12,7 +12,7 @@ mod music;
 mod player;
 mod screen_map;
 
-use bevy::{prelude::*, window::WindowResolution};
+use bevy::{asset::AssetMetaCheck, prelude::*, window::WindowResolution};
 use key::KeyPlugin;
 
 use crate::{
@@ -48,7 +48,14 @@ fn main() {
                 ..default()
             })
             // prevents blurry sprites
-            .set(ImagePlugin::default_nearest()),
+            .set(ImagePlugin::default_nearest())
+            .set(AssetPlugin {
+                // Wasm builds will check for meta files (that don't exist) if this isn't set.
+                // This causes errors and even panics in web builds on itch.
+                // See https://github.com/bevyengine/bevy_github_ci_template/issues/48.
+                meta_check: AssetMetaCheck::Never,
+                ..default()
+            }),
         CoreGamePlugins,
         ExternalPlugins,
         BeastsPlugins,
