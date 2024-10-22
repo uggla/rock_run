@@ -18,6 +18,9 @@ You can modify levels using [Tiled](https://www.mapeditor.org/), an excellent to
 
 ## Project status
 
+[![CI](https://github.com/uggla/rock_run/actions/workflows/ci.yaml/badge.svg)](https://github.com/uggla/rock_run/actions/workflows/ci.yaml)
+[![Release](https://github.com/uggla/rock_run/actions/workflows/release.yaml/badge.svg)](https://github.com/uggla/rock_run/actions/workflows/release.yaml)
+
 The project is currently under heavy development, and it does not make
 sense to provide binaries at this moment. However, as soon as the state
 is sufficiently advanced, binaries and a playable online version will
