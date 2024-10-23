@@ -1,14 +1,25 @@
 # Rock Run Rose's odyssey
 
-Rock Run Rose's Odyssey is a 2D old-school platformer game. The game is
-programmed in Rust and serves as an experiment with the Bevy framework.
+Rock Run Rose's Odyssey is a 2D old-school platformer game.
+
+In this game, you play as Rose, a young girl with green eyes living in
+prehistoric times. She ventured far from home in search of food, but
+dusk is approaching, and the night is dangerous, especially because of
+predators. Your mission is to help her avoid dangers and solve puzzles so
+she can return home safely.
 
 It is aimed at children around 8 years old, with the objective of enhancing
 reading skills through story following and mathematics (addition, subtraction,
 doubling, etc.) for puzzle solving while playing.
 
+The game is programmed in Rust and serves as an experiment with the Bevy
+framework.
+
 All assets are under CC0 license, most of them coming from the repository
-[https://github.com/sparklinlabs/superpowers-asset-packs](https://github.com/sparklinlabs/superpowers-asset-packs).
+[https://github.com/sparklinlabs/superpowers-asset-packs](https://github.com/sparklinlabs/superpowers-asset-packs)
+and [https://kenney.nl/](https://kenney.nl/).
+Consider supporting Kenney with a donation, as his work is fantastic and
+greatly aids hobbyists in game development.
 
 [https://github.com/BorisBoutillier/Kataster](https://github.com/BorisBoutillier/Kataster)
 is a great example of using Bevy, and the game draws inspiration and uses
@@ -21,10 +32,12 @@ You can modify levels using [Tiled](https://www.mapeditor.org/), an excellent to
 [![CI](https://github.com/uggla/rock_run/actions/workflows/ci.yaml/badge.svg)](https://github.com/uggla/rock_run/actions/workflows/ci.yaml)
 [![Release](https://github.com/uggla/rock_run/actions/workflows/release.yaml/badge.svg)](https://github.com/uggla/rock_run/actions/workflows/release.yaml)
 
-The project is currently under heavy development, and it does not make
-sense to provide binaries at this moment. However, as soon as the state
-is sufficiently advanced, binaries and a playable online version will
-be released.
+The project is currently in development, and the first release is now
+available, although there are still some known bugs (such as collision
+issues and the player sliding on horizontally moving platforms). You
+can find the binaries on [GitHub](https://github.com/uggla/rock_run) and
+itch.io. Additionally, an online WebAssembly (WASM) version is available at
+[https://uggla.itch.io/rockrun](https://uggla.itch.io/rockrun).
 
 Please note that the code in this project is far from clean or
 optimized. I am currently learning Bevy, and I've primarily focused
@@ -114,6 +127,13 @@ or
 
 cargo rwr  # for release mode
 ```
+
+## Debugging environment variables
+
+- `RUST_LOG="rock_run=debug"`: Enable debug logs.
+- `ROCKRUN_LEVEL`: Select the level to play.
+- `ROCKRUN_START_POSITION`: Sets the player's start position.
+- `ROCKRUN_GOD_MODE`: Disables deadly collisions.
 
 ## Known bug
 
