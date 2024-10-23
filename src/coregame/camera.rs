@@ -206,15 +206,31 @@ fn shake_camera(
     let shake_duration_sec = 6.0;
     let shake_amplitude = 20.0;
 
+    // Slightly zoom the camera to hide level boundaries
+    #[cfg(not(target_os = "linux"))]
+    let zoom_factor = match shake_timer.elapsed().as_secs_f32() {
+        0.0..2.5 => -0.022 * shake_timer.elapsed().as_secs_f32() + 1.0,
+        2.5..3.5 => 0.944,
+        3.5..6.0 => 0.022 * shake_timer.elapsed().as_secs_f32() + 1.0 - 0.132,
+        _ => 1.0,
+    };
+
+    #[cfg(target_os = "linux")]
+    let zoom_factor = 1.0;
+
+    let (mut camera_pos, mut camera_ortho) = camera_query.single_mut();
+
     if !game_event.is_empty() {
         *shake = Shake(false);
         game_event.clear();
+        camera_ortho.scale = 1.0;
         return;
     }
 
     if !restart_event.is_empty() {
         *shake = Shake(false);
         restart_event.clear();
+        camera_ortho.scale = 1.0;
         return;
     }
 
@@ -226,7 +242,9 @@ fn shake_camera(
 
     if *shake == Shake(true) && !shake_timer.finished() {
         shake_timer.tick(time.delta());
-        let (mut camera_pos, mut _camera_ortho) = camera_query.single_mut();
+
+        camera_ortho.scale = zoom_factor;
+
         camera_pos.translation.y += shake_amplitude
             * (PI * shake_timer.elapsed().as_secs_f32() / shake_duration_sec)
                 .sin()
