@@ -34,3 +34,4 @@
 - [x] Document debugging env vars.
 - [ ] Switch to english as default language.
 - [ ] Add persistant to keep language settings for the user.
+- [ ] Fix shaking bug that displays black lines on the top and bottom of the screen.
