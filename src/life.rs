@@ -103,10 +103,10 @@ fn show_life(
 
     let camera = camera_query.single();
 
-    #[cfg(not(target_arch = "wasm32"))]
+    #[cfg(target_os = "linux")]
     const TOP_MARGIN: f32 = 38.0;
 
-    #[cfg(target_arch = "wasm32")]
+    #[cfg(not(target_os = "linux"))]
     const TOP_MARGIN: f32 = 20.0;
 
     life_ui.translation = camera.translation

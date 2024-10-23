@@ -171,10 +171,10 @@ fn start_menu(
     rock_run_assets: Res<RockRunAssets>,
 ) {
     info!("start_menu");
-    #[cfg(not(target_arch = "wasm32"))]
+    #[cfg(target_os = "linux")]
     const TOP_MARGINS: [f32; 4] = [175.0, 275.0, 375.0, 475.0];
 
-    #[cfg(target_arch = "wasm32")]
+    #[cfg(not(target_os = "linux"))]
     const TOP_MARGINS: [f32; 4] = [185.0, 290.0, 395.0, 500.0];
 
     commands
