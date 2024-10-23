@@ -74,6 +74,13 @@ Use ⌨️ or 🎮 (left stick) to play.
 - ▶️ or **Esc** pause the game.
 - ◀️ or **Backspace** go back or exit the game.
 
+## Storage
+
+The game uses the [bevy_pkv](https://docs.rs/bevy_pkv/0.11.1/bevy_pkv)
+crate to store language preferences. On native systems, this creates a
+`bevy_pkv.redb` database in the system's application data directory. For
+WebAssembly (Wasm), it uses local storage.
+
 ## Run Locally (mainly for development purposes)
 
 1. Clone the project
@@ -134,6 +141,14 @@ cargo rwr  # for release mode
 - `ROCKRUN_LEVEL`: Select the level to play.
 - `ROCKRUN_START_POSITION`: Sets the player's start position.
 - `ROCKRUN_GOD_MODE`: Disables deadly collisions.
+
+## Debugging keys
+
+These controls are only available in debug mode.
+
+- F12 display perf ui (https://github.com/IyesGames/iyes_perf_ui).
+- W zoom out.
+- Z zoom in.
 
 ## Known bug
 
