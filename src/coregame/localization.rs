@@ -13,7 +13,7 @@ pub struct LocalizationPlugin;
 
 impl Plugin for LocalizationPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(Locale::new(langid!("fr-FR")))
+        app.insert_resource(Locale::new(langid!("en-US")))
             .add_systems(
                 Update,
                 localize_story_messages.run_if(not(in_state(AppState::Loading))),
