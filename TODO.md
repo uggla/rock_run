@@ -18,6 +18,7 @@
 - [x] Release a first version of the game on Itch.io with web version.
 - [x] Test on Windows.
 - [ ] Test on MacOS.
+- [ ] Add a target build for Raspberry Pi.
 - [ ] Test on Raspberry Pi.
 - [ ] Add more enigmas.
 - [ ] Add a envvar to enable fixing menu position.
@@ -33,6 +34,6 @@
 - [x] Add a link to kenney.nl within doc.
 - [x] Document debugging env vars.
 - [x] Switch to english as default language.
-- [ ] Add persistant to keep language settings for the user.
+- [x] Add persistant to keep language settings for the user.
 - [x] Fix shaking bug that displays black lines on the top and bottom of the screen.
-- [ ] Add debugging keys.
+- [x] Add debugging keys.
