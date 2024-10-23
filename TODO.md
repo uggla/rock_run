@@ -16,7 +16,7 @@
 - [ ] Remove remaining debugging stuffs especially on main.rs.
 - [x] Release a first version of the game on Github.
 - [x] Release a first version of the game on Itch.io with web version.
-- [ ] Test on Windows.
+- [x] Test on Windows.
 - [ ] Test on MacOS.
 - [ ] Test on Raspberry Pi.
 - [ ] Add more enigmas.
@@ -32,6 +32,7 @@
 - [ ] Refactor to use despawn with ForState method ?
 - [x] Add a link to kenney.nl within doc.
 - [x] Document debugging env vars.
-- [ ] Switch to english as default language.
+- [x] Switch to english as default language.
 - [ ] Add persistant to keep language settings for the user.
-- [ ] Fix shaking bug that displays black lines on the top and bottom of the screen.
+- [x] Fix shaking bug that displays black lines on the top and bottom of the screen.
+- [ ] Add debugging keys.
