@@ -4,7 +4,7 @@
 - [x] Refactor to use [bevy_asset_loader](https://github.com/NiklasEi/bevy_asset_loader).
 - [x] Bump to bevy 0.14.
 - [x] Add background musics.
-- [ ] Add trex.
+- [x] Add trex.
 - [x] Add an enigma that drop a rock allowing to go over spikes.
 - [x] Review enigmas colors.
 - [x] Improve level 1.
@@ -14,8 +14,8 @@
 - [x] Update doc about tiled.
 - [x] Add a squirrel and a challenge to get all his nuts.
 - [ ] Remove remaining debugging stuffs especially on main.rs.
-- [ ] Release a first version of the game on Github.
-- [ ] Release a first version of the game on Itch.io with web version.
+- [x] Release a first version of the game on Github.
+- [x] Release a first version of the game on Itch.io with web version.
 - [ ] Test on Windows.
 - [ ] Test on MacOS.
 - [ ] Test on Raspberry Pi.
@@ -30,4 +30,7 @@
 - [ ] Add more beasts.
 - [x] Check hit collision bugs.
 - [ ] Refactor to use despawn with ForState method ?
-- [ ] Add a link to kenney.nl within doc.
+- [x] Add a link to kenney.nl within doc.
+- [x] Document debugging env vars.
+- [ ] Switch to english as default language.
+- [ ] Add persistant to keep language settings for the user.
