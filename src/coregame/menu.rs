@@ -5,6 +5,7 @@ use bevy::{app::AppExit, audio::PlaybackMode};
 
 use bevy::prelude::*;
 use bevy_fluent::{BundleAsset, Locale};
+use bevy_pkv::PkvStore;
 use bevy_rapier2d::plugin::RapierConfiguration;
 use leafwing_input_manager::{
     action_state::ActionState, axislike::SingleAxis, input_map::InputMap,
@@ -85,7 +86,8 @@ impl Plugin for MenuPlugin {
             .add_event::<StartGame>()
             .insert_resource(Godmode(false))
             .insert_resource(StartLevel(1))
-            .insert_resource(StartPos(None));
+            .insert_resource(StartPos(None))
+            .insert_resource(PkvStore::new("DamageInc", "RockRun"));
     }
 }
 
@@ -166,9 +168,10 @@ fn setup(
 
 fn start_menu(
     mut commands: Commands,
-    locale: Res<Locale>,
+    mut locale: ResMut<Locale>,
     assets: Res<Assets<BundleAsset>>,
     rock_run_assets: Res<RockRunAssets>,
+    pkv: ResMut<PkvStore>,
 ) {
     info!("start_menu");
     #[cfg(target_os = "linux")]
@@ -176,6 +179,14 @@ fn start_menu(
 
     #[cfg(not(target_os = "linux"))]
     const TOP_MARGINS: [f32; 4] = [185.0, 290.0, 395.0, 500.0];
+
+    if let Ok(langid) = pkv.get::<String>("langid") {
+        match langid.as_str() {
+            "fr-FR" => locale.requested = langid!("fr-FR"),
+            "en-US" => locale.requested = langid!("en-US"),
+            _ => locale.requested = langid!("en-US"),
+        }
+    }
 
     commands
         .spawn((
@@ -416,6 +427,7 @@ fn update_menu(
     mut query2: Query<&mut Text, Select2>,
     assets: Res<Assets<BundleAsset>>,
     rock_run_assets: Res<RockRunAssets>,
+    mut pkv: ResMut<PkvStore>,
 ) {
     enum MenuColor {
         Selected,
@@ -459,6 +471,8 @@ fn update_menu(
             1 => {
                 info!("French");
                 locale.requested = langid!("fr-FR");
+                pkv.set_string("langid", "fr-FR")
+                    .expect("failed to store langid");
                 refresh_menu_items(
                     &locale,
                     assets,
@@ -471,6 +485,8 @@ fn update_menu(
             2 => {
                 info!("English");
                 locale.requested = langid!("en-US");
+                pkv.set_string("langid", "en-US")
+                    .expect("failed to store langid");
                 refresh_menu_items(
                     &locale,
                     assets,
