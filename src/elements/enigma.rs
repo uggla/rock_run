@@ -144,6 +144,16 @@ fn spawn_enigma_materials(
             "non-napoleon-answer",
             "napoleon-answer",
         ),
+        (
+            "largest-ocean-question",
+            "non-largest-ocean",
+            "largest-ocean",
+        ),
+        (
+            "largest-animal-question",
+            "non-largest-animal",
+            "largest-animal",
+        ),
     ];
 
     mcqs.shuffle(&mut thread_rng());
