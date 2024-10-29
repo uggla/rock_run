@@ -17,7 +17,7 @@
 - [x] Release a first version of the game on Github.
 - [x] Release a first version of the game on Itch.io with web version.
 - [x] Test on Windows.
-- [ ] Test on MacOS.
+- [x] Test on MacOS.
 - [ ] Add a target build for Raspberry Pi.
 - [ ] Test on Raspberry Pi.
 - [ ] Add more enigmas.
