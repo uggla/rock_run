@@ -399,7 +399,7 @@ fn spawn_enigma_materials(
                         translation: level
                             .map
                             .tiled_to_bevy_coord(Vec2::new(5488.0, 615.0))
-                            .extend(1.0),
+                            .extend(2.0),
                         ..default()
                     },
                     ..default()

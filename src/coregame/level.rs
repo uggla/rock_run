@@ -1,4 +1,10 @@
-use bevy::{prelude::*, utils::HashMap};
+use bevy::{
+    color,
+    prelude::*,
+    render::render_resource::{AsBindGroup, ShaderRef},
+    sprite::{Material2d, Material2dPlugin, MaterialMesh2dBundle},
+    utils::HashMap,
+};
 use bevy_ecs_tilemap::tiles::{TileStorage, TileVisible};
 use bevy_fluent::{BundleAsset, Locale};
 
@@ -31,6 +37,9 @@ pub struct Level {
 }
 
 #[derive(Component)]
+struct ShaderLevel;
+
+#[derive(Component)]
 struct DisplayLevel;
 
 #[derive(Component)]
@@ -46,17 +55,32 @@ impl Plugin for LevelPlugin {
         app.add_systems(OnExit(AppState::Loading), setup_background)
             .add_systems(
                 OnEnter(AppState::GameCreate),
-                (show_level_background, show_current_level),
+                (
+                    show_level_background,
+                    show_current_level,
+                    show_level_shaders,
+                ),
             )
             .add_systems(
                 OnEnter(AppState::NextLevel),
-                (show_level_background, show_current_level),
+                (
+                    show_level_background,
+                    show_current_level,
+                    show_level_shaders,
+                ),
             )
             .add_systems(
                 OnEnter(AppState::StartMenu),
-                (hide_level_background, despawn_display_level),
+                (
+                    hide_level_background,
+                    despawn_display_level,
+                    despawn_shader_level,
+                ),
             )
-            .add_systems(OnEnter(AppState::FinishLevel), hide_level_background)
+            .add_systems(
+                OnEnter(AppState::FinishLevel),
+                (hide_level_background, despawn_shader_level),
+            )
             .add_systems(
                 Update,
                 (check_exit, fade_display_level).run_if(in_state(AppState::GameRunning)),
@@ -64,6 +88,8 @@ impl Plugin for LevelPlugin {
             .insert_resource(CurrentLevel { id: 1 })
             .add_event::<Restart>()
             .add_event::<NextLevel>();
+
+        app.add_plugins(Material2dPlugin::<MysteriousFogMaterial>::default());
     }
 }
 
@@ -114,6 +140,89 @@ fn setup_background(mut commands: Commands, rock_run_assets: Res<RockRunAssets>)
             ),
         },
     ));
+}
+
+fn show_level_shaders(
+    mut commands: Commands,
+    current_level: Res<CurrentLevel>,
+    levels: Query<&Level, With<Level>>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut mysterious_fog: ResMut<Assets<MysteriousFogMaterial>>,
+) {
+    info!("show level shaders for level {:?}", current_level.id);
+
+    let level = levels
+        .iter()
+        .find(|level| level.id == current_level.id)
+        .unwrap();
+
+    #[allow(clippy::single_match)]
+    match current_level.id {
+        3 => {
+            commands.spawn((
+                MaterialMesh2dBundle {
+                    mesh: meshes.add(Rectangle::default()).into(),
+                    transform: Transform {
+                        translation: level
+                            .map
+                            .tiled_to_bevy_coord(Vec2::new(
+                                3024.0 + (3376.0 / 2.0),
+                                720.0 + (720.0 / 2.0),
+                            ))
+                            .extend(0.0),
+                        scale: Vec3::new(3376.0, 720.0, 0.0),
+                        ..default()
+                    },
+                    material: mysterious_fog.add(MysteriousFogMaterial {
+                        color: LinearRgba::from(color::palettes::css::GOLD),
+                    }),
+                    ..default()
+                },
+                ShaderLevel,
+            ));
+        }
+        _ => {}
+    }
+
+    commands.spawn((MaterialMesh2dBundle {
+        mesh: meshes.add(Rectangle::default()).into(),
+        transform: Transform {
+            translation: level
+                .map
+                .tiled_to_bevy_coord(Vec2::new(3024.0 + (3376.0 / 2.0), 720.0 + (720.0 / 2.0)))
+                .extend(0.0),
+            scale: Vec3::new(3376.0, 720.0, 0.0),
+            ..default()
+        },
+        material: mysterious_fog.add(MysteriousFogMaterial {
+            color: LinearRgba::from(color::palettes::css::GOLD),
+        }),
+        ..default()
+    },));
+}
+
+// This is the struct that will be passed to your shader
+#[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
+struct MysteriousFogMaterial {
+    #[uniform(0)]
+    color: LinearRgba,
+    // #[texture(1)]
+    // #[sampler(2)]
+    // color_texture: Option<Handle<Image>>,
+}
+
+/// The Material2d trait is very configurable, but comes with sensible defaults for all methods.
+/// You only need to implement functions for features that need non-default behavior. See the Material2d api docs for details!
+impl Material2d for MysteriousFogMaterial {
+    fn fragment_shader() -> ShaderRef {
+        "shaders/mysterious_fog_material.wgsl".into()
+    }
+}
+
+fn despawn_shader_level(mut commands: Commands, shader_levels: Query<Entity, With<ShaderLevel>>) {
+    for shader_level in shader_levels.iter() {
+        commands.entity(shader_level).despawn_recursive();
+    }
 }
 
 fn show_current_level(

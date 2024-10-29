@@ -3,7 +3,7 @@
         "height": 4300,
         "width": 2
     },
-    "activeFile": "level02.tmx",
+    "activeFile": "level03.tmx",
     "expandedProjectPaths": [
         "."
     ],
@@ -14,17 +14,17 @@
         },
         "level01.tmx": {
             "expandedObjectLayers": [
-                5,
-                4,
-                9,
                 8,
-                6
+                9,
+                6,
+                4,
+                5
             ],
             "scale": 0.75,
             "selectedLayer": 10,
             "viewCenter": {
-                "x": 6844,
-                "y": 518
+                "x": 6402.666666666666,
+                "y": 359.3333333333333
             }
         },
         "level01.tmx#backgrounds": {
@@ -73,18 +73,18 @@
         },
         "level02.tmx": {
             "expandedObjectLayers": [
-                3,
-                17,
-                13,
                 12,
+                13,
                 10,
-                8
+                8,
+                3,
+                17
             ],
             "scale": 1,
             "selectedLayer": 15,
             "viewCenter": {
-                "x": 12506,
-                "y": 1819.5
+                "x": 6400,
+                "y": 1079.5
             }
         },
         "level02.tmx#cloud-1": {
@@ -134,15 +134,15 @@
         },
         "level03.tmx": {
             "expandedObjectLayers": [
+                8,
                 4,
-                3,
-                8
+                3
             ],
-            "scale": 1.5,
-            "selectedLayer": 3,
+            "scale": 1,
+            "selectedLayer": 1,
             "viewCenter": {
-                "x": 5532,
-                "y": 633
+                "x": 6008,
+                "y": 899.5
             }
         },
         "level03.tmx#grad-1": {
@@ -190,8 +190,8 @@
     "project": "rockrun.tiled-project",
     "recentFiles": [
         "level01.tmx",
-        "level03.tmx",
         "level02.tmx",
+        "level03.tmx",
         "menu.tmx"
     ],
     "tileset.embedInMap": true,
