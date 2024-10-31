@@ -616,7 +616,12 @@ fn fireball_collisions(
     mut collision_events: EventReader<CollisionEvent>,
     player: Query<Entity, With<Player>>,
     mut hit: EventWriter<Hit>,
+    god_mode: Res<Godmode>,
 ) {
+    if god_mode.0 {
+        return;
+    }
+
     let player_entity = match player.get_single() {
         Ok(entity) => entity,
         Err(_) => return,
