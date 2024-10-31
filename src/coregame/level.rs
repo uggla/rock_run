@@ -183,22 +183,6 @@ fn show_level_shaders(
         }
         _ => {}
     }
-
-    commands.spawn((MaterialMesh2dBundle {
-        mesh: meshes.add(Rectangle::default()).into(),
-        transform: Transform {
-            translation: level
-                .map
-                .tiled_to_bevy_coord(Vec2::new(3024.0 + (3376.0 / 2.0), 720.0 + (720.0 / 2.0)))
-                .extend(0.0),
-            scale: Vec3::new(3376.0, 720.0, 0.0),
-            ..default()
-        },
-        material: mysterious_fog.add(MysteriousFogMaterial {
-            color: LinearRgba::from(color::palettes::css::GOLD),
-        }),
-        ..default()
-    },));
 }
 
 // This is the struct that will be passed to your shader
