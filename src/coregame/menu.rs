@@ -128,7 +128,7 @@ fn setup(
     }
 
     let mut input_map = InputMap::<MenuAction>::new([
-        (MenuAction::Accept, KeyCode::Enter),
+        (MenuAction::Accept, KeyCode::Space),
         (MenuAction::PauseUnpause, KeyCode::Escape),
         (MenuAction::ExitToMenu, KeyCode::Backspace),
         (MenuAction::Up, KeyCode::ArrowUp),
