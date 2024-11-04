@@ -427,6 +427,7 @@ fn check_enigma(
     levels: Query<&Level, With<Level>>,
     current_level: Res<CurrentLevel>,
     collected_keys: Res<Keys>,
+    stories_query: Query<(Entity, &ColliderName), With<Story>>,
 ) {
     for ev in no_more_msg_event.read() {
         debug!("No more story messages: {:?}", ev.latest);
@@ -458,7 +459,13 @@ fn check_enigma(
 
                 if n1 + n2 == user_answer {
                     debug!("Correct answer: {} + {} = {}", n1, n2, user_answer);
-                    correct_answer(&mut enigna_result, story, &mut commands, &rock_run_assets);
+                    correct_answer(
+                        &mut enigna_result,
+                        story,
+                        &mut commands,
+                        &rock_run_assets,
+                        &stories_query,
+                    );
                 } else {
                     debug!("Incorrect answer: {} + {} = {}", n1, n2, user_answer);
                     wrong_answer(&mut enigna_result, story, &mut commands, &rock_run_assets);
@@ -484,7 +491,13 @@ fn check_enigma(
 
                 if n1 * 2 == user_answer {
                     debug!("Correct answer: {} * 2 = {}", n1, user_answer);
-                    correct_answer(&mut enigna_result, story, &mut commands, &rock_run_assets);
+                    correct_answer(
+                        &mut enigna_result,
+                        story,
+                        &mut commands,
+                        &rock_run_assets,
+                        &stories_query,
+                    );
                 } else {
                     debug!("Incorrect answer: {} * 2 = {}", n1, user_answer);
                     wrong_answer(&mut enigna_result, story, &mut commands, &rock_run_assets);
@@ -499,6 +512,7 @@ fn check_enigma(
                     &mut commands,
                     &rock_run_assets,
                     level,
+                    &stories_query,
                     spawn_story_100,
                 );
             }
@@ -511,6 +525,7 @@ fn check_enigma(
                     &mut commands,
                     &rock_run_assets,
                     level,
+                    &stories_query,
                     |_level, _assets, _commands| {},
                 );
             }
@@ -523,6 +538,7 @@ fn check_enigma(
                     &mut commands,
                     &rock_run_assets,
                     level,
+                    &stories_query,
                     spawn_key,
                 );
             }
@@ -550,7 +566,13 @@ fn check_enigma(
                         "Correct answer: {} - {} = {} | Collected keys: {}",
                         n1, n2, user_answer, collected_keys.numbers
                     );
-                    correct_answer(&mut enigna_result, story, &mut commands, &rock_run_assets);
+                    correct_answer(
+                        &mut enigna_result,
+                        story,
+                        &mut commands,
+                        &rock_run_assets,
+                        &stories_query,
+                    );
                     spawn_story_101(level, &rock_run_assets, &mut commands);
                 } else {
                     debug!(
@@ -564,7 +586,13 @@ fn check_enigma(
                 let story = "story100-03";
                 if nuts.len() == 11 {
                     debug!("Correct answer: {}", nuts.len());
-                    correct_answer(&mut enigna_result, story, &mut commands, &rock_run_assets);
+                    correct_answer(
+                        &mut enigna_result,
+                        story,
+                        &mut commands,
+                        &rock_run_assets,
+                        &stories_query,
+                    );
                 } else {
                     debug!("Incorrect answer: {}", nuts.len());
                     wrong_answer(&mut enigna_result, story, &mut commands, &rock_run_assets);
@@ -593,7 +621,13 @@ fn check_enigma(
                         "Correct answer: {} / 2 = {} | Collected keys: {}",
                         n1, user_answer, collected_keys.numbers
                     );
-                    correct_answer(&mut enigna_result, story, &mut commands, &rock_run_assets);
+                    correct_answer(
+                        &mut enigna_result,
+                        story,
+                        &mut commands,
+                        &rock_run_assets,
+                        &stories_query,
+                    );
                 } else {
                     debug!(
                         "Incorrect answer: {} - / 2 = {} | Collected keys: {}",
@@ -666,6 +700,7 @@ fn check_mcq<F>(
     commands: &mut Commands,
     rock_run_assets: &Res<RockRunAssets>,
     level: &Level,
+    stories_query: &Query<(Entity, &ColliderName), With<Story>>,
     correct_fn: F,
 ) where
     F: Fn(&Level, &Res<RockRunAssets>, &mut Commands),
@@ -692,7 +727,13 @@ fn check_mcq<F>(
     if mcq_values[2].contains(user_answer) {
         debug!("Correct answer: {}", user_answer);
         correct_fn(level, rock_run_assets, commands);
-        correct_answer(enigna_result, story, commands, rock_run_assets);
+        correct_answer(
+            enigna_result,
+            story,
+            commands,
+            rock_run_assets,
+            stories_query,
+        );
     } else {
         debug!("Incorrect answer: {}", user_answer);
         wrong_answer(enigna_result, story, commands, rock_run_assets);
@@ -721,6 +762,7 @@ fn correct_answer(
     story: &str,
     commands: &mut Commands,
     rock_run_assets: &Res<RockRunAssets>,
+    stories_query: &Query<(Entity, &ColliderName), With<Story>>,
 ) {
     enigna_result.send(EnigmaResult::Correct(story.to_string()));
     commands.spawn(AudioBundle {
@@ -730,6 +772,13 @@ fn correct_answer(
             ..default()
         },
     });
+
+    for (entity, collider_name) in stories_query.iter() {
+        if story.contains(&collider_name.0) {
+            debug!("Despawn story: {}", collider_name.0);
+            commands.entity(entity).despawn_recursive();
+        }
+    }
 }
 
 fn move_warrior(
