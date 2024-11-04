@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [rockrun-0.2.2] - 2024-11-04
+
+### 🐛 Bug Fixes
+
+- Keyboard controls not aligned with documentation
+- #1 not allowing to answer multiple times a correct answer
+
+### 📚 Documentation
+
+- Update README.md, add a TLDR section
+
 ## [rockrun-0.2.1] - 2024-10-31
 
 ### 🐛 Bug Fixes
