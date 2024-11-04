@@ -1,5 +1,11 @@
 # Rock Run Rose's odyssey
 
+## TLDR I want to play !
+
+[https://uggla.itch.io/rockrun](https://uggla.itch.io/rockrun).
+
+## Overview
+
 Rock Run Rose's Odyssey is a 2D old-school platformer game.
 
 In this game, you play as Rose, a young girl with green eyes living in
@@ -36,7 +42,7 @@ The project is currently in development, and the first release is now
 available, although there are still some known bugs (such as collision
 issues and the player sliding on horizontally moving platforms). You
 can find the binaries on [GitHub](https://github.com/uggla/rock_run) and
-itch.io. Additionally, an online WebAssembly (WASM) version is available at
+itch.io. Additionally, **an online WebAssembly (WASM) version** is available at
 [https://uggla.itch.io/rockrun](https://uggla.itch.io/rockrun).
 
 Please note that the code in this project is far from clean or
