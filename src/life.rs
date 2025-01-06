@@ -79,15 +79,16 @@ fn spawn_life_entity(
 ) -> Entity {
     let x_offset = life.entities.len() as f32 * 20.0;
     let child = commands
-        .spawn(SpriteBundle {
-            texture: texture.clone(),
-            sprite: Sprite { ..default() },
-            transform: Transform {
+        .spawn((
+            Sprite {
+                image: texture.clone(),
+                ..default()
+            },
+            Transform {
                 translation: Vec3::new(x_offset, 0.0, 0.0),
                 ..default()
             },
-            ..default()
-        })
+        ))
         .id();
     child
 }
@@ -121,7 +122,7 @@ fn show_life(
 fn life_management(
     mut commands: Commands,
     rock_run_assets: Res<RockRunAssets>,
-    mut life_ui: Query<&Handle<Image>, With<LifeUI>>,
+    mut life_ui: Query<&Sprite, With<LifeUI>>,
     mut life: ResMut<Life>,
     mut life_event: EventReader<LifeEvent>,
     mut next_state: ResMut<NextState<AppState>>,
@@ -129,18 +130,18 @@ fn life_management(
     for ev in life_event.read() {
         match ev {
             LifeEvent::Win => {
-                let texture = life_ui.single_mut();
-                let child = spawn_life_entity(&mut commands, &life, texture);
+                let sprite = life_ui.single_mut();
+                let child = spawn_life_entity(&mut commands, &life, &sprite.image);
                 commands.entity(life.entities[0]).add_child(child);
                 life.entities.push(child);
-                commands.spawn(AudioBundle {
-                    source: rock_run_assets.get_something_sound.clone(),
-                    settings: PlaybackSettings {
+                commands.spawn((
+                    AudioPlayer::new(rock_run_assets.get_something_sound.clone()),
+                    PlaybackSettings {
                         mode: PlaybackMode::Despawn,
                         volume: Volume::new(0.8),
                         ..default()
                     },
-                });
+                ));
             }
             LifeEvent::Lost => match life.entities.pop() {
                 Some(entity) => {
@@ -201,14 +202,13 @@ fn setup_extralife(
 
     for start_pos in start_positions {
         commands.spawn((
-            SpriteBundle {
-                texture: texture.clone(),
-                sprite: Sprite { ..default() },
-                transform: Transform {
-                    scale: Vec3::splat(LIFE_SCALE_FACTOR),
-                    translation: start_pos.extend(10.0),
-                    ..default()
-                },
+            Sprite {
+                image: texture.clone(),
+                ..default()
+            },
+            Transform {
+                scale: Vec3::splat(LIFE_SCALE_FACTOR),
+                translation: start_pos.extend(10.0),
                 ..default()
             },
             Collider::cuboid(LIFE_WIDTH / 2.0, LIFE_HEIGHT / 2.0),

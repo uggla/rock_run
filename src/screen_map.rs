@@ -548,7 +548,7 @@ impl Map {
 
         camera_pos.x = old_pos
             .x
-            .lerp(camera_pos.x, smooth_factor.x * time.delta_seconds());
+            .lerp(camera_pos.x, smooth_factor.x * time.delta_secs());
         // camera_pos.y = old_pos
         //     .y
         //     .lerp(camera_pos.y, smooth_factor.y * time.delta_seconds());

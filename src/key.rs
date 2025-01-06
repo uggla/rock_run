@@ -47,14 +47,14 @@ fn check_get_key(
         commands.entity(ev.entity).despawn_recursive();
         keys.numbers += 1;
         debug!("Collected keys {}", keys.numbers);
-        commands.spawn(AudioBundle {
-            source: rock_run_assets.get_something_sound.clone(),
-            settings: PlaybackSettings {
+        commands.spawn((
+            AudioPlayer::new(rock_run_assets.get_something_sound.clone()),
+            PlaybackSettings {
                 mode: PlaybackMode::Despawn,
                 volume: Volume::new(0.8),
                 ..default()
             },
-        });
+        ));
     }
 }
 

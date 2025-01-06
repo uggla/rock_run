@@ -104,20 +104,17 @@ fn spawn_bat(
         let texture_atlas_layout = texture_atlases.add(layout);
 
         commands.spawn((
-            SpriteBundle {
+            Sprite::from_atlas_image(
                 texture,
-                sprite: Sprite { ..default() },
-
-                transform: Transform {
-                    scale: Vec3::splat(BAT_SCALE_FACTOR),
-                    translation: collision_event.spawn_pos.extend(20.0),
-                    ..default()
+                TextureAtlas {
+                    layout: texture_atlas_layout,
+                    index: 0,
                 },
+            ),
+            Transform {
+                scale: Vec3::splat(BAT_SCALE_FACTOR),
+                translation: collision_event.spawn_pos.extend(20.0),
                 ..default()
-            },
-            TextureAtlas {
-                layout: texture_atlas_layout,
-                index: 0,
             },
             RigidBody::KinematicPositionBased,
             AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
@@ -133,13 +130,13 @@ fn spawn_bat(
             },
         ));
 
-        commands.spawn(AudioBundle {
-            source: rock_run_assets.bat_sound.clone(),
-            settings: PlaybackSettings {
+        commands.spawn((
+            AudioPlayer::new(rock_run_assets.bat_sound.clone()),
+            PlaybackSettings {
                 mode: PlaybackMode::Despawn,
                 ..default()
             },
-        });
+        ));
     }
 }
 

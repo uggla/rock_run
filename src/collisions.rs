@@ -321,16 +321,18 @@ fn story_collisions(
                     let pos = entity_pos.get(entity).unwrap();
                     debug!("Collision: {:?}", pos);
                     commands
-                        .spawn(SpriteBundle {
-                            texture: rock_run_assets.story_qm.clone(),
-                            transform: Transform {
+                        .spawn((
+                            Sprite {
+                                image: rock_run_assets.story_qm.clone(),
+                                ..default()
+                            },
+                            Transform {
                                 translation: pos.translation
                                     + Vec3::new(0.0, PLAYER_HEIGHT / 2.0 + 20.0, 20.0),
                                 scale: Vec3::splat(1.5),
                                 ..default()
                             },
-                            ..default()
-                        })
+                        ))
                         .insert(StoryQM(collider_name.0.clone()));
                 };
             }
