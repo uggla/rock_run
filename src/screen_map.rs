@@ -350,10 +350,7 @@ impl Map {
     ///  assert_eq!(screen.unwrap().get_indices(), (1,0));
     /// ```
     pub fn get_above_screen(&self, point: Vec2) -> Option<&Screen> {
-        let screen = match self.get_screen(point, 0.0, 0.0) {
-            Some(screen) => screen,
-            None => return None,
-        };
+        let screen = self.get_screen(point, 0.0, 0.0)?;
 
         let (x_index, y_index) = screen.get_indices();
 
@@ -386,10 +383,7 @@ impl Map {
     ///  assert_eq!(screen.unwrap().get_indices(), (1,2));
     /// ```
     pub fn get_below_screen(&self, point: Vec2) -> Option<&Screen> {
-        let screen = match self.get_screen(point, 0.0, 0.0) {
-            Some(screen) => screen,
-            None => return None,
-        };
+        let screen = self.get_screen(point, 0.0, 0.0)?;
 
         let (x_index, y_index) = screen.get_indices();
 
@@ -869,6 +863,9 @@ mod tests {
         world.insert_resource(time);
         let time = world.resource_ref::<Time>();
 
+        // TODO: Remove this unsafe
+        // https://github.com/bevyengine/bevy/issues/16831
+        let time = unsafe { std::mem::transmute::<Ref<'_, Time>, Res<'_, Time>>(time) };
         // From middle screen
         // Move to right
         assert_eq!(
@@ -984,6 +981,10 @@ mod tests {
         time.advance_by(std::time::Duration::from_secs(1));
         world.insert_resource(time);
         let time = world.resource_ref::<Time>();
+
+        // TODO: Remove this unsafe
+        // https://github.com/bevyengine/bevy/issues/16831
+        let time = unsafe { std::mem::transmute::<Ref<'_, Time>, Res<'_, Time>>(time) };
 
         assert_eq!(map.get_start_screen().get_center(), Vec2::new(-1280.0, 0.0));
 

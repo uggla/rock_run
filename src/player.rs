@@ -3,8 +3,8 @@ use bevy_rapier2d::{
     control::KinematicCharacterController, dynamics::RigidBody, geometry::Collider,
 };
 use leafwing_input_manager::{
-    action_state::ActionState, axislike::SingleAxis, input_map::InputMap,
-    plugin::InputManagerPlugin, Actionlike, InputManagerBundle,
+    action_state::ActionState, input_map::InputMap, plugin::InputManagerPlugin, Actionlike,
+    InputManagerBundle,
 };
 
 use crate::{
@@ -134,23 +134,23 @@ fn setup_player(
         (PlayerMovement::Crouch, KeyCode::ArrowDown),
     ]);
 
-    input_map.insert(PlayerMovement::Jump, GamepadButtonType::South);
-    input_map.insert(
-        PlayerMovement::Run(PlayerDirection::Right),
-        SingleAxis::positive_only(GamepadAxisType::LeftStickX, 0.4),
-    );
-    input_map.insert(
-        PlayerMovement::Run(PlayerDirection::Left),
-        SingleAxis::negative_only(GamepadAxisType::LeftStickX, -0.4),
-    );
-    input_map.insert(
-        PlayerMovement::Climb,
-        SingleAxis::positive_only(GamepadAxisType::LeftStickY, 0.4),
-    );
-    input_map.insert(
-        PlayerMovement::Crouch,
-        SingleAxis::negative_only(GamepadAxisType::LeftStickY, -0.4),
-    );
+    // input_map.insert(PlayerMovement::Jump, GamepadButtonType::South);
+    // input_map.insert(
+    //     PlayerMovement::Run(PlayerDirection::Right),
+    //     SingleAxis::positive_only(GamepadAxisType::LeftStickX, 0.4),
+    // );
+    // input_map.insert(
+    //     PlayerMovement::Run(PlayerDirection::Left),
+    //     SingleAxis::negative_only(GamepadAxisType::LeftStickX, -0.4),
+    // );
+    // input_map.insert(
+    //     PlayerMovement::Climb,
+    //     SingleAxis::positive_only(GamepadAxisType::LeftStickY, 0.4),
+    // );
+    // input_map.insert(
+    //     PlayerMovement::Crouch,
+    //     SingleAxis::negative_only(GamepadAxisType::LeftStickY, -0.4),
+    // );
 
     let start_position: Vec3 = match start_position.0 {
         Some(position) => {
@@ -161,19 +161,18 @@ fn setup_player(
     };
 
     commands.spawn((
-        SpriteBundle {
-            texture,
-            sprite: Sprite { ..default() },
-            transform: Transform {
-                scale: Vec3::splat(PLAYER_SCALE_FACTOR),
-                translation: start_position,
-                ..default()
-            },
+        Sprite {
+            image: texture,
+            texture_atlas: Some(TextureAtlas {
+                layout: texture_atlas_layout,
+                index: 0,
+            }),
             ..default()
         },
-        TextureAtlas {
-            layout: texture_atlas_layout,
-            index: 0,
+        Transform {
+            scale: Vec3::splat(PLAYER_SCALE_FACTOR),
+            translation: start_position,
+            ..default()
         },
         RigidBody::KinematicPositionBased,
         AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
@@ -210,7 +209,7 @@ fn move_player(
         ),
         With<Player>,
     >,
-    mut animation_query: Query<(&mut AnimationTimer, &mut TextureAtlas, &mut Sprite)>,
+    mut animation_query: Query<(&mut AnimationTimer, &mut Sprite)>,
     state: Res<State<PlayerState>>,
     mut next_state: ResMut<NextState<PlayerState>>,
     mut jump_timer: Query<&mut JumpTimer>,
@@ -229,7 +228,7 @@ fn move_player(
     let mut direction_y = 0.0;
     let mut anim = |current_movement: PlayerMovement| match current_movement {
         PlayerMovement::Run(player_direction) => {
-            let (mut anim_timer, mut texture, mut sprite) = animation_query.single_mut();
+            let (mut anim_timer, mut sprite) = animation_query.single_mut();
             anim_timer.tick(time.delta());
             match player_direction {
                 PlayerDirection::Left => {
@@ -250,58 +249,78 @@ fn move_player(
                 match state.get() {
                     PlayerState::Jumping => {}
                     PlayerState::Falling => {
-                        cycle_texture(&mut texture, 14..=16);
+                        if let Some(texture) = &mut sprite.texture_atlas {
+                            cycle_texture(texture, 14..=16);
+                        }
                     }
                     PlayerState::Climbing => {
-                        cycle_texture(&mut texture, 33..=36);
+                        if let Some(texture) = &mut sprite.texture_atlas {
+                            cycle_texture(texture, 33..=36);
+                        }
                     }
                     _ => {
-                        cycle_texture(&mut texture, 6..=10);
+                        if let Some(texture) = &mut sprite.texture_atlas {
+                            cycle_texture(texture, 6..=10);
+                        }
                     }
                 }
             }
         }
         PlayerMovement::Idle => {
-            let (mut anim_timer, mut texture, _) = animation_query.single_mut();
+            let (mut anim_timer, mut sprite) = animation_query.single_mut();
             anim_timer.tick(time.delta());
             if anim_timer.just_finished() {
                 match state.get() {
                     PlayerState::Jumping => {}
                     PlayerState::Climbing => {
-                        texture.index = 34;
+                        if let Some(texture) = &mut sprite.texture_atlas {
+                            texture.index = 34;
+                        }
                     }
                     PlayerState::Falling => {
-                        cycle_texture(&mut texture, 14..=16);
+                        if let Some(texture) = &mut sprite.texture_atlas {
+                            cycle_texture(texture, 14..=16);
+                        }
                     }
                     _ => {
-                        swing_texture(&mut texture, 0..=4, &mut index_direction);
+                        if let Some(texture) = &mut sprite.texture_atlas {
+                            swing_texture(texture, 0..=4, &mut index_direction);
+                        }
                     }
                 }
             }
         }
         PlayerMovement::Jump => {
-            let (_, mut texture, _) = animation_query.single_mut();
-            texture.index = 11;
+            let (_, mut sprite) = animation_query.single_mut();
+            if let Some(texture) = &mut sprite.texture_atlas {
+                texture.index = 11;
+            }
         }
 
         PlayerMovement::Climb => {
-            let (mut anim_timer, mut texture, _) = animation_query.single_mut();
+            let (mut anim_timer, mut sprite) = animation_query.single_mut();
             anim_timer.tick(time.delta());
             if anim_timer.just_finished() {
-                cycle_texture(&mut texture, 33..=36);
+                if let Some(texture) = &mut sprite.texture_atlas {
+                    cycle_texture(texture, 33..=36);
+                }
             }
         }
         PlayerMovement::Crouch => {
-            let (mut anim_timer, mut texture, _) = animation_query.single_mut();
+            let (mut anim_timer, mut sprite) = animation_query.single_mut();
             anim_timer.tick(time.delta());
             if anim_timer.just_finished() {
-                cycle_texture(&mut texture, 33..=36);
+                if let Some(texture) = &mut sprite.texture_atlas {
+                    cycle_texture(texture, 33..=36);
+                }
             }
         }
 
         PlayerMovement::Hit => {
-            let (_, mut texture, _) = animation_query.single_mut();
-            texture.index = 26;
+            let (_, mut sprite) = animation_query.single_mut();
+            if let Some(texture) = &mut sprite.texture_atlas {
+                texture.index = 26;
+            }
         }
     };
 
@@ -312,7 +331,7 @@ fn move_player(
     if *state.get() == PlayerState::Hit {
         current_movement = PlayerMovement::Hit;
         anim(current_movement);
-        player_controller.translation = Some(Vec2::new(0.0, PLAYER_SPEED * time.delta_seconds()));
+        player_controller.translation = Some(Vec2::new(0.0, PLAYER_SPEED * time.delta_secs()));
         return;
     }
 
@@ -350,13 +369,13 @@ fn move_player(
     {
         next_state.set(PlayerState::Jumping);
         jump_timer.reset();
-        commands.spawn(AudioBundle {
-            source: player_audio.jump_sound.clone(),
-            settings: PlaybackSettings {
+        commands.spawn((
+            AudioPlayer::new(player_audio.jump_sound.clone()),
+            PlaybackSettings {
                 mode: PlaybackMode::Despawn,
                 ..default()
             },
-        });
+        ));
         current_movement = PlayerMovement::Jump;
         anim(current_movement);
     }
@@ -384,8 +403,8 @@ fn move_player(
             next_state.set(PlayerState::Falling);
         } else {
             player_controller.translation = Some(Vec2::new(
-                direction_x * PLAYER_SPEED * time.delta_seconds(),
-                PLAYER_SPEED * time.delta_seconds(),
+                direction_x * PLAYER_SPEED * time.delta_secs(),
+                PLAYER_SPEED * time.delta_secs(),
             ));
         }
     } else if *ladder_collision && state.get() == &PlayerState::Climbing {
@@ -394,16 +413,16 @@ fn move_player(
         // imperceptible movement to trigger the collision.
         if direction_x == 0.0 && direction_y == 0.0 {
             if *toggle {
-                player_controller.translation = Some(Vec2::new(0.1 * time.delta_seconds(), 0.0));
+                player_controller.translation = Some(Vec2::new(0.1 * time.delta_secs(), 0.0));
                 *toggle = false;
             } else {
-                player_controller.translation = Some(Vec2::new(-0.1 * time.delta_seconds(), 0.0));
+                player_controller.translation = Some(Vec2::new(-0.1 * time.delta_secs(), 0.0));
                 *toggle = true;
             }
         } else {
             player_controller.translation = Some(Vec2::new(
-                direction_x * PLAYER_SPEED * time.delta_seconds(),
-                direction_y * PLAYER_SPEED * time.delta_seconds(),
+                direction_x * PLAYER_SPEED * time.delta_secs(),
+                direction_y * PLAYER_SPEED * time.delta_secs(),
             ));
         }
     } else {
@@ -415,13 +434,13 @@ fn move_player(
             player_pos.translation += Vec3::new(event.movement.x, event.movement.y, 0.0);
             // Add the player movement
             player_pos.translation +=
-                Vec3::new(direction_x * PLAYER_SPEED * time.delta_seconds(), 0.0, 0.0);
+                Vec3::new(direction_x * PLAYER_SPEED * time.delta_secs(), 0.0, 0.0);
         }
         // Normal movement, if the player is on a moving platform following line will not move the
         // player but is required to detect collisions
         player_controller.translation = Some(Vec2::new(
-            direction_x * PLAYER_SPEED * time.delta_seconds(),
-            -PLAYER_SPEED * time.delta_seconds(),
+            direction_x * PLAYER_SPEED * time.delta_secs(),
+            -PLAYER_SPEED * time.delta_secs(),
         ));
     }
 }
@@ -473,13 +492,13 @@ fn check_hit(
             let player_audio = player_query.single_mut();
             jump_timer.reset();
             *just_hit = true;
-            commands.spawn(AudioBundle {
-                source: player_audio.hit_sound.clone(),
-                settings: PlaybackSettings {
+            commands.spawn((
+                AudioPlayer::new(player_audio.hit_sound.clone()),
+                PlaybackSettings {
                     mode: PlaybackMode::Despawn,
                     ..default()
                 },
-            });
+            ));
             debug!("justhit reset timer");
         }
     }

@@ -2,7 +2,7 @@ use bevy::{
     color,
     prelude::*,
     render::render_resource::{AsBindGroup, ShaderRef},
-    sprite::{Material2d, Material2dPlugin, MaterialMesh2dBundle},
+    sprite::{Material2d, Material2dPlugin},
     utils::HashMap,
 };
 use bevy_ecs_tilemap::tiles::{TileStorage, TileVisible};
@@ -261,17 +261,21 @@ fn fade_display_level(
     time: Res<Time>,
     mut display_level_timer: Query<&mut DisplayLevelTimer>,
     mut display_level: Query<Entity, With<DisplayLevel>>,
-    mut display_level_text: Query<&mut Text, With<DisplayLevelText>>,
+    mut display_level_text: Query<&mut TextColor, With<DisplayLevelText>>,
 ) {
     if let Ok(mut display_level_timer) = display_level_timer.get_single_mut() {
         display_level_timer.tick(time.delta());
 
         if display_level_timer.finished() {
-            let mut text = display_level_text.single_mut();
-            let transparency = text.sections[0].style.color.alpha();
+            let mut text_color = display_level_text.single_mut();
+            let transparency = text_color.alpha();
             let color: Srgba = Color::srgb_u8(0xF4, 0x78, 0x04).into();
-            text.sections[0].style.color =
-                Color::srgba(color.red, color.green, color.blue, transparency - 0.02);
+            *text_color = TextColor(Color::srgba(
+                color.red,
+                color.green,
+                color.blue,
+                transparency - 0.02,
+            ));
 
             if transparency < 0.0 {
                 commands

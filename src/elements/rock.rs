@@ -101,14 +101,13 @@ fn spawn_rock(
 
         commands
             .spawn((
-                SpriteBundle {
-                    texture,
-                    sprite: Sprite { ..default() },
-                    transform: Transform {
-                        scale: Vec3::splat(ROCK_SCALE_FACTOR),
-                        translation: collision_event.spawn_pos.extend(20.0),
-                        ..default()
-                    },
+                Sprite {
+                    image: texture,
+                    ..default()
+                },
+                Transform {
+                    scale: Vec3::splat(ROCK_SCALE_FACTOR),
+                    translation: collision_event.spawn_pos.extend(20.0),
                     ..default()
                 },
                 RigidBody::Dynamic,
@@ -159,17 +158,16 @@ fn spawn_small_rocks(
         *spawn_timer = Timer::from_seconds(spawn_time, TimerMode::Once);
         let texture = rock_run_assets.small_rock.clone();
         commands.spawn((
-            SpriteBundle {
-                texture: texture.clone(),
-                sprite: Sprite { ..default() },
-                transform: Transform {
-                    scale: Vec3::splat(1.0),
-                    translation: level
-                        .map
-                        .tiled_to_bevy_coord(Vec2::new(1475.0, 750.0))
-                        .extend(4.0),
-                    ..default()
-                },
+            Sprite {
+                image: texture.clone(),
+                ..default()
+            },
+            Transform {
+                scale: Vec3::splat(1.0),
+                translation: level
+                    .map
+                    .tiled_to_bevy_coord(Vec2::new(1475.0, 750.0))
+                    .extend(4.0),
                 ..default()
             },
             RigidBody::Dynamic,
@@ -187,17 +185,16 @@ fn spawn_small_rocks(
         ));
 
         commands.spawn((
-            SpriteBundle {
-                texture: texture.clone(),
-                sprite: Sprite { ..default() },
-                transform: Transform {
-                    scale: Vec3::splat(1.0),
-                    translation: level
-                        .map
-                        .tiled_to_bevy_coord(Vec2::new(5600.0, 750.0))
-                        .extend(4.0),
-                    ..default()
-                },
+            Sprite {
+                image: texture.clone(),
+                ..default()
+            },
+            Transform {
+                scale: Vec3::splat(1.0),
+                translation: level
+                    .map
+                    .tiled_to_bevy_coord(Vec2::new(5600.0, 750.0))
+                    .extend(4.0),
                 ..default()
             },
             RigidBody::Dynamic,

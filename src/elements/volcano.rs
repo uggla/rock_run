@@ -13,7 +13,7 @@ use bevy::{
     color,
     prelude::*,
     render::render_resource::{AsBindGroup, ShaderRef},
-    sprite::{Material2d, Material2dPlugin, MaterialMesh2dBundle},
+    sprite::{Material2d, Material2dPlugin},
     utils::HashMap,
 };
 
@@ -100,14 +100,13 @@ fn setup_volcano(
 
     for volcano in volcanos {
         commands.spawn((
-            SpriteBundle {
-                texture: texture.clone(),
-                sprite: Sprite { ..default() },
-                transform: Transform {
-                    scale: Vec3::splat(volcano.scale_factor),
-                    translation: volcano.start_pos.extend(volcano.depth),
-                    ..default()
-                },
+            Sprite {
+                image: texture.clone(),
+                ..default()
+            },
+            Transform {
+                scale: Vec3::splat(volcano.scale_factor),
+                translation: volcano.start_pos.extend(volcano.depth),
                 ..default()
             },
             Volcano {
@@ -160,13 +159,13 @@ fn spawn_fireball(
 
         if collision_event.sensor_name.contains("volcano01_02") {
             shake_event.send(ShakeCamera);
-            commands.spawn(AudioBundle {
-                source: rock_run_assets.eruption_sound.clone(),
-                settings: PlaybackSettings {
+            commands.spawn((
+                AudioPlayer::new(rock_run_assets.eruption_sound.clone()),
+                PlaybackSettings {
                     mode: PlaybackMode::Despawn,
                     ..default()
                 },
-            });
+            ));
             return;
         }
 
@@ -174,13 +173,13 @@ fn spawn_fireball(
         *spawn_pos = collision_event.spawn_pos;
         *spawn_timer = Timer::from_seconds(0.1, TimerMode::Repeating);
         shake_event.send(ShakeCamera);
-        commands.spawn(AudioBundle {
-            source: rock_run_assets.eruption_sound.clone(),
-            settings: PlaybackSettings {
+        commands.spawn((
+            AudioPlayer::new(rock_run_assets.eruption_sound.clone()),
+            PlaybackSettings {
                 mode: PlaybackMode::Despawn,
                 ..default()
             },
-        });
+        ));
     }
 
     if *fireballs && spawn_timer.finished() {
@@ -190,14 +189,13 @@ fn spawn_fireball(
         let torque_impulse: f32 = rng.gen_range(-2.5..=2.5);
 
         commands.spawn((
-            SpriteBundle {
-                texture: rock_run_assets.fireball.clone(),
-                sprite: Sprite { ..default() },
-                transform: Transform {
-                    scale: Vec3::splat(FIREBALL_SCALE_FACTOR),
-                    translation: spawn_pos.extend(20.0),
-                    ..default()
-                },
+            Sprite {
+                image: rock_run_assets.fireball.clone(),
+                ..default()
+            },
+            Transform {
+                scale: Vec3::splat(FIREBALL_SCALE_FACTOR),
+                translation: spawn_pos.extend(20.0),
                 ..default()
             },
             RigidBody::Dynamic,
@@ -242,17 +240,13 @@ fn setup_lava(
 
     for start_pos in start_positions {
         commands.spawn((
-            MaterialMesh2dBundle {
-                mesh: meshes.add(Rectangle::default()).into(),
-                transform: Transform {
-                    translation: start_pos.extend(5.0),
-                    scale: Vec3::new(2000.0, 66.0, 1.0),
-                    ..default()
-                },
-                material: lava.add(LavaMaterial {
-                    // color_texture: Some(asset_server.load("icon.png")),
-                    color: LinearRgba::from(color::palettes::css::GOLD),
-                }),
+            Mesh2d(meshes.add(Rectangle::default())),
+            MeshMaterial2d(lava.add(LavaMaterial {
+                color: LinearRgba::from(color::palettes::css::GOLD),
+            })),
+            Transform {
+                translation: start_pos.extend(5.0),
+                scale: Vec3::new(2000.0, 66.0, 1.0),
                 ..default()
             },
             Lava,

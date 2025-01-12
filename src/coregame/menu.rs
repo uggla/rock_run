@@ -8,8 +8,7 @@ use bevy_fluent::{BundleAsset, Locale};
 use bevy_pkv::PkvStore;
 use bevy_rapier2d::plugin::RapierConfiguration;
 use leafwing_input_manager::{
-    action_state::ActionState, axislike::SingleAxis, input_map::InputMap,
-    plugin::InputManagerPlugin, Actionlike,
+    action_state::ActionState, input_map::InputMap, plugin::InputManagerPlugin, Actionlike,
 };
 use unic_langid::langid;
 
@@ -136,28 +135,28 @@ fn setup(
         (MenuAction::Right, KeyCode::ArrowRight),
         (MenuAction::Left, KeyCode::ArrowLeft),
     ]);
-    input_map.insert(MenuAction::ExitToMenu, GamepadButtonType::Select);
-    input_map.insert(MenuAction::PauseUnpause, GamepadButtonType::Start);
-    input_map.insert(MenuAction::Accept, GamepadButtonType::South);
-    input_map.insert(
-        MenuAction::Up,
-        SingleAxis::positive_only(GamepadAxisType::LeftStickY, 0.4),
-    );
-    input_map.insert(
-        MenuAction::Down,
-        SingleAxis::negative_only(GamepadAxisType::LeftStickY, -0.4),
-    );
-    input_map.insert(
-        MenuAction::Right,
-        SingleAxis::positive_only(GamepadAxisType::LeftStickX, 0.4),
-    );
-    input_map.insert(
-        MenuAction::Left,
-        SingleAxis::negative_only(GamepadAxisType::LeftStickX, -0.4),
-    );
-
-    #[cfg(not(target_arch = "wasm32"))]
-    input_map.insert(MenuAction::Quit, GamepadButtonType::East);
+    // input_map.insert(MenuAction::ExitToMenu, GamepadButtonType::Select);
+    // input_map.insert(MenuAction::PauseUnpause, GamepadButtonType::Start);
+    // input_map.insert(MenuAction::Accept, GamepadButtonType::South);
+    // input_map.insert(
+    //     MenuAction::Up,
+    //     SingleAxis::positive_only(GamepadAxisType::LeftStickY, 0.4),
+    // );
+    // input_map.insert(
+    //     MenuAction::Down,
+    //     SingleAxis::negative_only(GamepadAxisType::LeftStickY, -0.4),
+    // );
+    // input_map.insert(
+    //     MenuAction::Right,
+    //     SingleAxis::positive_only(GamepadAxisType::LeftStickX, 0.4),
+    // );
+    // input_map.insert(
+    //     MenuAction::Left,
+    //     SingleAxis::negative_only(GamepadAxisType::LeftStickX, -0.4),
+    // );
+    //
+    // #[cfg(not(target_arch = "wasm32"))]
+    // input_map.insert(MenuAction::Quit, GamepadButtonType::East);
     #[cfg(not(target_arch = "wasm32"))]
     input_map.insert(MenuAction::Quit, KeyCode::Escape);
 
@@ -190,13 +189,10 @@ fn start_menu(
 
     commands
         .spawn((
-            NodeBundle {
-                style: Style {
-                    width: Val::Percent(100.0),
-                    height: Val::Percent(100.0),
-                    flex_direction: FlexDirection::Row,
-                    ..default()
-                },
+            Node {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                flex_direction: FlexDirection::Row,
                 ..default()
             },
             ForState {
@@ -206,101 +202,83 @@ fn start_menu(
         // Right column
         .with_children(|parent| {
             parent.spawn((
-                NodeBundle {
-                    style: Style {
-                        width: Val::Px(720.0),
-                        ..default()
-                    },
-                    background_color: Color::WHITE.into(),
+                Node {
+                    width: Val::Px(720.0),
                     ..default()
                 },
-                UiImage::new(rock_run_assets.menu.clone()),
+                BackgroundColor(Color::WHITE.into()),
+                ImageNode::new(rock_run_assets.menu.clone()),
             ));
         })
         // Left column
         .with_children(|parent| {
             parent
                 .spawn((
-                    NodeBundle {
-                        style: Style {
-                            align_items: AlignItems::Center,
-                            flex_direction: FlexDirection::Column,
-                            width: Val::Px(WINDOW_WIDTH - 720.0),
-                            ..default()
-                        },
-                        background_color: Color::WHITE.into(),
+                    Node {
+                        align_items: AlignItems::Center,
+                        flex_direction: FlexDirection::Column,
+                        width: Val::Px(WINDOW_WIDTH - 720.0),
                         ..default()
                     },
-                    UiImage::new(rock_run_assets.menu2.clone()),
+                    BackgroundColor(Color::WHITE.into()),
+                    ImageNode::new(rock_run_assets.menu2.clone()),
                 ))
                 .with_children(|parent| {
-                    parent.spawn(TextBundle {
-                        style: Style {
+                    parent.spawn((
+                        Node {
                             position_type: PositionType::Absolute,
                             top: Val::Px(TOP_MARGINS[0]),
                             ..default()
                         },
-                        text: Text::from_section(
-                            "Menu",
-                            TextStyle {
-                                font: rock_run_assets.cute_dino_font.clone(),
-                                font_size: 55.0,
-                                color: Color::srgb_u8(0x54, 0x2E, 0x0A),
-                            },
-                        ),
-                        ..default()
-                    });
+                        Text::new("Menu"),
+                        TextFont {
+                            font: rock_run_assets.cute_dino_font.clone(),
+                            font_size: 55.0,
+                            ..default()
+                        },
+                        TextColor(Color::srgb_u8(0x54, 0x2E, 0x0A)),
+                    ));
                 })
                 // English box
                 .with_children(|parent| {
                     parent
-                        .spawn((NodeBundle {
-                            style: Style {
-                                position_type: PositionType::Absolute,
-                                top: Val::Px(TOP_MARGINS[1]),
-                                ..default()
-                            },
+                        .spawn(Node {
+                            position_type: PositionType::Absolute,
+                            top: Val::Px(TOP_MARGINS[1]),
                             ..default()
-                        },))
+                        })
                         .with_children(|parent| {
                             // lang01 flag
                             parent.spawn((
-                                NodeBundle {
-                                    style: Style {
-                                        justify_content: JustifyContent::Start,
-                                        width: Val::Px(66.0),
-                                        right: Val::Px(30.0),
-                                        ..default()
-                                    },
-                                    background_color: Color::WHITE.into(),
+                                Node {
+                                    justify_content: JustifyContent::Start,
+                                    width: Val::Px(66.0),
+                                    right: Val::Px(30.0),
                                     ..default()
                                 },
-                                UiImage::new(rock_run_assets.en_flag.clone()),
+                                BackgroundColor(Color::WHITE.into()),
+                                ImageNode::new(rock_run_assets.en_flag.clone()),
                             ));
 
                             // lang01 text
                             parent.spawn((
-                                TextBundle {
-                                    style: Style {
-                                        justify_content: JustifyContent::Start,
-                                        ..default()
-                                    },
-                                    text: Text::from_section(
-                                        get_translation(
-                                            &locale,
-                                            &assets,
-                                            &rock_run_assets,
-                                            "lang01",
-                                            None,
-                                        ),
-                                        TextStyle {
-                                            font: rock_run_assets.cute_dino_font.clone(),
-                                            font_size: 40.0,
-                                            color: Color::srgb_u8(0x54, 0x2E, 0x0A),
-                                        },
-                                    ),
+                                Node {
+                                    justify_content: JustifyContent::Start,
                                     ..default()
                                 },
+                                Text::new(get_translation(
+                                    &locale,
+                                    &assets,
+                                    &rock_run_assets,
+                                    "lang01",
+                                    None,
+                                )),
+                                TextFont {
+                                    font: rock_run_assets.cute_dino_font.clone(),
+                                    font_size: 40.0,
+                                    ..default()
+                                },
+                                TextColor(Color::srgb_u8(0x54, 0x2E, 0x0A)),
                                 Sel2,
                             ));
                         });
@@ -308,24 +286,21 @@ fn start_menu(
                 // French box
                 .with_children(|parent| {
                     parent
-                        .spawn((NodeBundle {
-                            style: Style {
-                                position_type: PositionType::Absolute,
-                                top: Val::Px(TOP_MARGINS[2]),
-                                ..default()
-                            },
+                        .spawn(Node {
+                            position_type: PositionType::Absolute,
+                            top: Val::Px(TOP_MARGINS[2]),
                             ..default()
-                        },))
+                        })
                         .with_children(|parent| {
                             let style_flag = if locale.requested == langid!("fr-FR") {
-                                Style {
+                                Node {
                                     justify_content: JustifyContent::Start,
                                     width: Val::Px(66.0),
                                     right: Val::Px(20.0),
                                     ..default()
                                 }
                             } else {
-                                Style {
+                                Node {
                                     justify_content: JustifyContent::Start,
                                     width: Val::Px(66.0),
                                     right: Val::Px(33.0),
@@ -334,13 +309,13 @@ fn start_menu(
                             };
 
                             let style_lang = if locale.requested == langid!("fr-FR") {
-                                Style {
+                                Node {
                                     justify_content: JustifyContent::Start,
                                     left: Val::Px(13.0),
                                     ..default()
                                 }
                             } else {
-                                Style {
+                                Node {
                                     justify_content: JustifyContent::Start,
                                     left: Val::Px(-2.0),
                                     ..default()
@@ -349,34 +324,26 @@ fn start_menu(
 
                             // lang02 flag
                             parent.spawn((
-                                NodeBundle {
-                                    style: style_flag,
-                                    background_color: Color::WHITE.into(),
-                                    ..default()
-                                },
-                                UiImage::new(rock_run_assets.fr_flag.clone()),
+                                style_flag,
+                                ImageNode::new(rock_run_assets.fr_flag.clone()),
                             ));
 
                             // lang02 text
                             parent.spawn((
-                                TextBundle {
-                                    style: style_lang,
-                                    text: Text::from_section(
-                                        get_translation(
-                                            &locale,
-                                            &assets,
-                                            &rock_run_assets,
-                                            "lang02",
-                                            None,
-                                        ),
-                                        TextStyle {
-                                            font: rock_run_assets.cute_dino_font.clone(),
-                                            font_size: 40.0,
-                                            color: Color::srgb_u8(0x54, 0x2E, 0x0A),
-                                        },
-                                    ),
+                                style_lang,
+                                Text::new(get_translation(
+                                    &locale,
+                                    &assets,
+                                    &rock_run_assets,
+                                    "lang02",
+                                    None,
+                                )),
+                                TextFont {
+                                    font: rock_run_assets.cute_dino_font.clone(),
+                                    font_size: 40.0,
                                     ..default()
                                 },
+                                TextColor(Color::srgb_u8(0x54, 0x2E, 0x0A)),
                                 Sel1,
                             ));
                         });
@@ -384,28 +351,24 @@ fn start_menu(
                 // start instruction
                 .with_children(|parent| {
                     parent.spawn((
-                        TextBundle {
-                            style: Style {
-                                position_type: PositionType::Absolute,
-                                top: Val::Px(TOP_MARGINS[3]),
-                                ..default()
-                            },
-                            text: Text::from_section(
-                                get_translation(
-                                    &locale,
-                                    &assets,
-                                    &rock_run_assets,
-                                    "start_game",
-                                    None,
-                                ),
-                                TextStyle {
-                                    font: rock_run_assets.cute_dino_font.clone(),
-                                    font_size: 30.0,
-                                    color: Color::srgb_u8(0x54, 0x2E, 0x0A),
-                                },
-                            ),
+                        Node {
+                            position_type: PositionType::Absolute,
+                            top: Val::Px(TOP_MARGINS[3]),
                             ..default()
                         },
+                        Text::new(get_translation(
+                            &locale,
+                            &assets,
+                            &rock_run_assets,
+                            "start_game",
+                            None,
+                        )),
+                        TextFont {
+                            font: rock_run_assets.cute_dino_font.clone(),
+                            font_size: 30.0,
+                            ..default()
+                        },
+                        TextColor(Color::srgb_u8(0x54, 0x2E, 0x0A)),
                         Sel0,
                     ));
                 });
@@ -422,9 +385,9 @@ fn update_menu(
     mut menu_sel: Local<i8>,
     mut locale: ResMut<Locale>,
     menu_action_state: Res<ActionState<MenuAction>>,
-    mut query0: Query<&mut Text, Select0>,
-    mut query1: Query<&mut Text, Select1>,
-    mut query2: Query<&mut Text, Select2>,
+    mut query0: Query<(&mut Text, &mut TextColor), Select0>,
+    mut query1: Query<(&mut Text, &mut TextColor), Select1>,
+    mut query2: Query<(&mut Text, &mut TextColor), Select2>,
     assets: Res<Assets<BundleAsset>>,
     rock_run_assets: Res<RockRunAssets>,
     mut pkv: ResMut<PkvStore>,
@@ -445,9 +408,9 @@ fn update_menu(
         }
     }
 
-    let mut sel0 = query0.single_mut();
-    let mut sel1 = query1.single_mut();
-    let mut sel2 = query2.single_mut();
+    let (mut sel0_text, mut sel0_color) = query0.single_mut();
+    let (mut sel1_text, mut sel1_color) = query1.single_mut();
+    let (mut sel2_text, mut sel2_color) = query2.single_mut();
 
     if menu_action_state.just_pressed(&MenuAction::Up) {
         *menu_sel = (*menu_sel + 1) % 3;
@@ -477,9 +440,9 @@ fn update_menu(
                     &locale,
                     assets,
                     rock_run_assets,
-                    &mut sel0,
-                    &mut sel1,
-                    &mut sel2,
+                    &mut sel0_text,
+                    &mut sel1_text,
+                    &mut sel2_text,
                 );
             }
             2 => {
@@ -491,9 +454,9 @@ fn update_menu(
                     &locale,
                     assets,
                     rock_run_assets,
-                    &mut sel0,
-                    &mut sel1,
-                    &mut sel2,
+                    &mut sel0_text,
+                    &mut sel1_text,
+                    &mut sel2_text,
                 );
             }
             _ => {}
@@ -503,33 +466,33 @@ fn update_menu(
     match *menu_sel {
         0 => {
             if locale.requested == langid!("fr-FR") {
-                sel1.sections[0].style.color = MenuColor::color(&MenuColor::CurrentLang);
-                sel2.sections[0].style.color = MenuColor::color(&MenuColor::OtherLang);
+                *sel1_color = TextColor(MenuColor::color(&MenuColor::CurrentLang));
+                *sel2_color = TextColor(MenuColor::color(&MenuColor::OtherLang));
             } else {
-                sel2.sections[0].style.color = MenuColor::color(&MenuColor::CurrentLang);
-                sel1.sections[0].style.color = MenuColor::color(&MenuColor::OtherLang);
+                *sel2_color = TextColor(MenuColor::color(&MenuColor::CurrentLang));
+                *sel1_color = TextColor(MenuColor::color(&MenuColor::OtherLang));
             }
-            sel0.sections[0].style.color = MenuColor::color(&MenuColor::Selected);
+            *sel0_color = TextColor(MenuColor::color(&MenuColor::Selected));
         }
         1 => {
             if locale.requested == langid!("fr-FR") {
-                sel1.sections[0].style.color = MenuColor::color(&MenuColor::Selected);
-                sel2.sections[0].style.color = MenuColor::color(&MenuColor::OtherLang);
+                *sel1_color = TextColor(MenuColor::color(&MenuColor::Selected));
+                *sel2_color = TextColor(MenuColor::color(&MenuColor::OtherLang));
             } else {
-                sel2.sections[0].style.color = MenuColor::color(&MenuColor::CurrentLang);
-                sel1.sections[0].style.color = MenuColor::color(&MenuColor::Selected);
+                *sel2_color = TextColor(MenuColor::color(&MenuColor::CurrentLang));
+                *sel1_color = TextColor(MenuColor::color(&MenuColor::Selected));
             }
-            sel0.sections[0].style.color = MenuColor::color(&MenuColor::OtherLang);
+            *sel0_color = TextColor(MenuColor::color(&MenuColor::OtherLang));
         }
         2 => {
             if locale.requested == langid!("fr-FR") {
-                sel1.sections[0].style.color = MenuColor::color(&MenuColor::CurrentLang);
-                sel2.sections[0].style.color = MenuColor::color(&MenuColor::Selected);
+                *sel1_color = TextColor(MenuColor::color(&MenuColor::CurrentLang));
+                *sel2_color = TextColor(MenuColor::color(&MenuColor::Selected));
             } else {
-                sel2.sections[0].style.color = MenuColor::color(&MenuColor::Selected);
-                sel1.sections[0].style.color = MenuColor::color(&MenuColor::OtherLang);
+                *sel2_color = TextColor(MenuColor::color(&MenuColor::Selected));
+                *sel1_color = TextColor(MenuColor::color(&MenuColor::OtherLang));
             }
-            sel0.sections[0].style.color = MenuColor::color(&MenuColor::OtherLang);
+            *sel0_color = TextColor(MenuColor::color(&MenuColor::OtherLang));
         }
         _ => {}
     }
@@ -539,113 +502,116 @@ fn refresh_menu_items(
     locale: &ResMut<Locale>,
     assets: Res<Assets<BundleAsset>>,
     rock_run_assets: Res<RockRunAssets>,
-    sel0: &mut Mut<Text>,
-    sel1: &mut Mut<Text>,
-    sel2: &mut Mut<Text>,
+    sel0: &mut Text,
+    sel1: &mut Text,
+    sel2: &mut Text,
 ) {
     // Refresh menu items in case we has just changed the locale
-    sel0.sections[0].value = get_translation(locale, &assets, &rock_run_assets, "start_game", None);
-    sel1.sections[0].value = get_translation(locale, &assets, &rock_run_assets, "lang02", None);
-    sel2.sections[0].value = get_translation(locale, &assets, &rock_run_assets, "lang01", None);
+    *sel0 = Text::new(get_translation(
+        locale,
+        &assets,
+        &rock_run_assets,
+        "start_game",
+        None,
+    ));
+    *sel1 = Text::new(get_translation(
+        locale,
+        &assets,
+        &rock_run_assets,
+        "lang02",
+        None,
+    ));
+    *sel2 = Text::new(get_translation(
+        locale,
+        &assets,
+        &rock_run_assets,
+        "lang01",
+        None,
+    ));
 }
 
 fn gamefinished_menu(mut commands: Commands, rock_run_assets: Res<RockRunAssets>) {
     commands
         .spawn((
-            NodeBundle {
-                style: Style {
-                    width: Val::Percent(100.0),
-                    height: Val::Percent(100.0),
-                    justify_content: JustifyContent::Center,
-                    flex_direction: FlexDirection::Row,
-                    ..default()
-                },
-                background_color: Color::BLACK.into(),
+            Node {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                justify_content: JustifyContent::Center,
+                flex_direction: FlexDirection::Row,
                 ..default()
             },
+            TextColor(Color::BLACK.into()),
             ForState {
                 states: vec![AppState::GameOver],
             },
         ))
         .with_children(|parent| {
             parent.spawn((
-                NodeBundle {
-                    style: Style {
-                        width: Val::Px(720.0),
-                        ..default()
-                    },
-                    background_color: Color::WHITE.into(),
+                Node {
+                    width: Val::Px(720.0),
                     ..default()
                 },
-                UiImage::new(rock_run_assets.victory.clone()),
+                TextColor(Color::WHITE.into()),
+                ImageNode::new(rock_run_assets.victory.clone()),
             ));
         })
         .with_children(|parent| {
-            parent.spawn(AudioBundle {
-                source: rock_run_assets.victory_sound.clone(),
-                settings: PlaybackSettings {
+            parent.spawn((
+                AudioPlayer::new(rock_run_assets.victory_sound.clone()),
+                PlaybackSettings {
                     mode: PlaybackMode::Loop,
                     // volume: Volume::new(4.3),
                     ..default()
                 },
-            });
+            ));
         });
 }
 
 fn gameover_menu(mut commands: Commands, rock_run_assets: Res<RockRunAssets>) {
     commands
         .spawn((
-            NodeBundle {
-                style: Style {
-                    width: Val::Percent(100.0),
-                    height: Val::Percent(100.0),
-                    justify_content: JustifyContent::Center,
-                    flex_direction: FlexDirection::Row,
-                    ..default()
-                },
-                background_color: Color::BLACK.into(),
+            Node {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                justify_content: JustifyContent::Center,
+                flex_direction: FlexDirection::Row,
                 ..default()
             },
+            TextColor(Color::BLACK.into()),
             ForState {
                 states: vec![AppState::GameOver],
             },
         ))
         .with_children(|parent| {
             parent.spawn((
-                NodeBundle {
-                    style: Style {
-                        width: Val::Px(720.0),
-                        ..default()
-                    },
-                    background_color: Color::WHITE.into(),
+                Node {
+                    width: Val::Px(720.0),
                     ..default()
                 },
-                UiImage::new(rock_run_assets.gameover.clone()),
+                TextColor(Color::WHITE.into()),
+                ImageNode::new(rock_run_assets.gameover.clone()),
             ));
         });
 
-    commands.spawn(AudioBundle {
-        source: rock_run_assets.loose_sound.clone(),
-        settings: PlaybackSettings {
+    commands.spawn((
+        AudioPlayer::new(rock_run_assets.loose_sound.clone()),
+        PlaybackSettings {
             mode: PlaybackMode::Despawn,
             volume: Volume::new(2.5),
             ..default()
         },
-    });
+    ));
 }
 
 fn pause_menu(mut commands: Commands, rock_run_assets: Res<RockRunAssets>) {
     commands
         .spawn((
-            NodeBundle {
-                style: Style {
-                    position_type: PositionType::Absolute,
-                    width: Val::Percent(100.0),
-                    height: Val::Percent(100.0),
-                    align_items: AlignItems::Center,
-                    justify_content: JustifyContent::Center,
-                    ..default()
-                },
+            Node {
+                position_type: PositionType::Absolute,
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                align_items: AlignItems::Center,
+                justify_content: JustifyContent::Center,
                 ..default()
             },
             ForState {
@@ -654,42 +620,37 @@ fn pause_menu(mut commands: Commands, rock_run_assets: Res<RockRunAssets>) {
         ))
         .with_children(|parent| {
             parent.spawn((
-                TextBundle {
-                    style: Style { ..default() },
-                    text: Text::from_section(
-                        "Pause",
-                        TextStyle {
-                            font: rock_run_assets.cute_dino_font.clone(),
-                            font_size: 100.0,
-                            color: Color::srgb_u8(0xF8, 0xE4, 0x73),
-                        },
-                    ),
+                Text::new("Pause"),
+                TextFont {
+                    font: rock_run_assets.cute_dino_font.clone(),
+                    font_size: 100.0,
                     ..default()
                 },
+                TextColor(Color::srgb_u8(0xF8, 0xE4, 0x73)),
                 DrawBlinkTimer(Timer::from_seconds(0.5, TimerMode::Repeating)),
             ));
         })
         .with_children(|parent| {
-            parent.spawn(AudioBundle {
-                source: rock_run_assets.pause_in_sound.clone(),
-                settings: PlaybackSettings {
+            parent.spawn((
+                AudioPlayer::new(rock_run_assets.pause_in_sound.clone()),
+                PlaybackSettings {
                     mode: PlaybackMode::Despawn,
                     volume: Volume::new(4.3),
                     ..default()
                 },
-            });
+            ));
         });
 }
 
 fn exit_pause_menu(mut commands: Commands, rock_run_assets: Res<RockRunAssets>) {
-    commands.spawn(AudioBundle {
-        source: rock_run_assets.pause_out_sound.clone(),
-        settings: PlaybackSettings {
+    commands.spawn((
+        AudioPlayer::new(rock_run_assets.pause_out_sound.clone()),
+        PlaybackSettings {
             mode: PlaybackMode::Despawn,
             volume: Volume::new(4.3),
             ..default()
         },
-    });
+    ));
 }
 
 fn menu_blink_system(

@@ -194,14 +194,13 @@ fn setup_moving_platforms(
 
     for moving_platform in moving_platforms {
         commands.spawn((
-            SpriteBundle {
-                texture: texture.clone(),
-                sprite: Sprite { ..default() },
-                transform: Transform {
-                    scale: Vec3::splat(MOVING_PLATFORM_SCALE_FACTOR),
-                    translation: moving_platform.start_pos.extend(8.0),
-                    ..default()
-                },
+            Sprite {
+                image: texture.clone(),
+                ..default()
+            },
+            Transform {
+                scale: Vec3::splat(MOVING_PLATFORM_SCALE_FACTOR),
+                translation: moving_platform.start_pos.extend(8.0),
                 ..default()
             },
             RigidBody::KinematicPositionBased,
@@ -233,7 +232,7 @@ fn move_moving_platform(
                     MovingPlatformDirection::Left => {
                         let moving_platform_speed = -right_left_data.speed * 100.0;
                         if moving_platform_pos.translation.x > right_left_data.max_left {
-                            (moving_platform_speed * time.delta_seconds(), 0.0)
+                            (moving_platform_speed * time.delta_secs(), 0.0)
                         } else {
                             right_left_data.direction = MovingPlatformDirection::Right;
                             (0.0, 0.0)
@@ -242,7 +241,7 @@ fn move_moving_platform(
                     MovingPlatformDirection::Right => {
                         let moving_platform_speed = right_left_data.speed * 100.0;
                         if moving_platform_pos.translation.x < right_left_data.max_right {
-                            (moving_platform_speed * time.delta_seconds(), 0.0)
+                            (moving_platform_speed * time.delta_secs(), 0.0)
                         } else {
                             right_left_data.direction = MovingPlatformDirection::Left;
                             (0.0, 0.0)
@@ -255,7 +254,7 @@ fn move_moving_platform(
                 MovingPlatformDirection::Up => {
                     let moving_platform_speed = -up_down_data.speed * 100.0;
                     if moving_platform_pos.translation.y > up_down_data.max_down {
-                        (0.0, moving_platform_speed * time.delta_seconds())
+                        (0.0, moving_platform_speed * time.delta_secs())
                     } else {
                         up_down_data.direction = MovingPlatformDirection::Down;
                         (0.0, 0.0)
@@ -264,7 +263,7 @@ fn move_moving_platform(
                 MovingPlatformDirection::Down => {
                     let moving_platform_speed = up_down_data.speed * 100.0;
                     if moving_platform_pos.translation.y < up_down_data.max_up {
-                        (0.0, moving_platform_speed * time.delta_seconds())
+                        (0.0, moving_platform_speed * time.delta_secs())
                     } else {
                         up_down_data.direction = MovingPlatformDirection::Up;
                         (0.0, 0.0)
@@ -317,7 +316,7 @@ fn rotate_platform(
     moving_platform_pos: &Mut<Transform>,
     center: Vec2,
 ) -> (f32, f32) {
-    let angle = time.delta_seconds() * moving_platform_speed % (2.0 * PI);
+    let angle = time.delta_secs() * moving_platform_speed % (2.0 * PI);
     let target_pos =
         Vec2::from_angle(angle).rotate(moving_platform_pos.translation.xy() - center) + center;
     let translation = target_pos - moving_platform_pos.translation.xy();
