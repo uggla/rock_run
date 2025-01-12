@@ -160,22 +160,19 @@ fn show_level_shaders(
     match current_level.id {
         3 => {
             commands.spawn((
-                MaterialMesh2dBundle {
-                    mesh: meshes.add(Rectangle::default()).into(),
-                    transform: Transform {
-                        translation: level
-                            .map
-                            .tiled_to_bevy_coord(Vec2::new(
-                                3024.0 + (3376.0 / 2.0),
-                                720.0 + (720.0 / 2.0),
-                            ))
-                            .extend(0.0),
-                        scale: Vec3::new(3376.0, 720.0, 0.0),
-                        ..default()
-                    },
-                    material: mysterious_fog.add(MysteriousFogMaterial {
-                        color: LinearRgba::from(color::palettes::css::GOLD),
-                    }),
+                Mesh2d(meshes.add(Rectangle::default())),
+                MeshMaterial2d(mysterious_fog.add(MysteriousFogMaterial {
+                    color: LinearRgba::from(color::palettes::css::GOLD),
+                })),
+                Transform {
+                    translation: level
+                        .map
+                        .tiled_to_bevy_coord(Vec2::new(
+                            3024.0 + (3376.0 / 2.0),
+                            720.0 + (720.0 / 2.0),
+                        ))
+                        .extend(0.0),
+                    scale: Vec3::new(3376.0, 720.0, 0.0),
                     ..default()
                 },
                 ShaderLevel,
@@ -226,41 +223,34 @@ fn show_current_level(
 
     commands
         .spawn((
-            SpriteBundle {
-                sprite: Sprite { ..default() },
-                transform: Transform::from_translation(
-                    level.map.get_start_screen().get_center().xy().extend(10.0),
-                ),
-                ..default()
-            },
+            Sprite { ..default() },
+            Transform::from_translation(
+                level.map.get_start_screen().get_center().xy().extend(10.0),
+            ),
             DisplayLevel,
             DisplayLevelTimer(Timer::from_seconds(2.0, TimerMode::Once)),
         ))
         // right column
         .with_children(|parent| {
             parent.spawn((
-                Text2dBundle {
-                    transform: Transform::from_xyz(0.0, 0.0, 1.0),
-                    text: Text::from_section(
-                        get_translation(
-                            &locale,
-                            &assets,
-                            &rock_run_assets,
-                            "current_level",
-                            convert_to_fluent_args(Some(HashMap::from([(
-                                "current_level".to_string(),
-                                current_level.id.to_string(),
-                            )])))
-                            .as_ref(),
-                        ),
-                        TextStyle {
-                            font: rock_run_assets.cute_dino_font.clone(),
-                            font_size: 60.0,
-                            color: Color::srgb_u8(0xF4, 0x78, 0x04),
-                        },
-                    ),
+                Text2d::new(get_translation(
+                    &locale,
+                    &assets,
+                    &rock_run_assets,
+                    "current_level",
+                    convert_to_fluent_args(Some(HashMap::from([(
+                        "current_level".to_string(),
+                        current_level.id.to_string(),
+                    )])))
+                    .as_ref(),
+                )),
+                TextFont {
+                    font: rock_run_assets.cute_dino_font.clone(),
+                    font_size: 60.0,
                     ..default()
                 },
+                TextColor(Color::srgb_u8(0xF4, 0x78, 0x04)),
+                Transform::from_xyz(0.0, 0.0, 1.0),
                 DisplayLevelText,
             ));
         });
