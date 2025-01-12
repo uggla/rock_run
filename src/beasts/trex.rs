@@ -162,19 +162,18 @@ fn setup_trex(
 
     for start_pos in start_positions {
         commands.spawn((
-            SpriteBundle {
-                texture: texture.clone(),
-                sprite: Sprite { ..default() },
-                transform: Transform {
-                    scale: Vec3::splat(TREX_SCALE_FACTOR),
-                    translation: start_pos.extend(20.0),
-                    ..default()
-                },
+            Sprite {
+                image: texture.clone(),
+                texture_atlas: Some(TextureAtlas {
+                    layout: texture_atlas_layout.clone(),
+                    index: 0,
+                }),
                 ..default()
             },
-            TextureAtlas {
-                layout: texture_atlas_layout.clone(),
-                index: 0,
+            Transform {
+                scale: Vec3::splat(TREX_SCALE_FACTOR),
+                translation: start_pos.extend(20.0),
+                ..default()
             },
             RigidBody::KinematicPositionBased,
             AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
@@ -209,7 +208,7 @@ fn move_trex(
         ),
         With<Trex>,
     >,
-    mut animation_query: Query<(&mut AnimationTimer, &mut TextureAtlas, &mut Sprite)>,
+    mut animation_query: Query<(&mut AnimationTimer, &mut Sprite)>,
     player_query: Query<&mut Transform, (With<Player>, Without<Trex>)>,
     mut previous_direction: Local<TrexDirection>,
     mut previous_movement: Local<TrexMovement>,
@@ -223,58 +222,66 @@ fn move_trex(
         let mut anim =
             |current_movement: TrexMovement, commands: &mut Commands| match current_movement {
                 TrexMovement::Run(trex_direction) => {
-                    let (mut anim_timer, mut texture, mut sprite) =
+                    let (mut anim_timer, mut sprite) =
                         animation_query.get_mut(trex_entity).unwrap();
                     anim_timer.tick(time.delta());
                     match trex_direction {
                         TrexDirection::Left => {
                             sprite.flip_x = true;
-                            if texture.index > 15 {
-                                *trex_collider = Collider::compound(get_collider_shapes(
-                                    ColliderType::Bite,
-                                    sprite.flip_x,
-                                ));
-                            } else {
-                                *trex_collider = Collider::compound(get_collider_shapes(
-                                    ColliderType::Normal,
-                                    sprite.flip_x,
-                                ));
+                            if let Some(texture) = &mut sprite.texture_atlas {
+                                if texture.index > 15 {
+                                    *trex_collider = Collider::compound(get_collider_shapes(
+                                        ColliderType::Bite,
+                                        sprite.flip_x,
+                                    ));
+                                } else {
+                                    *trex_collider = Collider::compound(get_collider_shapes(
+                                        ColliderType::Normal,
+                                        sprite.flip_x,
+                                    ));
+                                }
                             }
                         }
                         TrexDirection::Right => {
                             sprite.flip_x = false;
-                            if texture.index > 15 {
-                                *trex_collider = Collider::compound(get_collider_shapes(
-                                    ColliderType::Bite,
-                                    sprite.flip_x,
-                                ));
-                            } else {
-                                *trex_collider = Collider::compound(get_collider_shapes(
-                                    ColliderType::Normal,
-                                    sprite.flip_x,
-                                ));
+                            if let Some(texture) = &mut sprite.texture_atlas {
+                                if texture.index > 15 {
+                                    *trex_collider = Collider::compound(get_collider_shapes(
+                                        ColliderType::Bite,
+                                        sprite.flip_x,
+                                    ));
+                                } else {
+                                    *trex_collider = Collider::compound(get_collider_shapes(
+                                        ColliderType::Normal,
+                                        sprite.flip_x,
+                                    ));
+                                }
                             }
                         }
                     }
                     if anim_timer.just_finished() {
-                        cycle_texture(&mut texture, 6..=18);
-                        if texture.index == 16 {
-                            commands.spawn(AudioBundle {
-                                source: rock_run_assets.trex_bite_sound.clone(),
-                                settings: PlaybackSettings {
-                                    mode: PlaybackMode::Despawn,
-                                    ..default()
-                                },
-                            });
+                        if let Some(texture) = &mut sprite.texture_atlas {
+                            cycle_texture(texture, 6..=18);
+                            if texture.index == 16 {
+                                commands.spawn((
+                                    AudioPlayer::new(rock_run_assets.trex_bite_sound.clone()),
+                                    PlaybackSettings {
+                                        mode: PlaybackMode::Despawn,
+                                        ..default()
+                                    },
+                                ));
+                            }
                         }
                     }
                 }
                 TrexMovement::Idle => {
-                    let (mut anim_timer, mut texture, mut _sprite) =
+                    let (mut anim_timer, mut _sprite) =
                         animation_query.get_mut(trex_entity).unwrap();
                     anim_timer.tick(time.delta());
                     if anim_timer.just_finished() {
-                        cycle_texture(&mut texture, 0..=5);
+                        if let Some(texture) = &mut _sprite.texture_atlas {
+                            cycle_texture(texture, 0..=5);
+                        }
                     }
                 }
             };
@@ -302,7 +309,7 @@ fn move_trex(
             let delta_pos_x = (player.translation.x - trex_pos.translation.x).signum()
                 * TREX_SPEED
                 * *speed_coef
-                * time.delta_seconds();
+                * time.delta_secs();
 
             *speed_coef += 0.01;
             if *speed_coef > 1.0 {
@@ -310,7 +317,7 @@ fn move_trex(
             }
 
             trex_controller.translation =
-                Some(Vec2::new(delta_pos_x, -TREX_SPEED * time.delta_seconds()));
+                Some(Vec2::new(delta_pos_x, -TREX_SPEED * time.delta_secs()));
 
             if let Ok(trex_controller_output) = trex_controller_query.get(trex_entity) {
                 // If trex is blocked, then set it to Idle.
@@ -322,13 +329,13 @@ fn move_trex(
 
         if *previous_movement != trex.current_movement {
             *previous_movement = trex.current_movement;
-            commands.spawn(AudioBundle {
-                source: rock_run_assets.trex_rush_sound.clone(),
-                settings: PlaybackSettings {
+            commands.spawn((
+                AudioPlayer::new(rock_run_assets.trex_rush_sound.clone()),
+                PlaybackSettings {
                     mode: PlaybackMode::Despawn,
                     ..default()
                 },
-            });
+            ));
         }
 
         anim(trex.current_movement, &mut commands);

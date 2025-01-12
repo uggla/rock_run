@@ -42,10 +42,7 @@ impl Plugin for CameraPlugin {
 }
 
 fn setup_camera(mut commands: Commands) {
-    commands.spawn(Camera2dBundle {
-        transform: Transform::from_xyz(0.0, 0.0, 0.0),
-        ..Default::default()
-    });
+    commands.spawn((Camera2d, Transform::from_xyz(0.0, 0.0, 0.0)));
 }
 
 fn move_camera_to_center(mut camera_query: Query<&mut Transform, With<Camera2d>>) {
@@ -149,7 +146,7 @@ fn camera_follows_player(
                             let offset_tmp = *offset;
                             *offset = Vec2::new(
                                 offset_tmp.x,
-                                offset_tmp.y + PLAYER_SPEED / 2.0 * time.delta_seconds(),
+                                offset_tmp.y + PLAYER_SPEED / 2.0 * time.delta_secs(),
                             );
                         } else {
                             *offset = dist;
@@ -170,7 +167,7 @@ fn camera_follows_player(
                         if offset.y > 0.0 {
                             *offset = Vec2::new(
                                 offset_tmp.x,
-                                offset_tmp.y - PLAYER_SPEED / 2.0 * time.delta_seconds(),
+                                offset_tmp.y - PLAYER_SPEED / 2.0 * time.delta_secs(),
                             );
                         } else {
                             *offset = Vec2::new(offset_tmp.x, 0.0);

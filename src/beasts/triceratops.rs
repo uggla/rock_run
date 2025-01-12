@@ -138,19 +138,18 @@ fn setup_triceratops(
 
     for start_pos in start_positions {
         commands.spawn((
-            SpriteBundle {
-                texture: texture.clone(),
-                sprite: Sprite { ..default() },
-                transform: Transform {
-                    scale: Vec3::splat(TRICERATOPS_SCALE_FACTOR),
-                    translation: start_pos.extend(20.0),
-                    ..default()
-                },
+            Sprite {
+                image: texture.clone(),
+                texture_atlas: Some(TextureAtlas {
+                    layout: texture_atlas_layout.clone(),
+                    index: 0,
+                }),
                 ..default()
             },
-            TextureAtlas {
-                layout: texture_atlas_layout.clone(),
-                index: 0,
+            Transform {
+                scale: Vec3::splat(TRICERATOPS_SCALE_FACTOR),
+                translation: start_pos.extend(20.0),
+                ..default()
             },
             RigidBody::KinematicPositionBased,
             AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
@@ -178,7 +177,7 @@ fn move_triceratops(
         ),
         With<Triceratops>,
     >,
-    mut animation_query: Query<(&mut AnimationTimer, &mut TextureAtlas, &mut Sprite)>,
+    mut animation_query: Query<(&mut AnimationTimer, &mut Sprite)>,
     mut collision_event: EventReader<TriceratopsCollision>,
 ) {
     let collided_triceratops_entities: Vec<Entity> =
@@ -188,7 +187,7 @@ fn move_triceratops(
     {
         let mut anim = |current_movement: TriceratopsMovement| match current_movement {
             TriceratopsMovement::Run(triceratops_direction) => {
-                let (mut anim_timer, mut texture, mut sprite) =
+                let (mut anim_timer, mut sprite) =
                     animation_query.get_mut(triceratos_entity).unwrap();
                 anim_timer.tick(time.delta());
                 match triceratops_direction {
@@ -202,7 +201,9 @@ fn move_triceratops(
                     }
                 }
                 if anim_timer.just_finished() {
-                    cycle_texture(&mut texture, 0..=4);
+                    if let Some(texture) = &mut sprite.texture_atlas {
+                        cycle_texture(texture, 0..=4);
+                    }
                 }
             }
         };
@@ -224,8 +225,8 @@ fn move_triceratops(
         };
         anim(triceratos.current_movement);
         triceratops_controller.translation = Some(Vec2::new(
-            direction_x * TRICERATOPS_SPEED * time.delta_seconds(),
-            -TRICERATOPS_SPEED * time.delta_seconds(),
+            direction_x * TRICERATOPS_SPEED * time.delta_secs(),
+            -TRICERATOPS_SPEED * time.delta_secs(),
         ));
     }
 }

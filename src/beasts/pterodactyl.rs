@@ -157,19 +157,18 @@ fn spawn_pterodactyl(
         }
 
         commands.spawn((
-            SpriteBundle {
-                texture,
-                sprite: Sprite { ..default() },
-                transform: Transform {
-                    scale: Vec3::splat(PTERODACTYL_SCALE_FACTOR),
-                    translation: pterodactyl.spawn_pos.unwrap().extend(20.0),
-                    ..default()
-                },
+            Sprite {
+                image: texture,
+                texture_atlas: Some(TextureAtlas {
+                    layout: texture_atlas_layout,
+                    index: 0,
+                }),
                 ..default()
             },
-            TextureAtlas {
-                layout: texture_atlas_layout,
-                index: 0,
+            Transform {
+                scale: Vec3::splat(PTERODACTYL_SCALE_FACTOR),
+                translation: pterodactyl.spawn_pos.unwrap().extend(20.0),
+                ..default()
             },
             RigidBody::KinematicPositionBased,
             AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
@@ -184,13 +183,13 @@ fn spawn_pterodactyl(
             pterodactyl,
         ));
 
-        commands.spawn(AudioBundle {
-            source: rock_run_assets.pterodactyl_sound.clone(),
-            settings: PlaybackSettings {
+        commands.spawn((
+            AudioPlayer::new(rock_run_assets.pterodactyl_sound.clone()),
+            PlaybackSettings {
                 mode: PlaybackMode::Despawn,
                 ..default()
             },
-        });
+        ));
 
         *spawn_timer = Timer::from_seconds(
             *spawn_time_values.choose(&mut rng).unwrap(),
@@ -264,7 +263,7 @@ fn move_pterodactyl(
         ),
         With<Pterodactyl>,
     >,
-    mut animation_query: Query<(&mut AnimationTimer, &mut TextureAtlas, &mut Sprite)>,
+    mut animation_query: Query<(&mut AnimationTimer, &mut Sprite)>,
     player_query: Query<&mut Transform, (With<Player>, Without<Pterodactyl>)>,
     mut chase_timer: Query<&mut ChaseTimer>,
     mut throw_timer: Query<&mut ThrowTimer>,
@@ -285,7 +284,7 @@ fn move_pterodactyl(
             |current_movement: PterodactylMovement, commands: &mut Commands| match current_movement
             {
                 PterodactylMovement::Fly(pterodactyl_direction) => {
-                    let (mut anim_timer, mut texture, mut sprite) =
+                    let (mut anim_timer, mut sprite) =
                         animation_query.get_mut(pterodactyl_entity).unwrap();
                     anim_timer.tick(time.delta());
                     match pterodactyl_direction {
@@ -299,25 +298,29 @@ fn move_pterodactyl(
                         }
                     }
                     if anim_timer.just_finished() {
-                        cycle_texture(&mut texture, 0..=4);
+                        if let Some(texture) = &mut sprite.texture_atlas {
+                            cycle_texture(texture, 0..=4);
+                        }
                     }
                 }
 
                 PterodactylMovement::Throw => {
-                    let (mut _anim_timer, mut texture, mut _sprite) =
+                    let (mut _anim_timer, mut sprite) =
                         animation_query.get_mut(pterodactyl_entity).unwrap();
-                    texture.index = 5;
+                    if let Some(texture) = &mut sprite.texture_atlas {
+                        texture.index = 5;
+                    }
 
                     if audio_entity.is_none() || query_entity.get(audio_entity.unwrap()).is_err() {
                         *audio_entity = Some(
                             commands
-                                .spawn(AudioBundle {
-                                    source: rock_run_assets.pterodactyl_sound.clone(),
-                                    settings: PlaybackSettings {
+                                .spawn((
+                                    AudioPlayer::new(rock_run_assets.pterodactyl_sound.clone()),
+                                    PlaybackSettings {
                                         mode: PlaybackMode::Despawn,
                                         ..default()
                                     },
-                                })
+                                ))
                                 .id(),
                         );
                     }
@@ -338,26 +341,26 @@ fn move_pterodactyl(
                     debug!("pterodactyl_pos: {:?}", pterodactyl_pos);
                     (pterodactyl.exit_pos - pterodactyl_pos).normalize()
                         * PTERODACTYL_SPEED
-                        * time.delta_seconds()
+                        * time.delta_secs()
                 } else {
                     // Lemniscate of Gerono above the player
                     let x = (WINDOW_WIDTH / 2.8)
-                        * (time.elapsed_seconds() * PTERODACTYL_SPEED * 0.002).cos()
+                        * (time.elapsed_secs() * PTERODACTYL_SPEED * 0.002).cos()
                         + player_pos.x;
                     let y = (WINDOW_HEIGHT / 2.8)
-                        * (time.elapsed_seconds() * PTERODACTYL_SPEED * 0.002).sin()
-                        * (time.elapsed_seconds() * PTERODACTYL_SPEED * 0.002).cos()
+                        * (time.elapsed_secs() * PTERODACTYL_SPEED * 0.002).sin()
+                        * (time.elapsed_secs() * PTERODACTYL_SPEED * 0.002).cos()
                         + player_pos.y
                         + 300.0;
 
-                    pterodactyl_pos.lerp(Vec2::new(x, y), time.delta_seconds() * SMOOTH_FACTOR)
+                    pterodactyl_pos.lerp(Vec2::new(x, y), time.delta_secs() * SMOOTH_FACTOR)
                         - pterodactyl_pos
                 }
             }
             true => {
                 (pterodactyl.exit_pos - pterodactyl_pos).normalize()
                     * PTERODACTYL_SPEED
-                    * time.delta_seconds()
+                    * time.delta_secs()
             }
         };
 
@@ -402,14 +405,13 @@ fn spawn_little_rock(
     let texture = rock_run_assets.rock_small.clone();
 
     commands.spawn((
-        SpriteBundle {
-            texture,
-            sprite: Sprite { ..default() },
-            transform: Transform {
-                scale: Vec3::splat(ROCK_SCALE_FACTOR),
-                translation: (current_pos + Vec2::new(0.0, -28.0)).extend(20.0),
-                ..default()
-            },
+        Sprite {
+            image: texture,
+            ..default()
+        },
+        Transform {
+            scale: Vec3::splat(ROCK_SCALE_FACTOR),
+            translation: (current_pos + Vec2::new(0.0, -28.0)).extend(20.0),
             ..default()
         },
         RigidBody::Dynamic,

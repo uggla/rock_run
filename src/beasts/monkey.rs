@@ -113,19 +113,18 @@ fn setup_monkey(
 
     for monkey in monkeys {
         commands.spawn((
-            SpriteBundle {
-                texture: monkey.texture.clone(),
-                sprite: Sprite { ..default() },
-                transform: Transform {
-                    scale: Vec3::splat(MONKEY_SCALE_FACTOR),
-                    translation: monkey.start_pos.extend(20.0),
-                    ..default()
-                },
+            Sprite {
+                image: monkey.texture.clone(),
+                texture_atlas: Some(TextureAtlas {
+                    layout: texture_atlas_layout.clone(),
+                    index: 0,
+                }),
                 ..default()
             },
-            TextureAtlas {
-                layout: texture_atlas_layout.clone(),
-                index: 0,
+            Transform {
+                scale: Vec3::splat(MONKEY_SCALE_FACTOR),
+                translation: monkey.start_pos.extend(20.0),
+                ..default()
             },
             RigidBody::KinematicPositionBased,
             AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
@@ -153,7 +152,7 @@ fn move_monkey(
     mut commands: Commands,
     time: Res<Time>,
     mut monkey_query: Query<(Entity, &mut Monkey), With<Monkey>>,
-    mut animation_query: Query<(&mut AnimationTimer, &mut TextureAtlas, &mut Sprite)>,
+    mut animation_query: Query<(&mut AnimationTimer, &mut Sprite)>,
     mut small_rock_event: EventReader<SmallRockAboutToRelease>,
 ) {
     let mut event_received = false;
@@ -164,8 +163,7 @@ fn move_monkey(
     }
 
     for (monkey_entity, mut monkey) in monkey_query.iter_mut() {
-        let (mut anim_timer, mut texture, mut sprite) =
-            animation_query.get_mut(monkey_entity).unwrap();
+        let (mut anim_timer, mut sprite) = animation_query.get_mut(monkey_entity).unwrap();
 
         let mut anim =
             |current_movement: MonkeyMovement, _commands: &mut Commands| match current_movement {
@@ -180,13 +178,17 @@ fn move_monkey(
                         }
                     }
                     if anim_timer.just_finished() {
-                        texture.index = 9;
+                        if let Some(texture) = &mut sprite.texture_atlas {
+                            texture.index = 9;
+                        }
                     }
                 }
                 MonkeyMovement::Throw => {
                     anim_timer.tick(time.delta());
                     if anim_timer.just_finished() {
-                        texture.index += 1;
+                        if let Some(texture) = &mut sprite.texture_atlas {
+                            texture.index += 1;
+                        }
                     }
                 }
             };
@@ -195,11 +197,15 @@ fn move_monkey(
 
         if event_received {
             monkey.current_movement = MonkeyMovement::Throw;
-            texture.index = 0;
+            if let Some(texture) = &mut sprite.texture_atlas {
+                texture.index = 0;
+            }
         }
 
-        if texture.index == 9 {
-            monkey.current_movement = monkey.initial_movement;
+        if let Some(texture) = &mut sprite.texture_atlas {
+            if texture.index == 9 {
+                monkey.current_movement = monkey.initial_movement;
+            }
         }
     }
 }

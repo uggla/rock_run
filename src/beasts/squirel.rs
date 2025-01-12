@@ -195,23 +195,20 @@ fn setup_squirels(
 
     for squirel in squirels {
         commands.spawn((
-            SpriteBundle {
-                texture: texture.clone(),
-                sprite: Sprite {
-                    flip_x: true,
-                    ..default()
-                },
-                transform: Transform {
-                    scale: Vec3::splat(SQUIREL_SCALE_FACTOR),
-                    translation: squirel.pos.extend(10.0),
-                    ..default()
-                },
-                visibility: squirel.visibility,
+            Sprite {
+                image: texture.clone(),
+                flip_x: true,
+                texture_atlas: Some(TextureAtlas {
+                    layout: texture_atlas_layout.clone(),
+                    index: 0,
+                }),
                 ..default()
             },
-            TextureAtlas {
-                layout: texture_atlas_layout.clone(),
-                index: 0,
+            squirel.visibility,
+            Transform {
+                scale: Vec3::splat(SQUIREL_SCALE_FACTOR),
+                translation: squirel.pos.extend(10.0),
+                ..default()
             },
             RigidBody::KinematicPositionBased,
             AnimationTimer(Timer::from_seconds(0.12, TimerMode::Repeating)),
@@ -270,14 +267,13 @@ fn setup_nuts(
 
     for start_pos in start_positions {
         commands.spawn((
-            SpriteBundle {
-                texture: texture.clone(),
-                sprite: Sprite { ..default() },
-                transform: Transform {
-                    scale: Vec3::splat(NUT_SCALE_FACTOR),
-                    translation: start_pos.extend(10.0),
-                    ..default()
-                },
+            Sprite {
+                image: texture.clone(),
+                ..default()
+            },
+            Transform {
+                scale: Vec3::splat(NUT_SCALE_FACTOR),
+                translation: start_pos.extend(10.0),
                 ..default()
             },
             Collider::cuboid(NUT_WIDTH / 2.0, NUT_HEIGHT / 2.0),
@@ -302,14 +298,14 @@ fn check_get_nut(
         collected_nuts.entities.push(ev.entity);
         debug!("Collected nuts {}", collected_nuts.entities.len());
         commands.entity(ev.entity).despawn_recursive();
-        commands.spawn(AudioBundle {
-            source: rock_run_assets.get_something_sound.clone(),
-            settings: PlaybackSettings {
+        commands.spawn((
+            AudioPlayer::new(rock_run_assets.get_something_sound.clone()),
+            PlaybackSettings {
                 mode: PlaybackMode::Despawn,
                 volume: Volume::new(0.8),
                 ..default()
             },
-        });
+        ));
     }
 }
 
@@ -327,7 +323,7 @@ fn move_squirel(
     mut commands: Commands,
     time: Res<Time>,
     mut squirel_query: Query<SquirelData, With<Squirel>>,
-    mut animation_query: Query<(&mut AnimationTimer, &mut TextureAtlas, &mut Sprite)>,
+    mut animation_query: Query<(&mut AnimationTimer, &mut Sprite)>,
     mut enigna_result: EventReader<EnigmaResult>,
     spikes: Query<&Transform, (With<Spike>, Without<Squirel>)>,
 ) {
@@ -344,8 +340,7 @@ fn move_squirel(
     {
         let mut anim = |current_movement: SquirelMovement| match current_movement {
             SquirelMovement::Run(squirel_direction) => {
-                let (mut anim_timer, mut texture, mut sprite) =
-                    animation_query.get_mut(squirel_entity).unwrap();
+                let (mut anim_timer, mut sprite) = animation_query.get_mut(squirel_entity).unwrap();
                 anim_timer.tick(time.delta());
                 match squirel_direction {
                     SquirelDirection::Left => {
@@ -358,16 +353,19 @@ fn move_squirel(
                     }
                 }
                 if anim_timer.just_finished() {
-                    cycle_texture(&mut texture, 8..=13);
+                    if let Some(texture) = &mut sprite.texture_atlas {
+                        cycle_texture(texture, 8..=13);
+                    }
                 }
             }
 
             SquirelMovement::Idle => {
-                let (mut anim_timer, mut texture, mut _sprite) =
-                    animation_query.get_mut(squirel_entity).unwrap();
+                let (mut anim_timer, mut sprite) = animation_query.get_mut(squirel_entity).unwrap();
                 anim_timer.tick(time.delta());
                 if anim_timer.just_finished() {
-                    cycle_texture(&mut texture, 0..=7);
+                    if let Some(texture) = &mut sprite.texture_atlas {
+                        cycle_texture(texture, 0..=7);
+                    }
                 }
             }
         };
@@ -397,13 +395,13 @@ fn move_squirel(
                 .any(|s| (s.translation.x - squirel_pos.x).abs() < 3.0 * 16.0)
             {
                 squirel_controller.translation = Some(Vec2::new(
-                    SQUIREL_SPEED * time.delta_seconds(),
-                    150.0 * time.delta_seconds(),
+                    SQUIREL_SPEED * time.delta_secs(),
+                    150.0 * time.delta_secs(),
                 ));
             } else {
                 squirel_controller.translation = Some(Vec2::new(
-                    SQUIREL_SPEED * time.delta_seconds(),
-                    -400.0 * time.delta_seconds(),
+                    SQUIREL_SPEED * time.delta_secs(),
+                    -400.0 * time.delta_secs(),
                 ));
             }
         }
@@ -630,17 +628,18 @@ fn display_vine(
     }
 }
 
-fn get_vine_sprite_bundle(texture: &Handle<Image>, vine_pos: Vec3) -> SpriteBundle {
-    SpriteBundle {
-        texture: texture.clone(),
-        sprite: Sprite { ..default() },
-        transform: Transform {
+fn get_vine_sprite_bundle(texture: &Handle<Image>, vine_pos: Vec3) -> (Sprite, Transform) {
+    (
+        Sprite {
+            image: texture.clone(),
+            ..default()
+        },
+        Transform {
             scale: Vec3::splat(VINE_SCALE_FACTOR),
             translation: vine_pos,
             ..default()
         },
-        ..default()
-    }
+    )
 }
 
 fn despawn_squirel(mut commands: Commands, squirels: Query<Entity, With<Squirel>>) {

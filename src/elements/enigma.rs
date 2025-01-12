@@ -247,17 +247,16 @@ fn spawn_enigma_materials(
             let texture = rock_run_assets.rock_ball.clone();
 
             commands.spawn((
-                SpriteBundle {
-                    texture: texture.clone(),
-                    sprite: Sprite { ..default() },
-                    transform: Transform {
-                        scale: Vec3::splat(ROCK_SCALE_FACTOR),
-                        translation: level
-                            .map
-                            .tiled_to_bevy_coord(Vec2::new(2800.0, 160.0 - ROCK_DIAMETER / 2.0))
-                            .extend(20.0),
-                        ..default()
-                    },
+                Sprite {
+                    image: texture.clone(),
+                    ..default()
+                },
+                Transform {
+                    scale: Vec3::splat(ROCK_SCALE_FACTOR),
+                    translation: level
+                        .map
+                        .tiled_to_bevy_coord(Vec2::new(2800.0, 160.0 - ROCK_DIAMETER / 2.0))
+                        .extend(20.0),
                     ..default()
                 },
                 RigidBody::Dynamic,
@@ -280,17 +279,16 @@ fn spawn_enigma_materials(
             ));
 
             commands.spawn((
-                SpriteBundle {
-                    texture: texture.clone(),
-                    sprite: Sprite { ..default() },
-                    transform: Transform {
-                        scale: Vec3::splat(ROCK_SCALE_FACTOR),
-                        translation: level
-                            .map
-                            .tiled_to_bevy_coord(Vec2::new(7505.0, 208.0 - ROCK_DIAMETER / 2.0))
-                            .extend(20.0),
-                        ..default()
-                    },
+                Sprite {
+                    image: texture.clone(),
+                    ..default()
+                },
+                Transform {
+                    scale: Vec3::splat(ROCK_SCALE_FACTOR),
+                    translation: level
+                        .map
+                        .tiled_to_bevy_coord(Vec2::new(7505.0, 208.0 - ROCK_DIAMETER / 2.0))
+                        .extend(20.0),
                     ..default()
                 },
                 RigidBody::Dynamic,
@@ -308,17 +306,16 @@ fn spawn_enigma_materials(
 
             let texture = rock_run_assets.gate.clone();
             commands.spawn((
-                SpriteBundle {
-                    texture,
-                    sprite: Sprite { ..default() },
-                    transform: Transform {
-                        scale: Vec3::splat(GATE_SCALE_FACTOR),
-                        translation: level
-                            .map
-                            .tiled_to_bevy_coord(Vec2::new(8032.0, 548.0))
-                            .extend(3.0),
-                        ..default()
-                    },
+                Sprite {
+                    image: texture,
+                    ..default()
+                },
+                Transform {
+                    scale: Vec3::splat(GATE_SCALE_FACTOR),
+                    translation: level
+                        .map
+                        .tiled_to_bevy_coord(Vec2::new(8032.0, 548.0))
+                        .extend(3.0),
                     ..default()
                 },
                 Collider::cuboid(GATE_WIDTH / 2.0, GATE_HEIGHT / 2.0),
@@ -332,20 +329,17 @@ fn spawn_enigma_materials(
         2 => {
             let texture = rock_run_assets.gate.clone();
             commands.spawn((
-                SpriteBundle {
-                    texture,
-                    sprite: Sprite {
-                        flip_y: true,
-                        ..default()
-                    },
-                    transform: Transform {
-                        scale: Vec3::splat(GATE_SCALE_FACTOR),
-                        translation: level
-                            .map
-                            .tiled_to_bevy_coord(Vec2::new(12144.0, 2135.0))
-                            .extend(4.0),
-                        ..default()
-                    },
+                Sprite {
+                    image: texture,
+                    flip_y: true,
+                    ..default()
+                },
+                Transform {
+                    scale: Vec3::splat(GATE_SCALE_FACTOR),
+                    translation: level
+                        .map
+                        .tiled_to_bevy_coord(Vec2::new(12144.0, 2135.0))
+                        .extend(4.0),
                     ..default()
                 },
                 Collider::cuboid(GATE_WIDTH / 2.0, GATE_HEIGHT / 2.0),
@@ -368,22 +362,21 @@ fn spawn_enigma_materials(
             let texture_atlas_layout = texture_atlases.add(layout);
 
             commands.spawn((
-                SpriteBundle {
-                    texture,
-                    sprite: Sprite { ..default() },
-                    transform: Transform {
-                        scale: Vec3::splat(WARRIOR_SCALE_FACTOR),
-                        translation: level
-                            .map
-                            .tiled_to_bevy_coord(Vec2::new(5575.0, 608.0))
-                            .extend(2.0),
-                        ..default()
-                    },
+                Sprite {
+                    image: texture,
+                    texture_atlas: Some(TextureAtlas {
+                        layout: texture_atlas_layout,
+                        index: 0,
+                    }),
                     ..default()
                 },
-                TextureAtlas {
-                    layout: texture_atlas_layout,
-                    index: 0,
+                Transform {
+                    scale: Vec3::splat(WARRIOR_SCALE_FACTOR),
+                    translation: level
+                        .map
+                        .tiled_to_bevy_coord(Vec2::new(5575.0, 608.0))
+                        .extend(2.0),
+                    ..default()
                 },
                 AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
                 Warrior,
@@ -391,17 +384,16 @@ fn spawn_enigma_materials(
 
             let texture = rock_run_assets.gate.clone();
             commands.spawn((
-                SpriteBundle {
-                    texture,
-                    sprite: Sprite { ..default() },
-                    transform: Transform {
-                        scale: Vec3::splat(GATE_SCALE_FACTOR),
-                        translation: level
-                            .map
-                            .tiled_to_bevy_coord(Vec2::new(5488.0, 615.0))
-                            .extend(2.0),
-                        ..default()
-                    },
+                Sprite {
+                    image: texture,
+                    ..default()
+                },
+                Transform {
+                    scale: Vec3::splat(GATE_SCALE_FACTOR),
+                    translation: level
+                        .map
+                        .tiled_to_bevy_coord(Vec2::new(5488.0, 615.0))
+                        .extend(2.0),
                     ..default()
                 },
                 Collider::cuboid(GATE_WIDTH / 2.0, GATE_HEIGHT / 2.0),
@@ -415,7 +407,6 @@ fn spawn_enigma_materials(
     }
 }
 
-#[allow(clippy::too_many_arguments)]
 fn check_enigma(
     mut commands: Commands,
     rock_run_assets: Res<RockRunAssets>,
@@ -647,7 +638,7 @@ fn spawn_story_100(level: &Level, _rock_run_assets: &Res<RockRunAssets>, command
         .spawn((
             Collider::cuboid(1.0, 1.0),
             Story,
-            TransformBundle::from(Transform::from_xyz(x, y, 0.0)),
+            Transform::from_xyz(x, y, 0.0),
         ))
         .insert(Sensor)
         .insert(ActiveEvents::COLLISION_EVENTS)
@@ -661,7 +652,7 @@ fn spawn_story_101(level: &Level, _rock_run_assets: &Res<RockRunAssets>, command
         .spawn((
             Collider::cuboid(1.0, 1.0),
             Story,
-            TransformBundle::from(Transform::from_xyz(x, y, 0.0)),
+            Transform::from_xyz(x, y, 0.0),
         ))
         .insert(Sensor)
         .insert(ActiveEvents::COLLISION_EVENTS)
@@ -672,14 +663,13 @@ fn spawn_story_101(level: &Level, _rock_run_assets: &Res<RockRunAssets>, command
 fn spawn_key(level: &Level, rock_run_assets: &Res<RockRunAssets>, commands: &mut Commands) {
     let start_pos = level.map.tiled_to_bevy_coord(Vec2::new(5984.0, 2064.0));
     commands.spawn((
-        SpriteBundle {
-            texture: rock_run_assets.key.clone(),
-            sprite: Sprite { ..default() },
-            transform: Transform {
-                scale: Vec3::splat(KEY_SCALE_FACTOR),
-                translation: start_pos.extend(10.0),
-                ..default()
-            },
+        Sprite {
+            image: rock_run_assets.key.clone(),
+            ..default()
+        },
+        Transform {
+            scale: Vec3::splat(KEY_SCALE_FACTOR),
+            translation: start_pos.extend(10.0),
             ..default()
         },
         Collider::cuboid(KEY_WIDTH / 2.0, KEY_HEIGHT / 2.0),
@@ -747,14 +737,14 @@ fn wrong_answer(
     rock_run_assets: &Res<RockRunAssets>,
 ) {
     enigna_result.send(EnigmaResult::Incorrect(story.to_string()));
-    commands.spawn(AudioBundle {
-        source: rock_run_assets.story_wrong_sound.clone(),
-        settings: PlaybackSettings {
+    commands.spawn((
+        AudioPlayer::new(rock_run_assets.story_wrong_sound.clone()),
+        PlaybackSettings {
             volume: Volume::new(7.0),
             mode: PlaybackMode::Despawn,
             ..default()
         },
-    });
+    ));
 }
 
 fn correct_answer(
@@ -765,13 +755,13 @@ fn correct_answer(
     stories_query: &Query<(Entity, &ColliderName), With<Story>>,
 ) {
     enigna_result.send(EnigmaResult::Correct(story.to_string()));
-    commands.spawn(AudioBundle {
-        source: rock_run_assets.story_valid_sound.clone(),
-        settings: PlaybackSettings {
+    commands.spawn((
+        AudioPlayer::new(rock_run_assets.story_valid_sound.clone()),
+        PlaybackSettings {
             mode: PlaybackMode::Despawn,
             ..default()
         },
-    });
+    ));
 
     for (entity, collider_name) in stories_query.iter() {
         if story.contains(&collider_name.0) {
@@ -784,15 +774,16 @@ fn correct_answer(
 fn move_warrior(
     time: Res<Time>,
     mut warrior_query: Query<Entity, With<Warrior>>,
-    mut animation_query: Query<(&mut AnimationTimer, &mut TextureAtlas, &mut Sprite)>,
+    mut animation_query: Query<(&mut AnimationTimer, &mut Sprite)>,
 ) {
     for warrior_entity in warrior_query.iter_mut() {
         let mut anim = || {
-            let (mut anim_timer, mut texture, mut _sprite) =
-                animation_query.get_mut(warrior_entity).unwrap();
+            let (mut anim_timer, mut sprite) = animation_query.get_mut(warrior_entity).unwrap();
             anim_timer.tick(time.delta());
             if anim_timer.just_finished() {
-                cycle_texture(&mut texture, 0..=5);
+                if let Some(texture) = &mut sprite.texture_atlas {
+                    cycle_texture(texture, 0..=5);
+                }
             }
         };
         anim();

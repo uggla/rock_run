@@ -74,7 +74,7 @@ fn tiled_object_to_collider<T: Component + Clone>(
                             .spawn((
                                 Collider::cuboid(*width / 2.0, *height / 2.0),
                                 bridge.component.clone(),
-                                TransformBundle::from(Transform::from_xyz(x, y, 0.0)),
+                                Transform::from_xyz(x, y, 0.0),
                             ))
                             .insert(Sensor)
                             .insert(ActiveEvents::COLLISION_EVENTS)
@@ -85,7 +85,7 @@ fn tiled_object_to_collider<T: Component + Clone>(
                             .spawn((
                                 Collider::cuboid(*width / 2.0, *height / 2.0),
                                 bridge.component.clone(),
-                                TransformBundle::from(Transform::from_xyz(x, y, 0.0)),
+                                Transform::from_xyz(x, y, 0.0),
                             ))
                             .insert(ColliderName(object.name.clone()));
                     }
@@ -164,7 +164,7 @@ fn tiled_object_to_collider<T: Component + Clone>(
                                 Collider::ball(*width / 2.0),
                                 bridge.component.clone(),
                                 // Platform,
-                                TransformBundle::from(Transform::from_xyz(x, y, 0.0)),
+                                Transform::from_xyz(x, y, 0.0),
                             ))
                             .insert(Sensor)
                             .insert(ActiveEvents::COLLISION_EVENTS)
@@ -176,7 +176,7 @@ fn tiled_object_to_collider<T: Component + Clone>(
                                 Collider::ball(*width / 2.0),
                                 bridge.component.clone(),
                                 // Platform,
-                                TransformBundle::from(Transform::from_xyz(x, y, 0.0)),
+                                Transform::from_xyz(x, y, 0.0),
                             ))
                             .insert(ColliderName(object.name.clone()));
                     }
@@ -188,7 +188,7 @@ fn tiled_object_to_collider<T: Component + Clone>(
                         .spawn((
                             Collider::cuboid(1.0, 1.0),
                             bridge.component.clone(),
-                            TransformBundle::from(Transform::from_xyz(x, y, 0.0)),
+                            Transform::from_xyz(x, y, 0.0),
                         ))
                         .insert(Sensor)
                         .insert(ActiveEvents::COLLISION_EVENTS)

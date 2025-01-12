@@ -716,7 +716,7 @@ fn menu_input_system(
     mut next_state: ResMut<NextState<AppState>>,
     menu_action_state: Res<ActionState<MenuAction>>,
     mut app_exit_events: EventWriter<AppExit>,
-    mut rapier_config: ResMut<RapierConfiguration>,
+    mut rapier_config: Query<&mut RapierConfiguration>,
     mut msg_event: EventWriter<StoryMessages>,
     mut selection_event: EventWriter<SelectionChanged>,
     mut no_more_msg_event: EventReader<NoMoreStoryMessages>,
@@ -726,6 +726,7 @@ fn menu_input_system(
     mut current_level: ResMut<CurrentLevel>,
     start_level: Res<StartLevel>,
 ) {
+    let mut rapier_config = rapier_config.single_mut();
     if state.get() != &AppState::StartMenu
         && menu_action_state.just_pressed(&MenuAction::ExitToMenu)
     {

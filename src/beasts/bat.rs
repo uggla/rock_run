@@ -154,7 +154,7 @@ fn move_bat(
         ),
         With<Bat>,
     >,
-    mut animation_query: Query<(&mut AnimationTimer, &mut TextureAtlas, &mut Sprite)>,
+    mut animation_query: Query<(&mut AnimationTimer, &mut Sprite)>,
     player_query: Query<&mut Transform, (With<Player>, Without<Bat>)>,
     hit: EventReader<Hit>,
     mut chase_timer: Query<&mut ChaseTimer>,
@@ -164,8 +164,7 @@ fn move_bat(
         let player = player_query.single();
         let mut anim = |current_movement: BatMovement| match current_movement {
             BatMovement::Fly(bat_direction) => {
-                let (mut anim_timer, mut texture, mut sprite) =
-                    animation_query.get_mut(bat_entity).unwrap();
+                let (mut anim_timer, mut sprite) = animation_query.get_mut(bat_entity).unwrap();
                 anim_timer.tick(time.delta());
                 match bat_direction {
                     BatDirection::Left => {
@@ -178,14 +177,17 @@ fn move_bat(
                     }
                 }
                 if anim_timer.just_finished() {
-                    cycle_texture(&mut texture, 0..=2);
+                    if let Some(texture) = &mut sprite.texture_atlas {
+                        cycle_texture(texture, 0..=2);
+                    }
                 }
             }
 
             BatMovement::Crunch => {
-                let (mut _anim_timer, mut texture, mut _sprite) =
-                    animation_query.get_mut(bat_entity).unwrap();
-                texture.index = 5;
+                let (mut _anim_timer, mut sprite) = animation_query.get_mut(bat_entity).unwrap();
+                if let Some(texture) = &mut sprite.texture_atlas {
+                    texture.index = 5;
+                }
             }
         };
 
@@ -205,9 +207,9 @@ fn move_bat(
             debug!("chase_timer finished");
             debug!("bat_pos: {:?}", bat_pos);
             bat_controller.filter_flags = QueryFilterFlags::ONLY_KINEMATIC;
-            (bat.exit_pos - bat_pos).normalize() * BAT_SPEED * time.delta_seconds()
+            (bat.exit_pos - bat_pos).normalize() * BAT_SPEED * time.delta_secs()
         } else {
-            (player_pos - bat_pos).normalize() * BAT_SPEED * time.delta_seconds()
+            (player_pos - bat_pos).normalize() * BAT_SPEED * time.delta_secs()
         };
 
         if bat_pos.distance(bat.exit_pos) < 2.0 {
