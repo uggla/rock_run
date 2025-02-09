@@ -17,7 +17,7 @@ use crate::{
     events::{NextLevel, PositionSensorCollisionStart, PositionSensorCollisionStop, Restart},
     helpers::{
         self,
-        tiled::{TiledMap, TilesetLayerToStorageEntity},
+        tiled::{TiledMap, TiledMapHandle, TilesetLayerToStorageEntity},
     },
     player, WINDOW_HEIGHT, WINDOW_WIDTH,
 };
@@ -97,7 +97,7 @@ fn setup_background(mut commands: Commands, rock_run_assets: Res<RockRunAssets>)
     let map_handle: Handle<helpers::tiled::TiledMap> = rock_run_assets.level01.clone();
     commands.spawn((
         helpers::tiled::TiledMapBundle {
-            tiled_map: map_handle.clone(),
+            tiled_map: TiledMapHandle(map_handle.clone()),
             ..Default::default()
         },
         Level {
@@ -110,7 +110,7 @@ fn setup_background(mut commands: Commands, rock_run_assets: Res<RockRunAssets>)
     let map_handle: Handle<helpers::tiled::TiledMap> = rock_run_assets.level02.clone();
     commands.spawn((
         helpers::tiled::TiledMapBundle {
-            tiled_map: map_handle.clone(),
+            tiled_map: TiledMapHandle(map_handle.clone()),
             ..Default::default()
         },
         Level {
@@ -127,7 +127,7 @@ fn setup_background(mut commands: Commands, rock_run_assets: Res<RockRunAssets>)
     let map_handle: Handle<helpers::tiled::TiledMap> = rock_run_assets.level03.clone();
     commands.spawn((
         helpers::tiled::TiledMapBundle {
-            tiled_map: map_handle.clone(),
+            tiled_map: TiledMapHandle(map_handle.clone()),
             ..Default::default()
         },
         Level {
