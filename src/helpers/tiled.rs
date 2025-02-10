@@ -395,9 +395,7 @@ pub fn process_loaded_maps(
                             ..Default::default()
                         });
 
-                        // layer_storage
-                        //     .storage
-                        //     .insert(layer_index as u32, layer_entity);
+                        layers_map.insert(layer_index as u32, layer_entity);
                     }
                     tileset_layer_entity
                         .storage

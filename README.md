@@ -200,3 +200,15 @@ RUST_LOG=none,rock_run=info cargo rr
 This is not fixed yet.
 
 TODO: create a environment variable to change the UI settings.
+
+4- Configuration file not updated
+
+```
+thread 'main' panicked at /home/rribaud/rust/registry/src/index.crates.io-6f17d22bba15001f/bevy_pkv-0.12.0/src/redb_store.rs:82:44:
+Failed to init key value store: UpgradeRequired(1)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+```
+
+.local/share/rockrun/bevy_pkv.redb
+
+TODO: Update that part of documentation.
