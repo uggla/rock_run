@@ -206,7 +206,7 @@ fn start_menu(
                     width: Val::Px(720.0),
                     ..default()
                 },
-                BackgroundColor(Color::WHITE.into()),
+                BackgroundColor(Color::WHITE),
                 ImageNode::new(rock_run_assets.menu.clone()),
             ));
         })
@@ -220,7 +220,7 @@ fn start_menu(
                         width: Val::Px(WINDOW_WIDTH - 720.0),
                         ..default()
                     },
-                    BackgroundColor(Color::WHITE.into()),
+                    BackgroundColor(Color::WHITE),
                     ImageNode::new(rock_run_assets.menu2.clone()),
                 ))
                 .with_children(|parent| {
@@ -256,7 +256,7 @@ fn start_menu(
                                     right: Val::Px(30.0),
                                     ..default()
                                 },
-                                BackgroundColor(Color::WHITE.into()),
+                                BackgroundColor(Color::WHITE),
                                 ImageNode::new(rock_run_assets.en_flag.clone()),
                             ));
 
@@ -540,7 +540,7 @@ fn gamefinished_menu(mut commands: Commands, rock_run_assets: Res<RockRunAssets>
                 flex_direction: FlexDirection::Row,
                 ..default()
             },
-            TextColor(Color::BLACK.into()),
+            TextColor(Color::BLACK),
             ForState {
                 states: vec![AppState::GameOver],
             },
@@ -551,7 +551,7 @@ fn gamefinished_menu(mut commands: Commands, rock_run_assets: Res<RockRunAssets>
                     width: Val::Px(720.0),
                     ..default()
                 },
-                TextColor(Color::WHITE.into()),
+                TextColor(Color::WHITE),
                 ImageNode::new(rock_run_assets.victory.clone()),
             ));
         })
@@ -577,7 +577,7 @@ fn gameover_menu(mut commands: Commands, rock_run_assets: Res<RockRunAssets>) {
                 flex_direction: FlexDirection::Row,
                 ..default()
             },
-            TextColor(Color::BLACK.into()),
+            TextColor(Color::BLACK),
             ForState {
                 states: vec![AppState::GameOver],
             },
@@ -588,7 +588,7 @@ fn gameover_menu(mut commands: Commands, rock_run_assets: Res<RockRunAssets>) {
                     width: Val::Px(720.0),
                     ..default()
                 },
-                TextColor(Color::WHITE.into()),
+                TextColor(Color::WHITE),
                 ImageNode::new(rock_run_assets.gameover.clone()),
             ));
         });

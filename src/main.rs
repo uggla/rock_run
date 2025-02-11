@@ -96,7 +96,7 @@ fn main() {
     app.run();
 }
 
-#[allow(dead_code)]
+// #[allow(dead_code)]
 // fn toggle_perf_ui(
 //     mut commands: Commands,
 //     q_root: Query<Entity, With<iyes_perf_ui::ui::root::PerfUiRoot>>,

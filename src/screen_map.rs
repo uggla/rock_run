@@ -447,6 +447,9 @@ impl Map {
     ///  let time = world.resource_ref::<Time>();
     ///
     ///  let map = Map::new(screen_map, screen_width, screen_height);
+    ///  // TODO: Remove this unsafe
+    ///  // https://github.com/bevyengine/bevy/issues/16831
+    ///  let time = unsafe { std::mem::transmute::<Ref<'_, Time>, Res<'_, Time>>(time) };
     ///
     ///  // From left middle screen
     ///  // Move to right
