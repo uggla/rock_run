@@ -7,6 +7,8 @@ use bevy::prelude::*;
 use bevy_fluent::{BundleAsset, Locale};
 use bevy_pkv::PkvStore;
 use bevy_rapier2d::plugin::RapierConfiguration;
+use leafwing_input_manager::axislike::AxisDirection;
+use leafwing_input_manager::prelude::GamepadControlDirection;
 use leafwing_input_manager::{
     action_state::ActionState, input_map::InputMap, plugin::InputManagerPlugin, Actionlike,
 };
@@ -135,28 +137,48 @@ fn setup(
         (MenuAction::Right, KeyCode::ArrowRight),
         (MenuAction::Left, KeyCode::ArrowLeft),
     ]);
-    // input_map.insert(MenuAction::ExitToMenu, GamepadButtonType::Select);
-    // input_map.insert(MenuAction::PauseUnpause, GamepadButtonType::Start);
-    // input_map.insert(MenuAction::Accept, GamepadButtonType::South);
-    // input_map.insert(
-    //     MenuAction::Up,
-    //     SingleAxis::positive_only(GamepadAxisType::LeftStickY, 0.4),
-    // );
-    // input_map.insert(
-    //     MenuAction::Down,
-    //     SingleAxis::negative_only(GamepadAxisType::LeftStickY, -0.4),
-    // );
-    // input_map.insert(
-    //     MenuAction::Right,
-    //     SingleAxis::positive_only(GamepadAxisType::LeftStickX, 0.4),
-    // );
-    // input_map.insert(
-    //     MenuAction::Left,
-    //     SingleAxis::negative_only(GamepadAxisType::LeftStickX, -0.4),
-    // );
-    //
-    // #[cfg(not(target_arch = "wasm32"))]
-    // input_map.insert(MenuAction::Quit, GamepadButtonType::East);
+    input_map.insert(MenuAction::ExitToMenu, GamepadButton::Select);
+    input_map.insert(MenuAction::PauseUnpause, GamepadButton::Start);
+    input_map.insert(MenuAction::Accept, GamepadButton::South);
+    input_map.insert(
+        MenuAction::Right,
+        GamepadControlDirection {
+            axis: GamepadAxis::LeftStickX,
+
+            direction: AxisDirection::Positive,
+            threshold: 0.8,
+        },
+    );
+    input_map.insert(
+        MenuAction::Left,
+        GamepadControlDirection {
+            axis: GamepadAxis::LeftStickX,
+
+            direction: AxisDirection::Negative,
+            threshold: 0.8,
+        },
+    );
+    input_map.insert(
+        MenuAction::Up,
+        GamepadControlDirection {
+            axis: GamepadAxis::LeftStickY,
+
+            direction: AxisDirection::Positive,
+            threshold: 0.8,
+        },
+    );
+    input_map.insert(
+        MenuAction::Down,
+        GamepadControlDirection {
+            axis: GamepadAxis::LeftStickY,
+
+            direction: AxisDirection::Negative,
+            threshold: 0.8,
+        },
+    );
+
+    #[cfg(not(target_arch = "wasm32"))]
+    input_map.insert(MenuAction::Quit, GamepadButton::East);
     #[cfg(not(target_arch = "wasm32"))]
     input_map.insert(MenuAction::Quit, KeyCode::Escape);
 

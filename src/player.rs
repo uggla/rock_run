@@ -3,8 +3,8 @@ use bevy_rapier2d::{
     control::KinematicCharacterController, dynamics::RigidBody, geometry::Collider,
 };
 use leafwing_input_manager::{
-    action_state::ActionState, input_map::InputMap, plugin::InputManagerPlugin, Actionlike,
-    InputManagerBundle,
+    action_state::ActionState, axislike::AxisDirection, input_map::InputMap,
+    plugin::InputManagerPlugin, prelude::GamepadControlDirection, Actionlike, InputManagerBundle,
 };
 
 use crate::{
@@ -134,23 +134,43 @@ fn setup_player(
         (PlayerMovement::Crouch, KeyCode::ArrowDown),
     ]);
 
-    // input_map.insert(PlayerMovement::Jump, GamepadButtonType::South);
-    // input_map.insert(
-    //     PlayerMovement::Run(PlayerDirection::Right),
-    //     SingleAxis::positive_only(GamepadAxisType::LeftStickX, 0.4),
-    // );
-    // input_map.insert(
-    //     PlayerMovement::Run(PlayerDirection::Left),
-    //     SingleAxis::negative_only(GamepadAxisType::LeftStickX, -0.4),
-    // );
-    // input_map.insert(
-    //     PlayerMovement::Climb,
-    //     SingleAxis::positive_only(GamepadAxisType::LeftStickY, 0.4),
-    // );
-    // input_map.insert(
-    //     PlayerMovement::Crouch,
-    //     SingleAxis::negative_only(GamepadAxisType::LeftStickY, -0.4),
-    // );
+    input_map.insert(PlayerMovement::Jump, GamepadButton::South);
+    input_map.insert(
+        PlayerMovement::Run(PlayerDirection::Right),
+        GamepadControlDirection {
+            axis: GamepadAxis::LeftStickX,
+
+            direction: AxisDirection::Positive,
+            threshold: 0.8,
+        },
+    );
+    input_map.insert(
+        PlayerMovement::Run(PlayerDirection::Left),
+        GamepadControlDirection {
+            axis: GamepadAxis::LeftStickX,
+
+            direction: AxisDirection::Negative,
+            threshold: 0.8,
+        },
+    );
+    input_map.insert(
+        PlayerMovement::Climb,
+        GamepadControlDirection {
+            axis: GamepadAxis::LeftStickY,
+
+            direction: AxisDirection::Positive,
+            threshold: 0.8,
+        },
+    );
+    input_map.insert(
+        PlayerMovement::Crouch,
+        GamepadControlDirection {
+            axis: GamepadAxis::LeftStickY,
+
+            direction: AxisDirection::Negative,
+            threshold: 0.8,
+        },
+    );
 
     let start_position: Vec3 = match start_position.0 {
         Some(position) => {
