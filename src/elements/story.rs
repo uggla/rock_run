@@ -17,9 +17,8 @@ use crate::{
     assets::RockRunAssets,
     coregame::state::AppState,
     events::{SelectionChanged, StoryMessages},
+    WINDOW_HEIGHT, WINDOW_WIDTH,
 };
-
-const Z_VALUE: f32 = 15.0;
 
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States)]
 pub enum TextSyllableState {
@@ -48,6 +47,9 @@ pub struct StoryPlugin {
 
 #[derive(Component)]
 struct TextSyllableBox;
+
+#[derive(Component)]
+struct RootText;
 
 #[derive(Component)]
 struct TextSyllable;
@@ -102,12 +104,12 @@ pub struct TextSyllableValues {
 
 impl Default for StoryPlugin {
     fn default() -> Self {
-        let box_size = Vec2::new(500.0, 200.0);
+        let box_size = Vec2::new(600.0, 250.0);
 
         Self {
             font: "fonts/FiraSans-Bold.ttf".into(),
             radius: 20.0,
-            box_position: Vec3::new(0.0, 0.0, Z_VALUE),
+            box_position: Vec3::new(0.0, 0.0, 0.0),
             box_size,
             box_filling: Source::new_linear_gradient(
                 Gradient {
@@ -236,43 +238,78 @@ fn setup(
         },
         color: TextColor(params.def_style_selected.color),
     };
-    commands
+
+    let screen_node = commands
         .spawn((
-            Sprite {
-                // color: Color::rgb(0.25, 0.25, 0.75),
-                // custom_size: Some(Vec2::new(box_size.x, box_size.y)),
-                image: image_handle,
+            Node {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                align_items: AlignItems::Center,
+                justify_content: JustifyContent::Center,
                 ..default()
             },
             Visibility::Hidden,
-            Transform {
-                translation: params.box_position,
-                ..default()
-            },
             TextSyllableBox,
         ))
-        .with_children(|builder| {
-            // builder.spawn((
-            //          Text::new(
-            //             sections: build_text_sections(
-            //                 &params.text,
-            //                 params.style_a.clone(),
-            //                 params.style_b.clone(),
-            //                 params.style_selected.clone(),
-            //             ),
-            //             justify: JustifyText::Left,
-            //         },
-            //         text_2d_bounds: Text2dBounds {
-            //             // Wrap text in the rectangle
-            //             size: Vec2::new(params.box_size.x, params.box_size.y),
-            //         },
-            //         // ensure the text is drawn on top of the box
-            //         transform: Transform::from_translation(Vec3::Z),
-            //         ..default()
-            //     },
-            //     TextSyllable,
-            // ));
-        });
+        .id();
+
+    let ui_node = commands
+        .spawn((
+            // TODO: Add margin based on os cfg.
+            // Or based on GPU detection
+            Node {
+                position_type: PositionType::Absolute,
+                left: Val::Px(params.box_position.x + WINDOW_WIDTH / 2.0 - params.box_size.x / 2.0),
+                // 0 + 720 / 2 - 250 /2 = 360-125        = 235
+                top: Val::Px(
+                    params.box_position.y + WINDOW_HEIGHT / 2.0
+                        - params.box_size.y / 2.0
+                        - 35.0 / 2.0,
+                ),
+                width: Val::Px(params.box_size.x),
+                height: Val::Px(params.box_size.y),
+                align_items: AlignItems::Center,
+                justify_content: JustifyContent::Center,
+                padding: UiRect::all(Val::Px(10.0)),
+                ..default()
+            },
+            ImageNode::new(image_handle),
+        ))
+        .id();
+
+    let root_text = commands
+        .spawn((
+            Text::new(""),
+            TextLayout {
+                justify: JustifyText::Left,
+                ..default()
+            },
+            RootText,
+        ))
+        .id();
+
+    commands.entity(screen_node).add_child(ui_node);
+    commands.entity(ui_node).add_child(root_text);
+
+    display_text_sections(commands, params, root_text);
+}
+
+fn display_text_sections(
+    mut commands: Commands,
+    params: ResMut<TextSyllableValues>,
+    root_text: Entity,
+) {
+    for textspan in build_text_sections(
+        &params.text,
+        params.style_a.clone(),
+        params.style_b.clone(),
+        params.style_selected.clone(),
+    ) {
+        let text_child = commands
+            .spawn((textspan.0, textspan.1.color, textspan.1.font, TextSyllable))
+            .id();
+        commands.entity(root_text).add_child(text_child);
+    }
 }
 
 fn draw_rounded_rectangle(params: &ResMut<TextSyllableValues>) -> DrawTarget {
@@ -441,31 +478,26 @@ fn build_text_sections(
 }
 
 fn toggle_visibility(
-    camera: Query<&Transform, (With<Camera>, Without<TextSyllableBox>)>,
-    mut text_syllable_box: Query<(&mut Transform, &mut Visibility), With<TextSyllableBox>>,
-    mut text_syllable: Query<&mut Text, With<TextSyllable>>,
-    params: Res<TextSyllableValues>,
+    mut commands: Commands,
+    mut text_syllable_box: Query<&mut Visibility, With<TextSyllableBox>>,
+    root_text: Query<Entity, With<RootText>>,
+    text_syllable: Query<Entity, With<TextSyllable>>,
+    params: ResMut<TextSyllableValues>,
     visible_state: Res<State<TextSyllableState>>,
 ) {
     if visible_state.get() == &TextSyllableState::Visible {
-        if let Ok(camera_pos) = camera.get_single() {
-            if let Ok((mut transform, mut visibility)) = text_syllable_box.get_single_mut() {
-                *visibility = Visibility::Visible;
-                transform.translation =
-                    Vec3::new(camera_pos.translation.x, camera_pos.translation.y, 0.0)
-                        + params.box_position;
+        if let Ok(mut visibility) = text_syllable_box.get_single_mut() {
+            *visibility = Visibility::Visible;
 
-                if let Ok(mut text) = text_syllable.get_single_mut() {
-                    // text.sections = build_text_sections(
-                    //     params.text.as_str(),
-                    //     params.style_a.clone(),
-                    //     params.style_b.clone(),
-                    //     params.style_selected.clone(),
-                    // )
+            if let Ok(root_text_entity) = root_text.get_single() {
+                for text_child in text_syllable.iter() {
+                    commands.entity(text_child).despawn();
                 }
+
+                display_text_sections(commands, params, root_text_entity);
             }
         }
-    } else if let Ok((_, mut visibility)) = text_syllable_box.get_single_mut() {
+    } else if let Ok(mut visibility) = text_syllable_box.get_single_mut() {
         *visibility = Visibility::Hidden;
     }
 }
@@ -729,59 +761,63 @@ mod tests {
         assert_eq!(result[6].0 .0, "test:".to_string());
         assert_eq!(result[7].1.color.0, RED.into());
         assert_eq!(result[7].0 .0, "sel1".to_string());
-        // assert_eq!(result[0].style.color, BLUE.into());
-        // assert_eq!(result[1].style.color, BLUE.into());
-        // assert_eq!(result[2].style.color, GREEN.into());
-        // assert_eq!(result[3].style.color, BLUE.into());
-        // assert_eq!(result[4].style.color, BLUE.into());
-        // assert_eq!(result[5].style.color, BLUE.into());
-        // assert_eq!(result[6].style.color, GREEN.into());
-        // assert_eq!(result[7].style.color, RED.into());
-        // assert_eq!(result[8].style.color, BLUE.into());
-        // assert_eq!(result[9].style.color, BLUE.into());
+        assert_eq!(result[8].1.color.0, BLUE.into());
+        assert_eq!(result[8].0 .0, "sel2".to_string());
+        assert_eq!(result[9].1.color.0, BLUE.into());
+        assert_eq!(result[9].0 .0, ".".to_string());
     }
 
-    // #[test]
-    // fn test_build_text_section_02() {
-    //     let result = build_text_sections(
-    //         r###"Ceci est un test: \("selection_items":["sel1","sel2"],"selected_item":1\)."###,
-    //         TextStyle {
-    //             font: TextFont {
-    //                 font: Handle::default(),
-    //                 font_size: 42.0,
-    //                 ..default()
-    //             },
-    //             color: TextColor(BLUE.into()),
-    //         },
-    //         TextStyle {
-    //             font: TextFont {
-    //                 font: Handle::default(),
-    //                 font_size: 42.0,
-    //                 ..default()
-    //             },
-    //             color: TextColor(GREEN.into()),
-    //         },
-    //         TextStyle {
-    //             font: TextFont {
-    //                 font: Handle::default(),
-    //                 font_size: 42.0,
-    //                 ..default()
-    //             },
-    //             color: TextColor(RED.into()),
-    //         },
-    //     );
-    //
-    //     dbg!(&result);
-    //     assert_eq!(result.len(), 10); // space counts as a section
-    //                                   // assert_eq!(result[0].style.color, BLUE.into());
-    //                                   // assert_eq!(result[1].style.color, BLUE.into());
-    //                                   // assert_eq!(result[2].style.color, GREEN.into());
-    //                                   // assert_eq!(result[3].style.color, BLUE.into());
-    //                                   // assert_eq!(result[4].style.color, BLUE.into());
-    //                                   // assert_eq!(result[5].style.color, BLUE.into());
-    //                                   // assert_eq!(result[6].style.color, GREEN.into());
-    //                                   // assert_eq!(result[7].style.color, BLUE.into());
-    //                                   // assert_eq!(result[8].style.color, RED.into());
-    //                                   // assert_eq!(result[9].style.color, BLUE.into());
-    // }
+    #[test]
+    fn test_build_text_section_02() {
+        let result = build_text_sections(
+            r###"Ceci est un test: \("selection_items":["sel1","sel2"],"selected_item":1\)."###,
+            TextStyle {
+                font: TextFont {
+                    font: Handle::default(),
+                    font_size: 42.0,
+                    ..default()
+                },
+                color: TextColor(BLUE.into()),
+            },
+            TextStyle {
+                font: TextFont {
+                    font: Handle::default(),
+                    font_size: 42.0,
+                    ..default()
+                },
+                color: TextColor(GREEN.into()),
+            },
+            TextStyle {
+                font: TextFont {
+                    font: Handle::default(),
+                    font_size: 42.0,
+                    ..default()
+                },
+                color: TextColor(RED.into()),
+            },
+        );
+
+        dbg!(&result);
+        assert_eq!(result.len(), 10); // space counts as a section
+        assert_eq!(result[0].1.color.0, BLUE.into());
+        assert_eq!(result[0].0 .0, "Ceci".to_string());
+        assert_eq!(result[1].1.color.0, BLUE.into());
+        assert_eq!(result[1].0 .0, " ".to_string());
+        assert_eq!(result[2].1.color.0, GREEN.into());
+        assert_eq!(result[2].0 .0, "est".to_string());
+        assert_eq!(result[3].1.color.0, BLUE.into());
+        assert_eq!(result[3].0 .0, " ".to_string());
+        assert_eq!(result[4].1.color.0, BLUE.into());
+        assert_eq!(result[4].0 .0, "un".to_string());
+        assert_eq!(result[5].1.color.0, BLUE.into());
+        assert_eq!(result[5].0 .0, " ".to_string());
+        assert_eq!(result[6].1.color.0, GREEN.into());
+        assert_eq!(result[6].0 .0, "test:".to_string());
+        assert_eq!(result[7].1.color.0, BLUE.into());
+        assert_eq!(result[7].0 .0, "sel1".to_string());
+        assert_eq!(result[8].1.color.0, RED.into());
+        assert_eq!(result[8].0 .0, "sel2".to_string());
+        assert_eq!(result[9].1.color.0, BLUE.into());
+        assert_eq!(result[9].0 .0, ".".to_string());
+    }
 }
