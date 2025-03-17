@@ -204,16 +204,12 @@ fn shake_camera(
     let shake_amplitude = 20.0;
 
     // Slightly zoom the camera to hide level boundaries
-    #[cfg(not(target_os = "linux"))]
     let zoom_factor = match shake_timer.elapsed().as_secs_f32() {
         0.0..2.5 => -0.022 * shake_timer.elapsed().as_secs_f32() + 1.0,
         2.5..3.5 => 0.944,
         3.5..6.0 => 0.022 * shake_timer.elapsed().as_secs_f32() + 1.0 - 0.132,
         _ => 1.0,
     };
-
-    #[cfg(target_os = "linux")]
-    let zoom_factor = 1.0;
 
     let (mut camera_pos, mut camera_ortho) = camera_query.single_mut();
 

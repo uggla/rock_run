@@ -17,6 +17,7 @@ use leafwing_input_manager::{
 use unic_langid::langid;
 
 use crate::events::{NextLevel, StartGame};
+use crate::WINDOW_HEIGHT;
 use crate::{
     assets::RockRunAssets,
     coregame::{
@@ -96,7 +97,7 @@ impl Plugin for MenuPlugin {
 
 #[derive(SystemParam)]
 struct ScreenResolution<'w, 's> {
-    query: Query<'w, 's, &'static Window, With<PrimaryWindow>>,
+    query: Query<'w, 's, &'static mut Window, With<PrimaryWindow>>,
 }
 
 fn setup(
@@ -104,12 +105,8 @@ fn setup(
     mut godmode: ResMut<Godmode>,
     mut start_level: ResMut<StartLevel>,
     mut start_position: ResMut<StartPos>,
-    screen: ScreenResolution,
 ) {
     info!("setup");
-    if let Ok(window) = screen.query.get_single() {
-        info!("Screen resolution: {}x{}", window.width(), window.height());
-    }
 
     match env::var("ROCKRUN_GOD_MODE") {
         Ok(_) => godmode.0 = true,
@@ -204,12 +201,21 @@ fn start_menu(
     assets: Res<Assets<BundleAsset>>,
     rock_run_assets: Res<RockRunAssets>,
     pkv: ResMut<PkvStore>,
+    mut screen: ScreenResolution,
 ) {
     info!("start_menu");
-    #[cfg(target_os = "linux")]
-    const TOP_MARGINS: [f32; 4] = [175.0, 275.0, 375.0, 475.0];
+    if let Ok(mut window) = screen.query.get_single_mut() {
+        info!("Resolution: {}x{}", window.width(), window.height());
 
-    #[cfg(not(target_os = "linux"))]
+        if window.width() != WINDOW_WIDTH || window.height() != WINDOW_HEIGHT {
+            warn!("Incorrect resolution detected, reapplying the setting.");
+            window
+                .resolution
+                .set_physical_resolution(WINDOW_WIDTH as u32, WINDOW_HEIGHT as u32);
+            info!("New resolution: {}x{}", window.width(), window.height());
+        }
+    }
+
     const TOP_MARGINS: [f32; 4] = [185.0, 290.0, 395.0, 500.0];
 
     if let Ok(langid) = pkv.get::<String>("langid") {

@@ -36,13 +36,14 @@ pub const WINDOW_HEIGHT: f32 = 720.0;
 
 fn main() {
     let mut app = App::new();
+    let resolution = WindowResolution::new(WINDOW_WIDTH, WINDOW_HEIGHT);
     app.add_plugins((
         DefaultPlugins
             .set(WindowPlugin {
                 primary_window: Some(Window {
                     title: "RockRun: Rose's Odyssey".to_string(),
                     resizable: false,
-                    resolution: WindowResolution::new(WINDOW_WIDTH, WINDOW_HEIGHT),
+                    resolution,
                     ..default()
                 }),
                 ..default()
