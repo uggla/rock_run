@@ -23,7 +23,7 @@ impl PluginGroup for ExternalPlugins {
             group = group.add(bevy::diagnostic::FrameTimeDiagnosticsPlugin);
             group = group.add(bevy::diagnostic::EntityCountDiagnosticsPlugin);
             group = group.add(bevy::diagnostic::SystemInformationDiagnosticsPlugin);
-            // group = group.add(iyes_perf_ui::PerfUiPlugin);
+            group = group.add(iyes_perf_ui::PerfUiPlugin);
         }
         group
     }
