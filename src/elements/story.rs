@@ -145,15 +145,15 @@ impl Default for StoryPlugin {
             //     a: 255,
             // }),
             style_a: SyllableStyle {
-                font_size: 42.0,
+                font_size: 36.0,
                 color: Color::srgb_u8(0xF4, 0x78, 0x04),
             },
             style_b: SyllableStyle {
-                font_size: 42.0,
+                font_size: 36.0,
                 color: Color::srgb_u8(0x54, 0x2E, 0x0A),
             },
             style_selected: SyllableStyle {
-                font_size: 42.0,
+                font_size: 36.0,
                 color: Color::srgb_u8(0xD3, 0xCD, 0x39),
             },
             text: "Hel-lo I am Rose, help me re-turn home.".into(),
