@@ -1,6 +1,8 @@
 use std::env;
 
 use bevy::audio::Volume;
+use bevy::ecs::system::SystemParam;
+use bevy::window::PrimaryWindow;
 use bevy::{app::AppExit, audio::PlaybackMode};
 
 use bevy::prelude::*;
@@ -92,13 +94,22 @@ impl Plugin for MenuPlugin {
     }
 }
 
+#[derive(SystemParam)]
+struct ScreenResolution<'w, 's> {
+    query: Query<'w, 's, &'static Window, With<PrimaryWindow>>,
+}
+
 fn setup(
     mut commands: Commands,
     mut godmode: ResMut<Godmode>,
     mut start_level: ResMut<StartLevel>,
     mut start_position: ResMut<StartPos>,
+    screen: ScreenResolution,
 ) {
     info!("setup");
+    if let Ok(window) = screen.query.get_single() {
+        info!("Screen resolution: {}x{}", window.width(), window.height());
+    }
 
     match env::var("ROCKRUN_GOD_MODE") {
         Ok(_) => godmode.0 = true,
