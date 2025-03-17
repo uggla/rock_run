@@ -88,7 +88,7 @@ impl Plugin for MenuPlugin {
             .insert_resource(Godmode(false))
             .insert_resource(StartLevel(1))
             .insert_resource(StartPos(None))
-            .insert_resource(PkvStore::new("DamageInc", "RockRun"));
+            .insert_resource(PkvStore::new("DamageInc", "RockRun_v0_3_0"));
     }
 }
 
