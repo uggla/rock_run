@@ -8,7 +8,7 @@ use bevy_rapier2d::{
     dynamics::RigidBody,
     geometry::Collider,
     pipeline::QueryFilterFlags,
-    prelude::{ActiveCollisionTypes, ActiveEvents, Sensor},
+    prelude::{ActiveCollisionTypes, ActiveEvents, CollisionGroups, Group, Sensor},
 };
 
 use crate::{
@@ -213,6 +213,7 @@ fn setup_squirels(
             RigidBody::KinematicPositionBased,
             AnimationTimer(Timer::from_seconds(0.12, TimerMode::Repeating)),
             Collider::compound(get_collider_shapes(false)),
+            CollisionGroups::new(Group::GROUP_3, Group::GROUP_3),
             KinematicCharacterController {
                 filter_flags: QueryFilterFlags::EXCLUDE_SENSORS,
                 max_slope_climb_angle: 85.0f32.to_radians(),

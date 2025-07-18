@@ -265,7 +265,8 @@ fn spawn_enigma_materials(
                 Collider::ball(ROCK_DIAMETER / 2.0),
                 // Group definition so far, might evolves in the future...
                 // GROUP_1: rocks (only this one)
-                // GROUP_2: beasts (pterodactyls)
+                // GROUP_2: pterodactyls
+                // GROUP_3: squirels
                 //
                 // Note: All colliders not part of a group (without this component) collides by default.
                 CollisionGroups::new(Group::GROUP_1, Group::GROUP_1),
