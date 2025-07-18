@@ -483,7 +483,7 @@ fn manage_numbers(
             EnigmaKind::Numbers(n) => n,
             EnigmaKind::Mcq(_) => unreachable!(),
         })
-        .last()
+        .next_back()
         .unwrap();
     numbers
 }
@@ -503,7 +503,7 @@ fn manage_mcq(
             EnigmaKind::Numbers(_) => unreachable!(),
             EnigmaKind::Mcq(values) => values,
         })
-        .last()
+        .next_back()
         .unwrap();
 
     // In this case:

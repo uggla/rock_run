@@ -408,6 +408,7 @@ fn spawn_enigma_materials(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn check_enigma(
     mut commands: Commands,
     rock_run_assets: Res<RockRunAssets>,
@@ -440,7 +441,7 @@ fn check_enigma(
                         EnigmaKind::Numbers(n) => n,
                         EnigmaKind::Mcq(_) => unreachable!(),
                     })
-                    .last()
+                    .next_back()
                     .unwrap();
 
                 let n1 = numbers.get("n1").unwrap().parse::<usize>().unwrap();
@@ -473,7 +474,7 @@ fn check_enigma(
                         EnigmaKind::Numbers(n) => n,
                         EnigmaKind::Mcq(_) => unreachable!(),
                     })
-                    .last()
+                    .next_back()
                     .unwrap();
 
                 let n1 = numbers.get("n1").unwrap().parse::<usize>().unwrap();
@@ -544,7 +545,7 @@ fn check_enigma(
                         EnigmaKind::Numbers(n) => n,
                         EnigmaKind::Mcq(_) => unreachable!(),
                     })
-                    .last()
+                    .next_back()
                     .unwrap();
 
                 let n1 = numbers.get("n1").unwrap().parse::<usize>().unwrap();
@@ -600,7 +601,7 @@ fn check_enigma(
                         EnigmaKind::Numbers(n) => n,
                         EnigmaKind::Mcq(_) => unreachable!(),
                     })
-                    .last()
+                    .next_back()
                     .unwrap();
 
                 let n1 = numbers.get("n1").unwrap().parse::<usize>().unwrap();
@@ -704,7 +705,7 @@ fn check_mcq<F>(
             EnigmaKind::Numbers(_) => unreachable!(),
             EnigmaKind::Mcq(values) => values,
         })
-        .last()
+        .next_back()
         .unwrap();
 
     let (_ltext, selection, _rtext) = decompose_selection_msg(&params.text).unwrap();

@@ -420,7 +420,7 @@ pub fn decompose_selection_msg(text: &str) -> Option<(String, UserSelection, Str
                 None => panic!("selection has no closing tag"),
             };
 
-            let selection = format!("{{{}}}", selection);
+            let selection = format!("{{{selection}}}");
             let selection: UserSelection = serde_json::from_str(&selection).unwrap();
             Some((ltext.to_string(), selection, rtext.to_string()))
         }
@@ -431,7 +431,7 @@ pub fn decompose_selection_msg(text: &str) -> Option<(String, UserSelection, Str
 pub fn compose_selection_msg(ltext: &str, selection: UserSelection, rtext: &str) -> String {
     let selection = serde_json::to_string(&selection).unwrap();
     let selection = selection.replace('{', "\\(").replace('}', "\\)");
-    format!("{}{}{}", ltext, selection, rtext)
+    format!("{ltext}{selection}{rtext}")
 }
 
 fn build_text_sections(
