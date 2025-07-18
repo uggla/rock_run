@@ -177,6 +177,7 @@ fn spawn_pterodactyl(
             Collider::compound(get_collider_shapes(false)),
             KinematicCharacterController {
                 filter_flags: QueryFilterFlags::ONLY_KINEMATIC,
+                filter_groups: Some(CollisionGroups::new(Group::GROUP_2, Group::GROUP_2)),
                 ..default()
             },
             CollisionGroups::new(Group::GROUP_2, Group::GROUP_2),
