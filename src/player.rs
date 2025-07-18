@@ -1,6 +1,9 @@
 use bevy::{audio::PlaybackMode, prelude::*};
 use bevy_rapier2d::{
-    control::KinematicCharacterController, dynamics::RigidBody, geometry::Collider,
+    control::KinematicCharacterController,
+    dynamics::RigidBody,
+    geometry::Collider,
+    prelude::{Ccd, CharacterLength},
 };
 use leafwing_input_manager::{
     Actionlike, action_state::ActionState, axislike::AxisDirection, input_map::InputMap,
@@ -202,10 +205,12 @@ fn setup_player(
             max_slope_climb_angle: 30.0f32.to_radians(),
             // Automatically slide down on slopes smaller than 30 degrees.
             min_slope_slide_angle: 30.0f32.to_radians(),
-            normal_nudge_factor: 1.0,
+            normal_nudge_factor: 0.03,
+            offset: CharacterLength::Absolute(0.02),
+            slide: true,
             ..default()
         },
-        // Ccd::enabled(),
+        Ccd::enabled(),
         Player,
         PlayerAudio {
             jump_sound: rock_run_assets.jump_sound.clone(),

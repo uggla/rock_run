@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="400" height="90" tilewidth="16" tileheight="16" infinite="0" nextlayerid="12" nextobjectid="97">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="400" height="90" tilewidth="16" tileheight="16" infinite="0" nextlayerid="12" nextobjectid="99">
  <tileset firstgid="1" name="tileset-1" tilewidth="16" tileheight="16" tilecount="2030" columns="58">
   <image source="tileset-1.png" width="928" height="560"/>
  </tileset>
@@ -299,7 +299,7 @@
  </layer>
  <objectgroup id="3" name="Ground">
   <object id="4" name="Ground" x="0" y="320">
-   <polyline points="32,0 32,272 624,272 624,240 688,240 688,272 1328,272 1552,160 1600,160 1712,272 2880,272 2880,208 2976,208 2976,272 3232,272 3232,336 3056,336 3056,400 3040,416 3040,1120 3040,1344 3744,1344 3744,880 3920,880 4112,1072 4640,1072 4800,912 4944,912 5056,800 5120,800 5232,688 5328,688 5328,656 5392,656 5392,688 5456,688 5456,800 6400,800 6400,-320"/>
+   <polyline points="32,0 32,272 624,272 624,240 688,240 688,272 1332,272.5 1553,160.5 1600,160 1712,272 2880,272 2880,208 2976,208 2976,272 3232,272 3232,336 3056,336 3056,400 3040,416 3040,1120 3040,1344 3744,1344 3744,880 3920,880 4112,1072 4640,1072 4800,912 4944,912 5056,800 5120,800 5232,688 5328,688 5328,656 5392,656 5392,688 5456,688 5456,800 6400,800 6400,-320"/>
   </object>
  </objectgroup>
  <objectgroup id="4" name="Platforms">
@@ -322,6 +322,12 @@
   </object>
   <object id="88" name="p13" x="6256" y="656" width="64" height="16"/>
   <object id="92" name="p14" x="5472" y="320" width="32" height="256"/>
+  <object id="97" name="p15" x="1328" y="592">
+   <polyline points="0,0 224,-112"/>
+  </object>
+  <object id="98" name="p16" x="1327" y="593">
+   <polyline points="0,0 224,-112"/>
+  </object>
  </objectgroup>
  <objectgroup id="6" name="Spikes">
   <object id="47" name="s01" x="2982.67" y="576" width="50.6667" height="16"/>
