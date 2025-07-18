@@ -62,7 +62,6 @@ fn despawn_key_on_restart(
     mut commands: Commands,
     keys: Query<Entity, With<Key>>,
     restart_event: EventReader<Restart>,
-    mut collected_keys: ResMut<Keys>,
 ) {
     if restart_event.is_empty() {
         return;
@@ -71,7 +70,6 @@ fn despawn_key_on_restart(
     for key in keys.iter() {
         commands.entity(key).despawn_recursive();
     }
-    collected_keys.numbers = 0;
 }
 
 fn despawn_key(
