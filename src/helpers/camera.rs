@@ -5,7 +5,7 @@ use bevy::{input::ButtonInput, math::Vec3, prelude::*, render::camera::Camera};
 pub fn movement(
     time: Res<Time>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut query: Query<(&mut Transform, &mut OrthographicProjection), With<Camera>>,
+    mut query: Query<(&mut Transform, &mut Projection), With<Camera>>,
 ) {
     for (mut transform, mut ortho) in query.iter_mut() {
         let mut direction = Vec3::ZERO;
@@ -27,16 +27,27 @@ pub fn movement(
         }
 
         if keyboard_input.pressed(KeyCode::KeyZ) {
-            ortho.scale += 0.1;
+            match *ortho {
+                Projection::Orthographic(ref mut projection) => projection.scale += 0.1,
+                _ => unreachable!(),
+            };
         }
 
         if keyboard_input.pressed(KeyCode::KeyX) {
-            ortho.scale -= 0.1;
+            match *ortho {
+                Projection::Orthographic(ref mut projection) => projection.scale -= 0.1,
+                _ => unreachable!(),
+            };
         }
 
-        if ortho.scale < 0.5 {
-            ortho.scale = 0.5;
-        }
+        match *ortho {
+            Projection::Orthographic(ref mut projection) => {
+                if projection.scale < 0.5 {
+                    projection.scale = 0.5
+                }
+            }
+            _ => unreachable!(),
+        };
 
         let z = transform.translation.z;
         transform.translation += time.delta_secs() * direction * 500.;

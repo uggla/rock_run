@@ -1,4 +1,4 @@
-use bevy::{prelude::*, utils::HashMap};
+use bevy::{platform::collections::HashMap, prelude::*};
 use bevy_rapier2d::{
     control::KinematicCharacterController, dynamics::RigidBody, geometry::Collider,
     pipeline::QueryFilterFlags,
@@ -212,6 +212,6 @@ fn move_monkey(
 
 fn despawn_monkey(mut commands: Commands, monkey: Query<Entity, With<Monkey>>) {
     for monkey in monkey.iter() {
-        commands.entity(monkey).despawn_recursive();
+        commands.entity(monkey).despawn();
     }
 }

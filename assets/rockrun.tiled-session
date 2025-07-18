@@ -16,9 +16,9 @@
             "expandedObjectLayers": [
                 6,
                 4,
-                8,
+                9,
                 5,
-                9
+                8
             ],
             "scale": 0.75,
             "selectedLayer": 10,
@@ -73,12 +73,12 @@
         },
         "level02.tmx": {
             "expandedObjectLayers": [
-                12,
-                13,
-                8,
-                17,
                 3,
-                10
+                12,
+                10,
+                13,
+                17,
+                8
             ],
             "scale": 1,
             "selectedLayer": 15,
@@ -134,9 +134,9 @@
         },
         "level03.tmx": {
             "expandedObjectLayers": [
+                3,
                 4,
-                8,
-                3
+                8
             ],
             "scale": 1,
             "selectedLayer": 1,

@@ -20,7 +20,7 @@ impl PluginGroup for ExternalPlugins {
         #[cfg(all(debug_assertions, not(target_arch = "wasm32")))]
         {
             // we want Bevy to measure these values for us:
-            group = group.add(bevy::diagnostic::FrameTimeDiagnosticsPlugin);
+            group = group.add(bevy::diagnostic::FrameTimeDiagnosticsPlugin::default());
             group = group.add(bevy::diagnostic::EntityCountDiagnosticsPlugin);
             group = group.add(bevy::diagnostic::SystemInformationDiagnosticsPlugin);
             group = group.add(iyes_perf_ui::PerfUiPlugin);

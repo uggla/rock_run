@@ -158,10 +158,10 @@ fn move_bat(
     player_query: Query<&mut Transform, (With<Player>, Without<Bat>)>,
     hit: EventReader<Hit>,
     mut chase_timer: Query<&mut ChaseTimer>,
-) {
+) -> Result<()> {
     for (bat_entity, mut bat_collider, mut bat_controller, bat_pos, mut bat) in bat_query.iter_mut()
     {
-        let player = player_query.single();
+        let player = player_query.single()?;
         let mut anim = |current_movement: BatMovement| match current_movement {
             BatMovement::Fly(bat_direction) => {
                 let (mut anim_timer, mut sprite) = animation_query.get_mut(bat_entity).unwrap();
@@ -194,7 +194,7 @@ fn move_bat(
         if !hit.is_empty() {
             bat.current_movement = BatMovement::Crunch;
             anim(bat.current_movement);
-            return;
+            return Ok(());
         }
 
         let mut chase_timer = chase_timer.get_mut(bat_entity).unwrap();
@@ -213,8 +213,8 @@ fn move_bat(
         };
 
         if bat_pos.distance(bat.exit_pos) < 2.0 {
-            commands.entity(bat_entity).despawn_recursive();
-            return;
+            commands.entity(bat_entity).despawn();
+            return Ok(());
         }
 
         bat.current_movement = if direction.x >= 0.0 {
@@ -226,11 +226,12 @@ fn move_bat(
         anim(bat.current_movement);
         bat_controller.translation = Some(Vec2::new(direction.x, direction.y));
     }
+    Ok(())
 }
 
 fn despawn_bat(mut commands: Commands, bats: Query<Entity, With<Bat>>) {
     for bat in bats.iter() {
-        commands.entity(bat).despawn_recursive();
+        commands.entity(bat).despawn();
     }
 }
 
@@ -244,6 +245,6 @@ fn despawn_bat_on_restart(
     }
 
     for bat in bats.iter() {
-        commands.entity(bat).despawn_recursive();
+        commands.entity(bat).despawn();
     }
 }

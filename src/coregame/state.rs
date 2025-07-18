@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use enum_iterator::{all, Sequence};
+use enum_iterator::{Sequence, all};
 
 /// Component to tag an entity as only needed in some of the states
 #[derive(Component, Debug)]
@@ -53,7 +53,7 @@ fn state_enter_despawn<T: States>(
 ) {
     for (entity, for_state) in &mut query.iter() {
         if !for_state.states.contains(state.get()) {
-            commands.entity(entity).despawn_recursive();
+            commands.entity(entity).despawn();
         }
     }
 }

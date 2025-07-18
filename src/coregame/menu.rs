@@ -12,13 +12,14 @@ use bevy_rapier2d::plugin::RapierConfiguration;
 use leafwing_input_manager::axislike::AxisDirection;
 use leafwing_input_manager::prelude::GamepadControlDirection;
 use leafwing_input_manager::{
-    action_state::ActionState, input_map::InputMap, plugin::InputManagerPlugin, Actionlike,
+    Actionlike, action_state::ActionState, input_map::InputMap, plugin::InputManagerPlugin,
 };
 use unic_langid::langid;
 
-use crate::events::{NextLevel, StartGame};
 use crate::WINDOW_HEIGHT;
+use crate::events::{NextLevel, StartGame};
 use crate::{
+    WINDOW_WIDTH,
     assets::RockRunAssets,
     coregame::{
         level::CurrentLevel,
@@ -27,7 +28,6 @@ use crate::{
     },
     elements::story::SelectionDirection,
     events::{LadderCollisionStop, NoMoreStoryMessages, SelectionChanged, StoryMessages},
-    WINDOW_WIDTH,
 };
 
 const LAST_LEVEL: u8 = 3;
@@ -204,7 +204,7 @@ fn start_menu(
     mut screen: ScreenResolution,
 ) {
     info!("start_menu");
-    if let Ok(mut window) = screen.query.get_single_mut() {
+    if let Ok(mut window) = screen.query.single_mut() {
         info!("Resolution: {}x{}", window.width(), window.height());
 
         if window.width() != WINDOW_WIDTH || window.height() != WINDOW_HEIGHT {
@@ -430,7 +430,7 @@ fn update_menu(
     assets: Res<Assets<BundleAsset>>,
     rock_run_assets: Res<RockRunAssets>,
     mut pkv: ResMut<PkvStore>,
-) {
+) -> Result<()> {
     enum MenuColor {
         Selected,
         CurrentLang,
@@ -447,9 +447,9 @@ fn update_menu(
         }
     }
 
-    let (mut sel0_text, mut sel0_color) = query0.single_mut();
-    let (mut sel1_text, mut sel1_color) = query1.single_mut();
-    let (mut sel2_text, mut sel2_color) = query2.single_mut();
+    let (mut sel0_text, mut sel0_color) = query0.single_mut()?;
+    let (mut sel1_text, mut sel1_color) = query1.single_mut()?;
+    let (mut sel2_text, mut sel2_color) = query2.single_mut()?;
 
     if menu_action_state.just_pressed(&MenuAction::Up) {
         *menu_sel = (*menu_sel + 1) % 3;
@@ -535,6 +535,7 @@ fn update_menu(
         }
         _ => {}
     }
+    Ok(())
 }
 
 fn refresh_menu_items(
@@ -598,7 +599,7 @@ fn gamefinished_menu(mut commands: Commands, rock_run_assets: Res<RockRunAssets>
                 AudioPlayer::new(rock_run_assets.victory_sound.clone()),
                 PlaybackSettings {
                     mode: PlaybackMode::Loop,
-                    // volume: Volume::new(4.3),
+                    // volume: Volume::Linear(4.3),
                     ..default()
                 },
             ));
@@ -634,7 +635,7 @@ fn gameover_menu(mut commands: Commands, rock_run_assets: Res<RockRunAssets>) {
         AudioPlayer::new(rock_run_assets.loose_sound.clone()),
         PlaybackSettings {
             mode: PlaybackMode::Despawn,
-            volume: Volume::new(2.5),
+            volume: Volume::Linear(2.5),
             ..default()
         },
     ));
@@ -672,7 +673,7 @@ fn pause_menu(mut commands: Commands, rock_run_assets: Res<RockRunAssets>) {
                 AudioPlayer::new(rock_run_assets.pause_in_sound.clone()),
                 PlaybackSettings {
                     mode: PlaybackMode::Despawn,
-                    volume: Volume::new(4.3),
+                    volume: Volume::Linear(4.3),
                     ..default()
                 },
             ));
@@ -684,7 +685,7 @@ fn exit_pause_menu(mut commands: Commands, rock_run_assets: Res<RockRunAssets>) 
         AudioPlayer::new(rock_run_assets.pause_out_sound.clone()),
         PlaybackSettings {
             mode: PlaybackMode::Despawn,
-            volume: Volume::new(4.3),
+            volume: Volume::Linear(4.3),
             ..default()
         },
     ));
@@ -724,25 +725,27 @@ fn menu_input_system(
     mut current_level: ResMut<CurrentLevel>,
     start_level: Res<StartLevel>,
 ) {
-    let mut rapier_config = rapier_config.single_mut();
+    let mut rapier_config = rapier_config
+        .single_mut()
+        .expect("Can't get rapier configuration.");
     if state.get() != &AppState::StartMenu
         && menu_action_state.just_pressed(&MenuAction::ExitToMenu)
     {
         next_state.set(AppState::StartMenu);
         rapier_config.physics_pipeline_active = true;
-        msg_event.send(StoryMessages::Hide);
-        ladder_collision_stop.send(LadderCollisionStop);
+        msg_event.write(StoryMessages::Hide);
+        ladder_collision_stop.write(LadderCollisionStop);
     } else {
         match state.get() {
             AppState::StartMenu => {
                 current_level.id = start_level.0;
                 if menu_action_state.just_pressed(&MenuAction::Quit) {
-                    app_exit_events.send(AppExit::Success);
+                    app_exit_events.write(AppExit::Success);
                 }
             }
             AppState::GameCreate => {
                 next_state.set(AppState::GameRunning);
-                game_event_start.send(StartGame);
+                game_event_start.write(StartGame);
             }
             AppState::GameRunning => {
                 if menu_action_state.just_pressed(&MenuAction::PauseUnpause) {
@@ -762,39 +765,39 @@ fn menu_input_system(
                     next_state.set(AppState::GameRunning);
                     rapier_config.physics_pipeline_active = true;
                     debug!("no more message, hide messages window");
-                    msg_event.send(StoryMessages::Hide);
+                    msg_event.write(StoryMessages::Hide);
                     no_more_msg_event.clear();
                 }
                 if menu_action_state.just_pressed(&MenuAction::Accept) {
                     // we still have messages to display
                     debug!("next message");
-                    msg_event.send(StoryMessages::Next);
+                    msg_event.write(StoryMessages::Next);
                 }
                 if menu_action_state.just_pressed(&MenuAction::Right) {
                     // Selection to the right
                     debug!("selection right");
-                    selection_event.send(SelectionChanged {
+                    selection_event.write(SelectionChanged {
                         movement: SelectionDirection::Right,
                     });
                 }
                 if menu_action_state.just_pressed(&MenuAction::Left) {
                     // Selection to the left
                     debug!("selection left");
-                    selection_event.send(SelectionChanged {
+                    selection_event.write(SelectionChanged {
                         movement: SelectionDirection::Left,
                     });
                 }
                 if menu_action_state.just_pressed(&MenuAction::Up) {
                     // Selection up
                     debug!("selection up");
-                    selection_event.send(SelectionChanged {
+                    selection_event.write(SelectionChanged {
                         movement: SelectionDirection::Up,
                     });
                 }
                 if menu_action_state.just_pressed(&MenuAction::Down) {
                     // Selection up
                     debug!("selection down");
-                    selection_event.send(SelectionChanged {
+                    selection_event.write(SelectionChanged {
                         movement: SelectionDirection::Down,
                     });
                 }
@@ -803,7 +806,7 @@ fn menu_input_system(
                     next_state.set(AppState::GameRunning);
                     rapier_config.physics_pipeline_active = true;
                     debug!("hide messages window");
-                    msg_event.send(StoryMessages::Hide);
+                    msg_event.write(StoryMessages::Hide);
                 }
             }
             AppState::GameOver => {
@@ -825,7 +828,7 @@ fn menu_input_system(
             }
             AppState::NextLevel => {
                 next_state.set(AppState::GameRunning);
-                game_event_level.send(NextLevel);
+                game_event_level.write(NextLevel);
             }
             AppState::GameFinished => {
                 if menu_action_state.just_pressed(&MenuAction::Accept) {

@@ -6,7 +6,7 @@ use bevy_rapier2d::{
     geometry::{ActiveCollisionTypes, Collider},
     prelude::Damping,
 };
-use rand::{thread_rng, Rng};
+use rand::{Rng, rng};
 
 use crate::{
     assets::RockRunAssets,
@@ -147,14 +147,14 @@ fn spawn_small_rocks(
 
     spawn_timer.tick(time.delta());
     if spawn_timer.remaining() <= Duration::from_secs(1) && !*event_send {
-        small_rock_event.send(SmallRockAboutToRelease);
+        small_rock_event.write(SmallRockAboutToRelease);
         *event_send = true;
     }
 
     if spawn_timer.finished() {
         *event_send = false;
-        let mut rng = thread_rng();
-        let spawn_time: f32 = rng.gen_range(1.0..=3.5);
+        let mut rng = rng();
+        let spawn_time: f32 = rng.random_range(1.0..=3.5);
         *spawn_timer = Timer::from_seconds(spawn_time, TimerMode::Once);
         let texture = rock_run_assets.small_rock.clone();
         commands.spawn((
@@ -218,10 +218,10 @@ fn despawn_smallrock(
     rocks: Query<(Entity, &Transform), With<SmallRock>>,
     laval: Query<&Transform, With<Lava>>,
 ) {
-    if let Ok(lava_pos) = laval.get_single() {
+    if let Ok(lava_pos) = laval.single() {
         for (rock, rock_pos) in rocks.iter() {
             if rock_pos.translation.y < lava_pos.translation.y {
-                commands.entity(rock).despawn_recursive();
+                commands.entity(rock).despawn();
             }
         }
     }
@@ -229,7 +229,7 @@ fn despawn_smallrock(
 
 fn despawn_rock(mut commands: Commands, rocks: Query<Entity, With<Rock>>) {
     for rock in rocks.iter() {
-        commands.entity(rock).despawn_recursive();
+        commands.entity(rock).despawn();
     }
 }
 
@@ -243,6 +243,6 @@ fn despawn_rock_on_restart(
     }
 
     for rock in rocks.iter() {
-        commands.entity(rock).despawn_recursive();
+        commands.entity(rock).despawn();
     }
 }

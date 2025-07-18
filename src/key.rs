@@ -44,14 +44,14 @@ fn check_get_key(
     mut keys: ResMut<Keys>,
 ) {
     for ev in key_collision.read() {
-        commands.entity(ev.entity).despawn_recursive();
+        commands.entity(ev.entity).despawn();
         keys.numbers += 1;
         debug!("Collected keys {}", keys.numbers);
         commands.spawn((
             AudioPlayer::new(rock_run_assets.get_something_sound.clone()),
             PlaybackSettings {
                 mode: PlaybackMode::Despawn,
-                volume: Volume::new(0.8),
+                volume: Volume::Linear(0.8),
                 ..default()
             },
         ));
@@ -68,7 +68,7 @@ fn despawn_key_on_restart(
     }
 
     for key in keys.iter() {
-        commands.entity(key).despawn_recursive();
+        commands.entity(key).despawn();
     }
 }
 
@@ -78,7 +78,7 @@ fn despawn_key(
     mut collected_keys: ResMut<Keys>,
 ) {
     for entity in entities.iter() {
-        commands.entity(entity).despawn_recursive();
+        commands.entity(entity).despawn();
     }
     collected_keys.numbers = 0;
 }

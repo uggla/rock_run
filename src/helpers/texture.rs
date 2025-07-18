@@ -1,6 +1,6 @@
 use std::ops::RangeInclusive;
 
-use bevy::{ecs::system::Local, log::trace, sprite::TextureAtlas};
+use bevy::{ecs::system::Local, image::TextureAtlas, log::trace};
 
 #[derive(Debug, Default, Eq, PartialEq)]
 pub enum IndexDirection {

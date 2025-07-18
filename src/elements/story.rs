@@ -14,10 +14,10 @@ use raqote::{DrawOptions, DrawTarget, Gradient, GradientStop, PathBuilder, Point
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    WINDOW_HEIGHT, WINDOW_WIDTH,
     assets::RockRunAssets,
     coregame::state::AppState,
     events::{SelectionChanged, StoryMessages},
-    WINDOW_HEIGHT, WINDOW_WIDTH,
 };
 
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States)]
@@ -440,7 +440,7 @@ fn build_text_sections(
     style_b: TextStyle,
     style_selected: TextStyle,
 ) -> Vec<(TextSpan, TextStyle)> {
-    let text_sections = match decompose_selection_msg(text) {
+    match decompose_selection_msg(text) {
         Some((ltext, selection, rtext)) => {
             let selection = selection
                 .selection_items
@@ -473,8 +473,7 @@ fn build_text_sections(
                 .collect::<Vec<(TextSpan, TextStyle)>>()
         }
         None => build_text_sections_according_to_syllables(text, style_a, style_b),
-    };
-    text_sections
+    }
 }
 
 fn toggle_visibility(
@@ -486,10 +485,10 @@ fn toggle_visibility(
     visible_state: Res<State<TextSyllableState>>,
 ) {
     if visible_state.get() == &TextSyllableState::Visible {
-        if let Ok(mut visibility) = text_syllable_box.get_single_mut() {
+        if let Ok(mut visibility) = text_syllable_box.single_mut() {
             *visibility = Visibility::Visible;
 
-            if let Ok(root_text_entity) = root_text.get_single() {
+            if let Ok(root_text_entity) = root_text.single() {
                 for text_child in text_syllable.iter() {
                     commands.entity(text_child).despawn();
                 }
@@ -497,7 +496,7 @@ fn toggle_visibility(
                 display_text_sections(commands, params, root_text_entity);
             }
         }
-    } else if let Ok(mut visibility) = text_syllable_box.get_single_mut() {
+    } else if let Ok(mut visibility) = text_syllable_box.single_mut() {
         *visibility = Visibility::Hidden;
     }
 }
@@ -700,17 +699,17 @@ mod tests {
         );
         assert_eq!(result.len(), 17); // space counts as a section
         assert_eq!(result[0].1.color.0, BLUE.into());
-        assert_eq!(result[0].0 .0, "Hel".to_string());
+        assert_eq!(result[0].0.0, "Hel".to_string());
         assert_eq!(result[1].1.color.0, GREEN.into());
-        assert_eq!(result[1].0 .0, "lo".to_string());
+        assert_eq!(result[1].0.0, "lo".to_string());
         assert_eq!(result[2].1.color.0, BLUE.into()); // first space
-        assert_eq!(result[2].0 .0, " ".to_string());
+        assert_eq!(result[2].0.0, " ".to_string());
         assert_eq!(result[3].1.color.0, BLUE.into());
-        assert_eq!(result[3].0 .0, "I".to_string());
+        assert_eq!(result[3].0.0, "I".to_string());
         assert_eq!(result[4].1.color.0, BLUE.into()); // second space
-        assert_eq!(result[4].0 .0, " ".to_string());
+        assert_eq!(result[4].0.0, " ".to_string());
         assert_eq!(result[5].1.color.0, GREEN.into());
-        assert_eq!(result[5].0 .0, "am".to_string());
+        assert_eq!(result[5].0.0, "am".to_string());
     }
 
     #[test]
@@ -746,25 +745,25 @@ mod tests {
         dbg!(&result);
         assert_eq!(result.len(), 10); // space counts as a section
         assert_eq!(result[0].1.color.0, BLUE.into());
-        assert_eq!(result[0].0 .0, "Ceci".to_string());
+        assert_eq!(result[0].0.0, "Ceci".to_string());
         assert_eq!(result[1].1.color.0, BLUE.into());
-        assert_eq!(result[1].0 .0, " ".to_string());
+        assert_eq!(result[1].0.0, " ".to_string());
         assert_eq!(result[2].1.color.0, GREEN.into());
-        assert_eq!(result[2].0 .0, "est".to_string());
+        assert_eq!(result[2].0.0, "est".to_string());
         assert_eq!(result[3].1.color.0, BLUE.into());
-        assert_eq!(result[3].0 .0, " ".to_string());
+        assert_eq!(result[3].0.0, " ".to_string());
         assert_eq!(result[4].1.color.0, BLUE.into());
-        assert_eq!(result[4].0 .0, "un".to_string());
+        assert_eq!(result[4].0.0, "un".to_string());
         assert_eq!(result[5].1.color.0, BLUE.into());
-        assert_eq!(result[5].0 .0, " ".to_string());
+        assert_eq!(result[5].0.0, " ".to_string());
         assert_eq!(result[6].1.color.0, GREEN.into());
-        assert_eq!(result[6].0 .0, "test:".to_string());
+        assert_eq!(result[6].0.0, "test:".to_string());
         assert_eq!(result[7].1.color.0, RED.into());
-        assert_eq!(result[7].0 .0, "sel1".to_string());
+        assert_eq!(result[7].0.0, "sel1".to_string());
         assert_eq!(result[8].1.color.0, BLUE.into());
-        assert_eq!(result[8].0 .0, "sel2".to_string());
+        assert_eq!(result[8].0.0, "sel2".to_string());
         assert_eq!(result[9].1.color.0, BLUE.into());
-        assert_eq!(result[9].0 .0, ".".to_string());
+        assert_eq!(result[9].0.0, ".".to_string());
     }
 
     #[test]
@@ -800,24 +799,24 @@ mod tests {
         dbg!(&result);
         assert_eq!(result.len(), 10); // space counts as a section
         assert_eq!(result[0].1.color.0, BLUE.into());
-        assert_eq!(result[0].0 .0, "Ceci".to_string());
+        assert_eq!(result[0].0.0, "Ceci".to_string());
         assert_eq!(result[1].1.color.0, BLUE.into());
-        assert_eq!(result[1].0 .0, " ".to_string());
+        assert_eq!(result[1].0.0, " ".to_string());
         assert_eq!(result[2].1.color.0, GREEN.into());
-        assert_eq!(result[2].0 .0, "est".to_string());
+        assert_eq!(result[2].0.0, "est".to_string());
         assert_eq!(result[3].1.color.0, BLUE.into());
-        assert_eq!(result[3].0 .0, " ".to_string());
+        assert_eq!(result[3].0.0, " ".to_string());
         assert_eq!(result[4].1.color.0, BLUE.into());
-        assert_eq!(result[4].0 .0, "un".to_string());
+        assert_eq!(result[4].0.0, "un".to_string());
         assert_eq!(result[5].1.color.0, BLUE.into());
-        assert_eq!(result[5].0 .0, " ".to_string());
+        assert_eq!(result[5].0.0, " ".to_string());
         assert_eq!(result[6].1.color.0, GREEN.into());
-        assert_eq!(result[6].0 .0, "test:".to_string());
+        assert_eq!(result[6].0.0, "test:".to_string());
         assert_eq!(result[7].1.color.0, BLUE.into());
-        assert_eq!(result[7].0 .0, "sel1".to_string());
+        assert_eq!(result[7].0.0, "sel1".to_string());
         assert_eq!(result[8].1.color.0, RED.into());
-        assert_eq!(result[8].0 .0, "sel2".to_string());
+        assert_eq!(result[8].0.0, "sel2".to_string());
         assert_eq!(result[9].1.color.0, BLUE.into());
-        assert_eq!(result[9].0 .0, ".".to_string());
+        assert_eq!(result[9].0.0, ".".to_string());
     }
 }

@@ -11,17 +11,17 @@ use crate::{
 use bevy::{
     audio::PlaybackMode,
     color,
+    platform::collections::HashMap,
     prelude::*,
     render::render_resource::{AsBindGroup, ShaderRef},
     sprite::{Material2d, Material2dPlugin},
-    utils::HashMap,
 };
 
 use bevy_rapier2d::prelude::{
     ActiveCollisionTypes, ActiveEvents, Collider, ExternalImpulse, RigidBody, Sensor,
 };
 
-use rand::{thread_rng, Rng};
+use rand::{Rng, rng};
 
 const FIREBALL_SCALE_FACTOR: f32 = 1.0;
 
@@ -158,7 +158,7 @@ fn spawn_fireball(
         }
 
         if collision_event.sensor_name.contains("volcano01_02") {
-            shake_event.send(ShakeCamera);
+            shake_event.write(ShakeCamera);
             commands.spawn((
                 AudioPlayer::new(rock_run_assets.eruption_sound.clone()),
                 PlaybackSettings {
@@ -172,7 +172,7 @@ fn spawn_fireball(
         *fireballs = true;
         *spawn_pos = collision_event.spawn_pos;
         *spawn_timer = Timer::from_seconds(0.1, TimerMode::Repeating);
-        shake_event.send(ShakeCamera);
+        shake_event.write(ShakeCamera);
         commands.spawn((
             AudioPlayer::new(rock_run_assets.eruption_sound.clone()),
             PlaybackSettings {
@@ -183,10 +183,10 @@ fn spawn_fireball(
     }
 
     if *fireballs && spawn_timer.finished() {
-        let mut rng = thread_rng();
-        let impulse_x: f32 = rng.gen_range(-15.0..=15.0);
-        let impulse_y: f32 = rng.gen_range(3.0..=4.0);
-        let torque_impulse: f32 = rng.gen_range(-2.5..=2.5);
+        let mut rng = rng();
+        let impulse_x: f32 = rng.random_range(-15.0..=15.0);
+        let impulse_y: f32 = rng.random_range(3.0..=4.0);
+        let torque_impulse: f32 = rng.random_range(-2.5..=2.5);
 
         commands.spawn((
             Sprite {
@@ -274,18 +274,18 @@ impl Material2d for LavaMaterial {
 
 fn despawn_volcano(mut commands: Commands, volcano: Query<Entity, With<Volcano>>) {
     for volcano in volcano.iter() {
-        commands.entity(volcano).despawn_recursive();
+        commands.entity(volcano).despawn();
     }
 }
 
 fn despawn_fireballs(mut commands: Commands, fireballs: Query<Entity, With<Fireball>>) {
     for fireball in fireballs.iter() {
-        commands.entity(fireball).despawn_recursive();
+        commands.entity(fireball).despawn();
     }
 }
 
 fn despawn_lava(mut commands: Commands, lavas: Query<Entity, With<Lava>>) {
     for lava in lavas.iter() {
-        commands.entity(lava).despawn_recursive();
+        commands.entity(lava).despawn();
     }
 }

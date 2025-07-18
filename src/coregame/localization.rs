@@ -4,7 +4,7 @@ use crate::{
     elements::story::TextSyllableValues,
     events::{Message, MessageArgs, NoMoreStoryMessages, StoryMessages},
 };
-use bevy::{prelude::*, utils::HashMap};
+use bevy::{platform::collections::HashMap, prelude::*};
 use bevy_fluent::{BundleAsset, Locale};
 use fluent::{FluentArgs, FluentValue};
 use unic_langid::langid;
@@ -89,7 +89,7 @@ fn localize_story_messages(
             None => {
                 // No more messages, so close the msg box
                 debug!("no more message");
-                msg_event_writer.send(NoMoreStoryMessages {
+                msg_event_writer.write(NoMoreStoryMessages {
                     latest: latest_message.to_string(),
                 });
             }

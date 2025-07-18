@@ -12,24 +12,23 @@ use crate::{
     elements::{
         moving_platform::MovingPlatformMovement,
         rock::{ROCK_DIAMETER, ROCK_SCALE_FACTOR},
-        story::{decompose_selection_msg, TextSyllableValues},
+        story::{TextSyllableValues, decompose_selection_msg},
     },
     events::{EnigmaResult, NoMoreStoryMessages},
     helpers::texture::cycle_texture,
-    key::{Key, Keys, KEY_HEIGHT, KEY_SCALE_FACTOR, KEY_WIDTH},
+    key::{KEY_HEIGHT, KEY_SCALE_FACTOR, KEY_WIDTH, Key, Keys},
 };
 use bevy::{
     audio::{PlaybackMode, Volume},
+    platform::collections::HashMap,
     prelude::*,
-    utils::HashMap,
 };
 use bevy_fluent::{BundleAsset, Locale};
 use bevy_rapier2d::{
     dynamics::{Ccd, ExternalImpulse, GravityScale, RigidBody, Velocity},
     prelude::{ActiveCollisionTypes, ActiveEvents, Collider, CollisionGroups, Group, Sensor},
 };
-use rand::seq::SliceRandom;
-use rand::{thread_rng, Rng};
+use rand::{Rng, seq::SliceRandom};
 
 use super::moving_platform::MovingPlatform;
 
@@ -120,7 +119,7 @@ fn spawn_enigma_materials(
     mut enigmas: ResMut<Enigmas>,
 ) {
     info!("spawn_enigma_materials");
-    let mut rng = thread_rng();
+    let mut rng = rand::rng();
 
     let mut mcqs = vec![
         ("mammals-question", "mammals", "non-mammals"),
@@ -156,15 +155,15 @@ fn spawn_enigma_materials(
         ),
     ];
 
-    mcqs.shuffle(&mut thread_rng());
+    mcqs.shuffle(&mut rng);
 
     let mut enigmas_builder = Vec::new();
 
     enigmas_builder.push(Enigma {
         associated_story: "story03-03".to_string(),
         kind: EnigmaKind::Numbers(HashMap::from([
-            ("n1".to_string(), rng.gen_range(0..=50).to_string()),
-            ("n2".to_string(), rng.gen_range(0..50).to_string()),
+            ("n1".to_string(), rng.random_range(0..=50).to_string()),
+            ("n2".to_string(), rng.random_range(0..50).to_string()),
         ])),
     });
 
@@ -172,7 +171,7 @@ fn spawn_enigma_materials(
         associated_story: "story04-03".to_string(),
         kind: EnigmaKind::Numbers(HashMap::from([(
             "n1".to_string(),
-            rng.gen_range(0..=49).to_string(),
+            rng.random_range(0..=49).to_string(),
         )])),
     });
 
@@ -206,8 +205,8 @@ fn spawn_enigma_materials(
         ]),
     });
 
-    let mut n1 = rng.gen_range(0..=100);
-    let mut n2 = rng.gen_range(0..=100);
+    let mut n1 = rng.random_range(0..=100);
+    let mut n2 = rng.random_range(0..=100);
     if n2 > n1 {
         mem::swap(&mut n1, &mut n2);
     }
@@ -229,7 +228,7 @@ fn spawn_enigma_materials(
         associated_story: "story101-03".to_string(),
         kind: EnigmaKind::Numbers(HashMap::from([(
             "n1".to_string(),
-            (rng.gen_range(0..=49) * 2).to_string(),
+            (rng.random_range(0..=49) * 2).to_string(),
         )])),
     });
 
@@ -738,11 +737,11 @@ fn wrong_answer(
     commands: &mut Commands,
     rock_run_assets: &Res<RockRunAssets>,
 ) {
-    enigna_result.send(EnigmaResult::Incorrect(story.to_string()));
+    enigna_result.write(EnigmaResult::Incorrect(story.to_string()));
     commands.spawn((
         AudioPlayer::new(rock_run_assets.story_wrong_sound.clone()),
         PlaybackSettings {
-            volume: Volume::new(7.0),
+            volume: Volume::Linear(7.0),
             mode: PlaybackMode::Despawn,
             ..default()
         },
@@ -756,7 +755,7 @@ fn correct_answer(
     rock_run_assets: &Res<RockRunAssets>,
     stories_query: &Query<(Entity, &ColliderName), With<Story>>,
 ) {
-    enigna_result.send(EnigmaResult::Correct(story.to_string()));
+    enigna_result.write(EnigmaResult::Correct(story.to_string()));
     commands.spawn((
         AudioPlayer::new(rock_run_assets.story_valid_sound.clone()),
         PlaybackSettings {
@@ -768,7 +767,7 @@ fn correct_answer(
     for (entity, collider_name) in stories_query.iter() {
         if story.contains(&collider_name.0) {
             debug!("Despawn story: {}", collider_name.0);
-            commands.entity(entity).despawn_recursive();
+            commands.entity(entity).despawn();
         }
     }
 }
@@ -903,18 +902,18 @@ fn move_platform(
 
 fn despawn_warrior(mut commands: Commands, warriors: Query<Entity, With<Warrior>>) {
     for warrior in warriors.iter() {
-        commands.entity(warrior).despawn_recursive();
+        commands.entity(warrior).despawn();
     }
 }
 
 fn despawn_gate(mut commands: Commands, gates: Query<Entity, With<Gate>>) {
     for gate in gates.iter() {
-        commands.entity(gate).despawn_recursive();
+        commands.entity(gate).despawn();
     }
 }
 
 fn despawn_rockgate(mut commands: Commands, rockgates: Query<Entity, With<RockGate>>) {
     for rockgate in rockgates.iter() {
-        commands.entity(rockgate).despawn_recursive();
+        commands.entity(rockgate).despawn();
     }
 }

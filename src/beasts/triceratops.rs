@@ -1,4 +1,4 @@
-use bevy::{prelude::*, utils::HashMap};
+use bevy::{platform::collections::HashMap, prelude::*};
 use bevy_rapier2d::{
     control::KinematicCharacterController, dynamics::RigidBody, geometry::Collider,
     pipeline::QueryFilterFlags,
@@ -233,6 +233,6 @@ fn move_triceratops(
 
 fn despawn_triceratops(mut commands: Commands, triceratops: Query<Entity, With<Triceratops>>) {
     for triceratops in triceratops.iter() {
-        commands.entity(triceratops).despawn_recursive();
+        commands.entity(triceratops).despawn();
     }
 }

@@ -1,10 +1,10 @@
-use bevy::{prelude::*, utils::HashMap};
+use bevy::{platform::collections::HashMap, prelude::*};
 use bevy_rapier2d::{
     control::KinematicCharacterControllerOutput, dynamics::Velocity,
     geometry::ActiveCollisionTypes, pipeline::CollisionEvent,
 };
 use rand::seq::SliceRandom;
-use rand::thread_rng;
+use rand::{rng, seq::IndexedRandom};
 
 use crate::{
     assets::RockRunAssets,
@@ -22,7 +22,7 @@ use crate::{
         enigma::{EnigmaKind, Enigmas, RockGate},
         moving_platform::MovingPlatform,
         rock::Rock,
-        story::{compose_selection_msg, UserSelection},
+        story::{UserSelection, compose_selection_msg},
         volcano::Fireball,
     },
     events::{
@@ -32,7 +32,7 @@ use crate::{
     },
     key::Key,
     life::ExtraLife,
-    player::{self, Player, PlayerState, PLAYER_HEIGHT},
+    player::{self, PLAYER_HEIGHT, Player, PlayerState},
 };
 
 struct SensorValues {
@@ -111,12 +111,12 @@ fn player_collisions_with_elements(
         }
     }
 
-    let ground_entity = match ground.get_single() {
+    let ground_entity = match ground.single() {
         Ok(entity) => entity,
         Err(_) => return,
     };
 
-    let (_player_entity, output) = match player_controller.get_single() {
+    let (_player_entity, output) = match player_controller.single() {
         Ok(controller) => controller,
         Err(_) => return,
     };
@@ -146,7 +146,7 @@ fn player_collisions_with_elements(
             if character_collision.entity == moving_platform && state.get() != &PlayerState::Jumping
             {
                 next_state.set(PlayerState::Idling);
-                moving_platform_collision.send(MovingPlatformCollision {
+                moving_platform_collision.write(MovingPlatformCollision {
                     entity: moving_platform,
                 });
             }
@@ -154,7 +154,7 @@ fn player_collisions_with_elements(
 
         // Player collides with spikes
         if spikes.contains(character_collision.entity) && !god_mode.0 {
-            hit.send(Hit);
+            hit.write(Hit);
         }
 
         // Player collides with fast moving rocks or rockgates
@@ -165,7 +165,7 @@ fn player_collisions_with_elements(
                 if (velocity.linvel.x.abs() > 175.0 || velocity.linvel.y.abs() > 20.0)
                     && !god_mode.0
                 {
-                    hit.send(Hit);
+                    hit.write(Hit);
                 }
 
                 if output.grounded && state.get() != &PlayerState::Jumping {
@@ -213,7 +213,7 @@ fn player_collisions_with_beasts(
         }
     }
 
-    let (_player_entity, output) = match player_controller.get_single() {
+    let (_player_entity, output) = match player_controller.single() {
         Ok(controller) => controller,
         Err(_) => return,
     };
@@ -223,7 +223,7 @@ fn player_collisions_with_beasts(
         for bat in bats.iter() {
             if character_collision.entity == bat {
                 debug!("hit bat {:?}", bat);
-                hit.send(Hit);
+                hit.write(Hit);
             }
         }
 
@@ -231,7 +231,7 @@ fn player_collisions_with_beasts(
         for pterodactyl in pterodactyls.iter() {
             if character_collision.entity == pterodactyl {
                 debug!("hit pterodactyl {:?}", pterodactyl);
-                hit.send(Hit);
+                hit.write(Hit);
             }
         }
 
@@ -239,7 +239,7 @@ fn player_collisions_with_beasts(
         for triceratops in triceratops.iter() {
             if character_collision.entity == triceratops {
                 debug!("hit triceratops {:?}", triceratops);
-                hit.send(Hit);
+                hit.write(Hit);
             }
         }
 
@@ -247,7 +247,7 @@ fn player_collisions_with_beasts(
         for trex in trexes.iter() {
             if character_collision.entity == trex {
                 debug!("hit trex {:?}", trex);
-                hit.send(Hit);
+                hit.write(Hit);
             }
         }
 
@@ -255,7 +255,7 @@ fn player_collisions_with_beasts(
         for monkey in monkeys.iter() {
             if character_collision.entity == monkey {
                 debug!("hit monkey {:?}", monkey);
-                hit.send(Hit);
+                hit.write(Hit);
             }
         }
     }
@@ -269,7 +269,7 @@ fn triceratops_collisions(
     ground: Query<Entity, With<Ground>>,
     mut collision_event: EventWriter<TriceratopsCollision>,
 ) {
-    let ground_entity = match ground.get_single() {
+    let ground_entity = match ground.single() {
         Ok(entity) => entity,
         Err(_) => return,
     };
@@ -281,7 +281,7 @@ fn triceratops_collisions(
                 && output.grounded
                 && (output.effective_translation.x > -0.5 && output.effective_translation.x < 0.5)
             {
-                collision_event.send(TriceratopsCollision {
+                collision_event.write(TriceratopsCollision {
                     id: triceratops_entity,
                 });
             }
@@ -298,7 +298,7 @@ fn story_collisions(
     qm_entity: Query<(Entity, &StoryQM)>,
     player: Query<Entity, With<Player>>,
 ) {
-    let player_entity = match player.get_single() {
+    let player_entity = match player.single() {
         Ok(entity) => entity,
         Err(_) => return,
     };
@@ -350,7 +350,7 @@ fn story_collisions(
                     );
 
                     for (entity, _) in qm_entity.iter() {
-                        commands.entity(entity).despawn_recursive();
+                        commands.entity(entity).despawn();
                     }
                 }
             }
@@ -368,28 +368,28 @@ fn display_story(
         With<player::Player>,
     >,
 ) {
-    let (entity, story_name) = match qm_entity.get_single() {
+    let (entity, story_name) = match qm_entity.single() {
         Ok((entity, qm)) => (entity, qm.0.clone()),
         Err(_) => return,
     };
 
-    let input_state = match input.get_single() {
+    let input_state = match input.single() {
         Ok(state) => state,
         Err(_) => return,
     };
 
     if input_state.just_pressed(&player::PlayerMovement::Climb) {
-        commands.entity(entity).despawn_recursive();
+        commands.entity(entity).despawn();
         match story_name.as_str() {
             "story01" => {
-                msg_event.send(StoryMessages::Display(vec![
+                msg_event.write(StoryMessages::Display(vec![
                     ("story01-01".to_string(), None),
                     ("story01-02".to_string(), None),
                     ("story01-03".to_string(), None),
                 ]));
             }
             "story02" => {
-                msg_event.send(StoryMessages::Display(vec![
+                msg_event.write(StoryMessages::Display(vec![
                     ("story02-01".to_string(), None),
                     ("story02-02".to_string(), None),
                 ]));
@@ -397,7 +397,7 @@ fn display_story(
             "story03" => {
                 let numbers = manage_numbers(&enigmas, "story03-03");
 
-                msg_event.send(StoryMessages::Display(vec![
+                msg_event.write(StoryMessages::Display(vec![
                     ("story03-01".to_string(), None),
                     ("story03-02".to_string(), None),
                     ("story03-03".to_string(), Some(numbers)),
@@ -406,7 +406,7 @@ fn display_story(
             "story04" => {
                 let numbers = manage_numbers(&enigmas, "story04-03");
 
-                msg_event.send(StoryMessages::Display(vec![
+                msg_event.write(StoryMessages::Display(vec![
                     ("story04-01".to_string(), None),
                     ("story04-02".to_string(), None),
                     ("story04-03".to_string(), Some(numbers)),
@@ -417,7 +417,7 @@ fn display_story(
 
                 debug!("Answers: {:?}", selection);
 
-                msg_event.send(StoryMessages::Display(vec![
+                msg_event.write(StoryMessages::Display(vec![
                     ("story05-01".to_string(), None),
                     ("story05-02".to_string(), None),
                     ("story05-03".to_string(), Some(question)),
@@ -426,7 +426,7 @@ fn display_story(
             }
             "story06" => {
                 let (selection, question) = manage_mcq(enigmas, "story06-03");
-                msg_event.send(StoryMessages::Display(vec![
+                msg_event.write(StoryMessages::Display(vec![
                     ("story06-01".to_string(), None),
                     ("story06-02".to_string(), Some(question)),
                     ("story06-03".to_string(), Some(selection)),
@@ -434,7 +434,7 @@ fn display_story(
             }
             "story07" => {
                 let (selection, question) = manage_mcq(enigmas, "story07-04");
-                msg_event.send(StoryMessages::Display(vec![
+                msg_event.write(StoryMessages::Display(vec![
                     ("story07-01".to_string(), None),
                     ("story07-02".to_string(), None),
                     ("story07-03".to_string(), Some(question)),
@@ -444,14 +444,14 @@ fn display_story(
             "story08" => {
                 let numbers = manage_numbers(&enigmas, "story08-03");
 
-                msg_event.send(StoryMessages::Display(vec![
+                msg_event.write(StoryMessages::Display(vec![
                     ("story08-01".to_string(), None),
                     ("story08-02".to_string(), None),
                     ("story08-03".to_string(), Some(numbers)),
                 ]));
             }
             "story100" => {
-                msg_event.send(StoryMessages::Display(vec![
+                msg_event.write(StoryMessages::Display(vec![
                     ("story100-01".to_string(), None),
                     ("story100-02".to_string(), None),
                     ("story100-03".to_string(), None),
@@ -460,7 +460,7 @@ fn display_story(
             "story101" => {
                 let numbers = manage_numbers(&enigmas, "story101-03");
 
-                msg_event.send(StoryMessages::Display(vec![
+                msg_event.write(StoryMessages::Display(vec![
                     ("story101-01".to_string(), None),
                     ("story101-02".to_string(), None),
                     ("story101-03".to_string(), Some(numbers)),
@@ -471,11 +471,8 @@ fn display_story(
     }
 }
 
-fn manage_numbers(
-    enigmas: &ResMut<Enigmas>,
-    var_name: &str,
-) -> bevy::utils::hashbrown::HashMap<String, String> {
-    let numbers = enigmas
+fn manage_numbers(enigmas: &ResMut<Enigmas>, var_name: &str) -> HashMap<String, String> {
+    enigmas
         .enigmas
         .iter()
         .filter(|e| e.associated_story == var_name)
@@ -484,17 +481,13 @@ fn manage_numbers(
             EnigmaKind::Mcq(_) => unreachable!(),
         })
         .next_back()
-        .unwrap();
-    numbers
+        .unwrap()
 }
 
 fn manage_mcq(
     enigmas: ResMut<Enigmas>,
     associated_story: &str,
-) -> (
-    bevy::utils::hashbrown::HashMap<String, String>,
-    bevy::utils::hashbrown::HashMap<String, String>,
-) {
+) -> (HashMap<String, String>, HashMap<String, String>) {
     let mcq_values = enigmas
         .enigmas
         .iter()
@@ -537,13 +530,10 @@ fn manage_mcq(
 
     // Pick 3 random wrong answers and 1 random good answer.
     let wrong_answers = wrong_answers
-        .choose_multiple(&mut thread_rng(), 3)
+        .choose_multiple(&mut rng(), 3)
         .map(|s| s.to_string())
         .collect::<Vec<String>>();
-    let correct_answers = correct_answers
-        .choose(&mut thread_rng())
-        .unwrap()
-        .to_string();
+    let correct_answers = correct_answers.choose(&mut rng()).unwrap().to_string();
 
     let mut answers = wrong_answers
         .iter()
@@ -552,7 +542,7 @@ fn manage_mcq(
         .collect::<Vec<String>>();
 
     // Shuffle the answers
-    answers.shuffle(&mut thread_rng());
+    answers.shuffle(&mut rng());
 
     let selection = UserSelection::new(answers);
     let selection: HashMap<String, String> = HashMap::from([(
@@ -571,7 +561,7 @@ fn ladder_collisions(
     mut ladder_collision_stop: EventWriter<LadderCollisionStop>,
     player: Query<Entity, With<Player>>,
 ) {
-    let player_entity = match player.get_single() {
+    let player_entity = match player.single() {
         Ok(entity) => entity,
         Err(_) => return,
     };
@@ -590,7 +580,7 @@ fn ladder_collisions(
                         "Received collision event: {:?}, collider name: {:?}",
                         collision_event, collider_name
                     );
-                    ladder_collision_start.send(LadderCollisionStart);
+                    ladder_collision_start.write(LadderCollisionStart);
                 };
             }
             CollisionEvent::Stopped(e1, e2, _cf) => {
@@ -606,7 +596,7 @@ fn ladder_collisions(
                         collision_event, collider_name
                     );
 
-                    ladder_collision_stop.send(LadderCollisionStop);
+                    ladder_collision_stop.write(LadderCollisionStop);
                 };
             }
         }
@@ -624,7 +614,7 @@ fn fireball_collisions(
         return;
     }
 
-    let player_entity = match player.get_single() {
+    let player_entity = match player.single() {
         Ok(entity) => entity,
         Err(_) => return,
     };
@@ -644,7 +634,7 @@ fn fireball_collisions(
                         collision_event, collider_name
                     );
 
-                    hit.send(Hit);
+                    hit.write(Hit);
                 };
             }
             CollisionEvent::Stopped(e1, e2, _cf) => {
@@ -688,7 +678,7 @@ fn position_sensor_collisions(
         restart_event.clear();
     }
 
-    let player_entity = match player.get_single() {
+    let player_entity = match player.single() {
         Ok(player_entity) => player_entity,
         Err(_) => return,
     };
@@ -850,7 +840,7 @@ fn position_sensor_collisions(
                             if sensor_values.disable_next_collision {
                                 *active_collision_type = ActiveCollisionTypes::STATIC_STATIC;
                             }
-                            event_start.send(PositionSensorCollisionStart {
+                            event_start.write(PositionSensorCollisionStart {
                                 sensor_name: collider_name.0.clone(),
                                 spawn_pos: sensor_values.start_pos,
                                 exit_pos: sensor_values.end_pos,
@@ -873,7 +863,7 @@ fn position_sensor_collisions(
                         collision_event, collider_name
                     );
 
-                    event_stop.send(PositionSensorCollisionStop {
+                    event_stop.write(PositionSensorCollisionStop {
                         sensor_name: collider_name.0.clone(),
                     });
                 };
@@ -888,7 +878,7 @@ fn extra_life_collisions(
     mut extralife_collision: EventWriter<ExtraLifeCollision>,
     player: Query<Entity, With<Player>>,
 ) {
-    let player_entity = match player.get_single() {
+    let player_entity = match player.single() {
         Ok(player_entity) => player_entity,
         Err(_) => return,
     };
@@ -907,7 +897,7 @@ fn extra_life_collisions(
                         collision_event, collider_name
                     );
 
-                    extralife_collision.send(ExtraLifeCollision { entity });
+                    extralife_collision.write(ExtraLifeCollision { entity });
                 };
             }
             CollisionEvent::Stopped(e1, e2, _cf) => {
@@ -934,7 +924,7 @@ fn nut_collisions(
     mut extralife_collision: EventWriter<NutCollision>,
     player: Query<Entity, With<Player>>,
 ) {
-    let player_entity = match player.get_single() {
+    let player_entity = match player.single() {
         Ok(player_entity) => player_entity,
         Err(_) => return,
     };
@@ -953,7 +943,7 @@ fn nut_collisions(
                         collision_event, collider_name
                     );
 
-                    extralife_collision.send(NutCollision { entity });
+                    extralife_collision.write(NutCollision { entity });
                 };
             }
             CollisionEvent::Stopped(e1, e2, _cf) => {
@@ -980,7 +970,7 @@ fn key_collisions(
     mut key_collision: EventWriter<KeyCollision>,
     player: Query<Entity, With<Player>>,
 ) {
-    let player_entity = match player.get_single() {
+    let player_entity = match player.single() {
         Ok(player_entity) => player_entity,
         Err(_) => return,
     };
@@ -999,7 +989,7 @@ fn key_collisions(
                         collision_event, collider_name
                     );
 
-                    key_collision.send(KeyCollision { entity });
+                    key_collision.write(KeyCollision { entity });
                 };
             }
             CollisionEvent::Stopped(e1, e2, _cf) => {
@@ -1023,6 +1013,6 @@ fn key_collisions(
 // Remove QM entities if player goes to menu and question mark is displayed
 fn despawn_qm(mut commands: Commands, qm_entity: Query<(Entity, &StoryQM)>) {
     for (entity, _) in qm_entity.iter() {
-        commands.entity(entity).despawn_recursive();
+        commands.entity(entity).despawn();
     }
 }

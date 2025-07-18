@@ -1,6 +1,6 @@
 use std::f32::consts::PI;
 
-use bevy::{prelude::*, utils::HashMap};
+use bevy::{platform::collections::HashMap, prelude::*};
 use bevy_rapier2d::{
     control::KinematicCharacterController, dynamics::RigidBody, geometry::Collider,
     pipeline::QueryFilterFlags,
@@ -302,7 +302,7 @@ fn move_moving_platform(
         {
             trace!("Player on moving platform {:?}", current_platform.entity);
             if translation_y < 0.0 && state.get() == &PlayerState::Idling {
-                moving_platform_descending.send(MovingPlatformDescending {
+                moving_platform_descending.write(MovingPlatformDescending {
                     movement: Vec2::new(translation_x, translation_y),
                 });
             }
@@ -329,6 +329,6 @@ fn despawn_moving_platform(
     moving_platforms: Query<Entity, With<MovingPlatform>>,
 ) {
     for moving_platform in moving_platforms.iter() {
-        commands.entity(moving_platform).despawn_recursive();
+        commands.entity(moving_platform).despawn();
     }
 }

@@ -104,9 +104,9 @@ fn toggle_perf_ui(
     kbd: Res<ButtonInput<KeyCode>>,
 ) {
     if kbd.just_pressed(KeyCode::F12) {
-        if let Ok(e) = q_root.get_single() {
+        if let Ok(e) = q_root.single() {
             // despawn the existing Perf UI
-            commands.entity(e).despawn_recursive();
+            commands.entity(e).despawn();
         } else {
             // create a simple Perf UI with default settings
             // and all entries provided by the crate:
@@ -124,7 +124,7 @@ fn update_text(
         With<player::Player>,
     >,
 ) {
-    let input_state = match input.get_single() {
+    let input_state = match input.single() {
         Ok(state) => state,
         Err(_) => return,
     };

@@ -1,11 +1,12 @@
 use bevy::{
     audio::{PlaybackMode, Volume},
+    platform::collections::HashMap,
     prelude::*,
-    utils::HashMap,
 };
 use bevy_rapier2d::geometry::{ActiveCollisionTypes, ActiveEvents, Collider, Sensor};
 
 use crate::{
+    WINDOW_HEIGHT, WINDOW_WIDTH,
     assets::RockRunAssets,
     coregame::{
         camera::CameraSet,
@@ -14,7 +15,6 @@ use crate::{
         state::AppState,
     },
     events::{ExtraLifeCollision, LifeEvent},
-    WINDOW_HEIGHT, WINDOW_WIDTH,
 };
 
 const LIFE_SCALE_FACTOR: f32 = 2.0;
@@ -78,7 +78,7 @@ fn spawn_life_entity(
     texture: &Handle<Image>,
 ) -> Entity {
     let x_offset = life.entities.len() as f32 * 20.0;
-    let child = commands
+    commands
         .spawn((
             Sprite {
                 image: texture.clone(),
@@ -89,24 +89,24 @@ fn spawn_life_entity(
                 ..default()
             },
         ))
-        .id();
-    child
+        .id()
 }
 
 fn show_life(
     mut life_query: Query<&mut Transform, With<LifeUI>>,
     camera_query: Query<&mut Transform, (With<Camera2d>, Without<LifeUI>)>,
-) {
-    let mut life_ui = match life_query.get_single_mut() {
+) -> Result<()> {
+    let mut life_ui = match life_query.single_mut() {
         Ok(life) => life,
-        Err(_) => return,
+        Err(_) => return Ok(()),
     };
 
-    let camera = camera_query.single();
+    let camera = camera_query.single()?;
 
     #[cfg(target_os = "linux")]
     const TOP_MARGIN: f32 = 38.0;
 
+    // TODO:: Fix this, this is not anymore needed
     #[cfg(not(target_os = "linux"))]
     const TOP_MARGIN: f32 = 20.0;
 
@@ -117,6 +117,7 @@ fn show_life(
             100.0,
         );
     life_ui.scale = Vec3::splat(LIFE_SCALE_FACTOR);
+    Ok(())
 }
 
 fn life_management(
@@ -126,11 +127,11 @@ fn life_management(
     mut life: ResMut<Life>,
     mut life_event: EventReader<LifeEvent>,
     mut next_state: ResMut<NextState<AppState>>,
-) {
+) -> Result<()> {
     for ev in life_event.read() {
         match ev {
             LifeEvent::Win => {
-                let sprite = life_ui.single_mut();
+                let sprite = life_ui.single_mut()?;
                 let child = spawn_life_entity(&mut commands, &life, &sprite.image);
                 commands.entity(life.entities[0]).add_child(child);
                 life.entities.push(child);
@@ -138,14 +139,14 @@ fn life_management(
                     AudioPlayer::new(rock_run_assets.get_something_sound.clone()),
                     PlaybackSettings {
                         mode: PlaybackMode::Despawn,
-                        volume: Volume::new(0.8),
+                        volume: Volume::Linear(0.8),
                         ..default()
                     },
                 ));
             }
             LifeEvent::Lost => match life.entities.pop() {
                 Some(entity) => {
-                    commands.entity(entity).despawn_recursive();
+                    commands.entity(entity).despawn();
                     debug!("life left: {}", life.entities.len());
                     if life.entities.is_empty() {
                         next_state.set(AppState::GameOver);
@@ -157,6 +158,7 @@ fn life_management(
             },
         }
     }
+    Ok(())
 }
 
 fn despawn_life(
@@ -164,8 +166,8 @@ fn despawn_life(
     life_ui: Query<Entity, With<LifeUI>>,
     mut life: ResMut<Life>,
 ) {
-    if let Ok(life_ui) = life_ui.get_single() {
-        commands.entity(life_ui).despawn_recursive();
+    if let Ok(life_ui) = life_ui.single() {
+        commands.entity(life_ui).despawn();
         life.entities.clear();
     }
 }
@@ -227,13 +229,13 @@ fn check_get_extralife(
     mut extralive_collision: EventReader<ExtraLifeCollision>,
 ) {
     for ev in extralive_collision.read() {
-        commands.entity(ev.entity).despawn_recursive();
-        life_event.send(LifeEvent::Win);
+        commands.entity(ev.entity).despawn();
+        life_event.write(LifeEvent::Win);
     }
 }
 
 fn despawn_extralife(mut commands: Commands, entities: Query<Entity, With<ExtraLife>>) {
     for entity in entities.iter() {
-        commands.entity(entity).despawn_recursive();
+        commands.entity(entity).despawn();
     }
 }

@@ -36,7 +36,7 @@ fn setup_music(
                 AudioPlayer::new(rock_run_assets.music_level01.clone()),
                 PlaybackSettings {
                     mode: PlaybackMode::Loop,
-                    volume: Volume::new(0.3),
+                    volume: Volume::Linear(0.3),
                     ..default()
                 },
                 Music,
@@ -47,7 +47,7 @@ fn setup_music(
                 AudioPlayer::new(rock_run_assets.music_level02.clone()),
                 PlaybackSettings {
                     mode: PlaybackMode::Loop,
-                    volume: Volume::new(0.3),
+                    volume: Volume::Linear(0.3),
                     ..default()
                 },
                 Music,
@@ -58,7 +58,7 @@ fn setup_music(
                 AudioPlayer::new(rock_run_assets.music_level03.clone()),
                 PlaybackSettings {
                     mode: PlaybackMode::Loop,
-                    volume: Volume::new(0.3),
+                    volume: Volume::Linear(0.3),
                     ..default()
                 },
                 Music,
@@ -70,6 +70,6 @@ fn setup_music(
 
 fn despawn_music(mut commands: Commands, musics: Query<Entity, With<Music>>) {
     for music in musics.iter() {
-        commands.entity(music).despawn_recursive();
+        commands.entity(music).despawn();
     }
 }

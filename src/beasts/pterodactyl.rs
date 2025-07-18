@@ -5,10 +5,10 @@ use bevy_rapier2d::{
     geometry::{ActiveCollisionTypes, Collider},
     prelude::{CollisionGroups, Group, QueryFilterFlags},
 };
-use rand::seq::SliceRandom;
-use rand::thread_rng;
+use rand::{rng, seq::IndexedRandom};
 
 use crate::{
+    WINDOW_HEIGHT, WINDOW_WIDTH,
     assets::RockRunAssets,
     collisions::CollisionSet,
     coregame::state::AppState,
@@ -16,7 +16,6 @@ use crate::{
     events::{PositionSensorCollisionStart, Restart, StartGame},
     helpers::texture::cycle_texture,
     player::Player,
-    WINDOW_HEIGHT, WINDOW_WIDTH,
 };
 
 const PTERODACTYL_SPEED: f32 = 600.0;
@@ -113,17 +112,17 @@ fn spawn_pterodactyl(
     mut restart_event: EventReader<Restart>,
     player_query: Query<&Transform, With<Player>>,
     camera_query: Query<&mut Transform, (With<Camera2d>, Without<Player>)>,
-) {
+) -> Result<()> {
     if !game_event.is_empty() {
         pterodactyls.clear();
         game_event.clear();
-        return;
+        return Ok(());
     }
 
     if !restart_event.is_empty() {
         pterodactyls.clear();
         restart_event.clear();
-        return;
+        return Ok(());
     }
 
     spawn_timer.tick(time.delta());
@@ -131,7 +130,7 @@ fn spawn_pterodactyl(
     if !pterodactyls.is_empty() && spawn_timer.finished() {
         let spawn_time_values = [0.3, 0.6, 1.0];
         let spawn_y_values = [-50.0, 0.0, 50.0];
-        let mut rng = thread_rng();
+        let mut rng = rng();
         let texture = rock_run_assets.pterodactyl.clone();
         let layout = TextureAtlasLayout::from_grid(
             UVec2::new(PTERODACTYL_WIDTH as u32, PTERODACTYL_HEIGHT as u32),
@@ -143,8 +142,8 @@ fn spawn_pterodactyl(
         let texture_atlas_layout = texture_atlases.add(layout);
 
         let mut pterodactyl = pterodactyls.pop().unwrap();
-        let player_pos = player_query.single();
-        let camera_pos = camera_query.single();
+        let player_pos = player_query.single()?;
+        let camera_pos = camera_query.single()?;
 
         if pterodactyl.spawn_pos.is_none() {
             let spawn_y = player_pos.translation.y + spawn_y_values.choose(&mut rng).unwrap();
@@ -200,11 +199,12 @@ fn spawn_pterodactyl(
 
     for collision_event in pterodactyl_sensor_collision.read() {
         if !collision_event.sensor_name.contains("pterodactyl") {
-            return;
+            return Ok(());
         }
 
         *pterodactyls = build_pterodactyls_to_spawn(collision_event);
     }
+    Ok(())
 }
 
 fn build_pterodactyls_to_spawn(collision_event: &PositionSensorCollisionStart) -> Vec<Pterodactyl> {
@@ -271,7 +271,7 @@ fn move_pterodactyl(
     rock_run_assets: Res<RockRunAssets>,
     mut audio_entity: Local<Option<Entity>>,
     query_entity: Query<Entity>,
-) {
+) -> Result<()> {
     for (
         pterodactyl_entity,
         mut pterodactyl_collider,
@@ -280,7 +280,7 @@ fn move_pterodactyl(
         mut pterodactyl,
     ) in pterodactyl_query.iter_mut()
     {
-        let player = player_query.single();
+        let player = player_query.single()?;
         let mut anim =
             |current_movement: PterodactylMovement, commands: &mut Commands| match current_movement
             {
@@ -366,8 +366,8 @@ fn move_pterodactyl(
         };
 
         if pterodactyl_pos.distance(pterodactyl.exit_pos) < 2.0 {
-            commands.entity(pterodactyl_entity).despawn_recursive();
-            return;
+            commands.entity(pterodactyl_entity).despawn();
+            return Ok(());
         }
 
         pterodactyl.current_movement = if direction.x >= 0.0 {
@@ -396,6 +396,7 @@ fn move_pterodactyl(
             pterodactyl_controller.translation = Some(Vec2::new(direction.x, direction.y));
         };
     }
+    Ok(())
 }
 
 fn spawn_little_rock(
@@ -427,7 +428,7 @@ fn spawn_little_rock(
 
 fn despawn_pterodactyl(mut commands: Commands, pterodactyls: Query<Entity, With<Pterodactyl>>) {
     for pterodactyl in pterodactyls.iter() {
-        commands.entity(pterodactyl).despawn_recursive();
+        commands.entity(pterodactyl).despawn();
     }
 }
 
@@ -441,6 +442,6 @@ fn despawn_pterodactyl_on_restart(
     }
 
     for pterodactyl in pterodactyls.iter() {
-        commands.entity(pterodactyl).despawn_recursive();
+        commands.entity(pterodactyl).despawn();
     }
 }

@@ -1,4 +1,4 @@
-use bevy::{audio::PlaybackMode, prelude::*, utils::HashMap};
+use bevy::{audio::PlaybackMode, platform::collections::HashMap, prelude::*};
 use bevy_rapier2d::{
     control::{KinematicCharacterController, KinematicCharacterControllerOutput},
     dynamics::RigidBody,
@@ -7,6 +7,7 @@ use bevy_rapier2d::{
 };
 
 use crate::{
+    WINDOW_WIDTH,
     assets::RockRunAssets,
     collisions::CollisionSet,
     coregame::{
@@ -15,7 +16,6 @@ use crate::{
     },
     helpers::texture::cycle_texture,
     player::Player,
-    WINDOW_WIDTH,
 };
 
 const TREX_SPEED: f32 = 550.0;
@@ -214,8 +214,8 @@ fn move_trex(
     mut previous_movement: Local<TrexMovement>,
     mut speed_coef: Local<f32>,
     trex_controller_query: Query<&KinematicCharacterControllerOutput, With<Trex>>,
-) {
-    let player = player_query.single();
+) -> Result<()> {
+    let player = player_query.single()?;
     for (trex_entity, mut trex, mut trex_collider, trex_pos, mut trex_controller) in
         trex_query.iter_mut()
     {
@@ -340,10 +340,11 @@ fn move_trex(
 
         anim(trex.current_movement, &mut commands);
     }
+    Ok(())
 }
 
 fn despawn_trex(mut commands: Commands, trex: Query<Entity, With<Trex>>) {
     for trex in trex.iter() {
-        commands.entity(trex).despawn_recursive();
+        commands.entity(trex).despawn();
     }
 }

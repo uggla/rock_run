@@ -18,7 +18,7 @@ use std::sync::Arc;
 
 use bevy::asset::io::Reader;
 use bevy::asset::{AssetLoader, AssetPath};
-use bevy::utils::HashMap;
+use bevy::platform::collections::HashMap;
 use bevy::{log, prelude::*};
 use bevy_ecs_tilemap::prelude::*;
 
@@ -135,7 +135,10 @@ impl AssetLoader for TiledLoader {
                 None => {
                     #[cfg(feature = "atlas")]
                     {
-                        log::info!("Skipping image collection tileset '{}' which is incompatible with atlas feature", tileset.name);
+                        log::info!(
+                            "Skipping image collection tileset '{}' which is incompatible with atlas feature",
+                            tileset.name
+                        );
                         continue;
                     }
 
@@ -152,7 +155,9 @@ impl AssetLoader for TiledLoader {
                                     .expect("The asset load context was empty.");
                                 let tile_path = tmx_dir.join(&img.source);
                                 let asset_path = AssetPath::from(tile_path);
-                                log::info!("Loading tile image from {asset_path:?} as image ({tileset_index}, {tile_id})");
+                                log::info!(
+                                    "Loading tile image from {asset_path:?} as image ({tileset_index}, {tile_id})"
+                                );
                                 let texture: Handle<Image> = load_context.load(asset_path.clone());
                                 tile_image_offsets
                                     .insert((tileset_index, tile_id), tile_images.len() as u32);
@@ -247,10 +252,10 @@ pub fn process_loaded_maps(
                 for entity in tileset_layer_entity.get_entities() {
                     if let Ok((_, map_tiles)) = tile_storage_query.get(*entity) {
                         for tile in map_tiles.iter().flatten() {
-                            commands.entity(*tile).despawn_recursive()
+                            commands.entity(*tile).despawn()
                         }
                     }
-                    // commands.entity(*layer_entity).despawn_recursive();
+                    // commands.entity(*layer_entity).despawn();
                 }
 
                 // The TilemapBundle requires that all tile images come exclusively from a single
@@ -384,12 +389,8 @@ pub fn process_loaded_maps(
                             texture: tilemap_texture.clone(),
                             tile_size,
                             spacing: tile_spacing,
-                            transform: get_tilemap_center_transform(
-                                &map_size,
-                                &grid_size,
-                                &map_type,
-                                layer_index as f32,
-                            ) * Transform::from_xyz(offset_x, -offset_y, 0.0),
+                            anchor: TilemapAnchor::Center,
+                            transform: Transform::from_xyz(offset_x, -offset_y, layer_index as f32),
                             map_type,
                             render_settings: *render_settings,
                             ..Default::default()

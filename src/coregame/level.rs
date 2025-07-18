@@ -1,14 +1,15 @@
 use bevy::{
     color,
+    platform::collections::HashMap,
     prelude::*,
     render::render_resource::{AsBindGroup, ShaderRef},
     sprite::{Material2d, Material2dPlugin},
-    utils::HashMap,
 };
 use bevy_ecs_tilemap::tiles::{TileStorage, TileVisible};
 use bevy_fluent::{BundleAsset, Locale};
 
 use crate::{
+    WINDOW_HEIGHT, WINDOW_WIDTH,
     assets::RockRunAssets,
     coregame::{
         localization::{convert_to_fluent_args, get_translation},
@@ -19,7 +20,7 @@ use crate::{
         self,
         tiled::{TiledMap, TiledMapHandle, TilesetLayerToStorageEntity},
     },
-    player, WINDOW_HEIGHT, WINDOW_WIDTH,
+    player,
 };
 
 use crate::screen_map::Map;
@@ -202,7 +203,7 @@ impl Material2d for MysteriousFogMaterial {
 
 fn despawn_shader_level(mut commands: Commands, shader_levels: Query<Entity, With<ShaderLevel>>) {
     for shader_level in shader_levels.iter() {
-        commands.entity(shader_level).despawn_recursive();
+        commands.entity(shader_level).despawn();
     }
 }
 
@@ -262,12 +263,12 @@ fn fade_display_level(
     mut display_level_timer: Query<&mut DisplayLevelTimer>,
     mut display_level: Query<Entity, With<DisplayLevel>>,
     mut display_level_text: Query<&mut TextColor, With<DisplayLevelText>>,
-) {
-    if let Ok(mut display_level_timer) = display_level_timer.get_single_mut() {
+) -> Result<()> {
+    if let Ok(mut display_level_timer) = display_level_timer.single_mut() {
         display_level_timer.tick(time.delta());
 
         if display_level_timer.finished() {
-            let mut text_color = display_level_text.single_mut();
+            let mut text_color = display_level_text.single_mut()?;
             let transparency = text_color.alpha();
             let color: Srgba = Color::srgb_u8(0xF4, 0x78, 0x04).into();
             *text_color = TextColor(Color::srgba(
@@ -278,20 +279,19 @@ fn fade_display_level(
             ));
 
             if transparency < 0.0 {
-                commands
-                    .entity(display_level.single_mut())
-                    .despawn_recursive();
+                commands.entity(display_level.single_mut()?).despawn();
             }
         }
     }
+    Ok(())
 }
 
 fn despawn_display_level(
     mut commands: Commands,
     mut display_level: Query<Entity, With<DisplayLevel>>,
 ) {
-    if let Ok(display_level) = display_level.get_single_mut() {
-        commands.entity(display_level).despawn_recursive();
+    if let Ok(display_level) = display_level.single_mut() {
+        commands.entity(display_level).despawn();
     }
 }
 
@@ -352,7 +352,7 @@ fn check_exit(
     >,
     mut exit_collision: Local<bool>,
 ) {
-    let input_state = match input.get_single() {
+    let input_state = match input.single() {
         Ok(state) => state,
         Err(_) => return,
     };

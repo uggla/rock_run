@@ -1,7 +1,7 @@
 use bevy::{
     audio::{PlaybackMode, Volume},
+    platform::collections::HashMap,
     prelude::*,
-    utils::HashMap,
 };
 use bevy_rapier2d::{
     control::KinematicCharacterController,
@@ -299,12 +299,12 @@ fn check_get_nut(
     for ev in extralive_collision.read() {
         collected_nuts.entities.push(ev.entity);
         debug!("Collected nuts {}", collected_nuts.entities.len());
-        commands.entity(ev.entity).despawn_recursive();
+        commands.entity(ev.entity).despawn();
         commands.spawn((
             AudioPlayer::new(rock_run_assets.get_something_sound.clone()),
             PlaybackSettings {
                 mode: PlaybackMode::Despawn,
-                volume: Volume::new(0.8),
+                volume: Volume::Linear(0.8),
                 ..default()
             },
         ));
@@ -390,7 +390,7 @@ fn move_squirel(
 
         if squirel.current_movement == SquirelMovement::Run(SquirelDirection::Right) {
             if squirel_pos.distance(squirel.end_pos) < 32.0 {
-                commands.entity(squirel_entity).despawn_recursive();
+                commands.entity(squirel_entity).despawn();
             }
             if spikes
                 .iter()
@@ -526,7 +526,7 @@ fn display_vine(
     }
 
     if vine.count == 0 {
-        commands.entity(vine_entity).despawn_recursive();
+        commands.entity(vine_entity).despawn();
 
         commands
             .spawn((
@@ -555,7 +555,7 @@ fn display_vine(
     }
 
     if vine.count >= 1 {
-        commands.entity(vine_entity).despawn_recursive();
+        commands.entity(vine_entity).despawn();
 
         // Display vine root
         let parent = commands
@@ -646,18 +646,18 @@ fn get_vine_sprite_bundle(texture: &Handle<Image>, vine_pos: Vec3) -> (Sprite, T
 
 fn despawn_squirel(mut commands: Commands, squirels: Query<Entity, With<Squirel>>) {
     for squirel in squirels.iter() {
-        commands.entity(squirel).despawn_recursive();
+        commands.entity(squirel).despawn();
     }
 }
 
 fn despawn_nuts(mut commands: Commands, nuts: Query<Entity, With<Nut>>) {
     for nut in nuts.iter() {
-        commands.entity(nut).despawn_recursive();
+        commands.entity(nut).despawn();
     }
 }
 
 fn despawn_vines(mut commands: Commands, vines: Query<Entity, With<Vine>>) {
     for vine in vines.iter() {
-        commands.entity(vine).despawn_recursive();
+        commands.entity(vine).despawn();
     }
 }

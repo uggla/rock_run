@@ -10,7 +10,7 @@ use bevy::prelude::*;
 
 use crate::{
     coregame::level::{CurrentLevel, Level},
-    player::{Player, PlayerState, PLAYER_SPEED},
+    player::{PLAYER_SPEED, Player, PlayerState},
 };
 pub struct CameraPlugin;
 
@@ -45,17 +45,18 @@ fn setup_camera(mut commands: Commands) {
     commands.spawn((Camera2d, Transform::from_xyz(0.0, 0.0, 0.0)));
 }
 
-fn move_camera_to_center(mut camera_query: Query<&mut Transform, With<Camera2d>>) {
-    let mut camera = camera_query.single_mut();
+fn move_camera_to_center(mut camera_query: Query<&mut Transform, With<Camera2d>>) -> Result<()> {
+    let mut camera = camera_query.single_mut()?;
     camera.translation = Vec3::new(0.0, 0.0, 0.0);
+    Ok(())
 }
 
 fn move_camera_to_level_start_screen(
     current_level: Res<CurrentLevel>,
     levels: Query<&Level, With<Level>>,
     mut camera_query: Query<&mut Transform, With<Camera2d>>,
-) {
-    let mut camera = camera_query.single_mut();
+) -> Result<()> {
+    let mut camera = camera_query.single_mut()?;
 
     for level in levels.iter() {
         if level.id == current_level.id {
@@ -63,6 +64,7 @@ fn move_camera_to_level_start_screen(
             break;
         }
     }
+    Ok(())
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -75,9 +77,9 @@ fn camera_follows_player(
     levels: Query<&Level, With<Level>>,
     mut offset: Local<Vec2>,
     shake: Res<Shake>,
-) {
-    let mut camera = camera_query.single_mut();
-    let player = player_query.single();
+) -> Result<()> {
+    let mut camera = camera_query.single_mut()?;
+    let player = player_query.single()?;
 
     levels
         .iter()
@@ -189,17 +191,18 @@ fn camera_follows_player(
                 .move_camera(&time, camera.translation.xy(), new_camera_pos)
                 .extend(0.0);
         });
+    Ok(())
 }
 
 fn shake_camera(
     mut shake_events: EventReader<ShakeCamera>,
-    mut camera_query: Query<(&mut Transform, &mut OrthographicProjection), With<Camera2d>>,
+    mut camera_query: Query<(&mut Transform, &mut Projection), With<Camera2d>>,
     time: Res<Time>,
     mut shake: ResMut<Shake>,
     mut shake_timer: Local<Timer>,
     mut game_event: EventReader<StartGame>,
     mut restart_event: EventReader<Restart>,
-) {
+) -> Result<()> {
     let shake_duration_sec = 6.0;
     let shake_amplitude = 20.0;
 
@@ -211,20 +214,26 @@ fn shake_camera(
         _ => 1.0,
     };
 
-    let (mut camera_pos, mut camera_ortho) = camera_query.single_mut();
+    let (mut camera_pos, mut camera_projection) = camera_query.single_mut()?;
 
     if !game_event.is_empty() {
         *shake = Shake(false);
         game_event.clear();
-        camera_ortho.scale = 1.0;
-        return;
+        match *camera_projection {
+            Projection::Orthographic(ref mut projection) => projection.scale = 1.0,
+            _ => unreachable!(),
+        };
+        return Ok(());
     }
 
     if !restart_event.is_empty() {
         *shake = Shake(false);
         restart_event.clear();
-        camera_ortho.scale = 1.0;
-        return;
+        match *camera_projection {
+            Projection::Orthographic(ref mut projection) => projection.scale = 1.0,
+            _ => unreachable!(),
+        };
+        return Ok(());
     }
 
     for _ev in shake_events.read() {
@@ -236,7 +245,10 @@ fn shake_camera(
     if *shake == Shake(true) && !shake_timer.finished() {
         shake_timer.tick(time.delta());
 
-        camera_ortho.scale = zoom_factor;
+        match *camera_projection {
+            Projection::Orthographic(ref mut projection) => projection.scale = zoom_factor,
+            _ => unreachable!(),
+        };
 
         camera_pos.translation.y += shake_amplitude
             * (PI * shake_timer.elapsed().as_secs_f32() / shake_duration_sec)
@@ -248,4 +260,5 @@ fn shake_camera(
     if *shake == Shake(true) && shake_timer.finished() {
         *shake = Shake(false);
     }
+    Ok(())
 }

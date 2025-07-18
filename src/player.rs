@@ -3,8 +3,8 @@ use bevy_rapier2d::{
     control::KinematicCharacterController, dynamics::RigidBody, geometry::Collider,
 };
 use leafwing_input_manager::{
-    action_state::ActionState, axislike::AxisDirection, input_map::InputMap,
-    plugin::InputManagerPlugin, prelude::GamepadControlDirection, Actionlike, InputManagerBundle,
+    Actionlike, action_state::ActionState, axislike::AxisDirection, input_map::InputMap,
+    plugin::InputManagerPlugin, prelude::GamepadControlDirection,
 };
 
 use crate::{
@@ -19,7 +19,7 @@ use crate::{
         Hit, LadderCollisionStart, LadderCollisionStop, LifeEvent, MovingPlatformDescending,
         Restart, StartGame,
     },
-    helpers::texture::{cycle_texture, swing_texture, IndexDirection},
+    helpers::texture::{IndexDirection, cycle_texture, swing_texture},
 };
 
 pub const PLAYER_SPEED: f32 = 500.0;
@@ -206,12 +206,12 @@ fn setup_player(
             ..default()
         },
         // Ccd::enabled(),
-        InputManagerBundle::with_map(input_map),
         Player,
         PlayerAudio {
             jump_sound: rock_run_assets.jump_sound.clone(),
             hit_sound: rock_run_assets.hit_sound.clone(),
         },
+        input_map,
     ));
 }
 
@@ -240,119 +240,122 @@ fn move_player(
     mut game_event: EventReader<StartGame>,
     mut ladder_collision: Local<bool>,
     mut toggle: Local<bool>,
-) {
+) -> Result<()> {
     let (mut player_collider, mut player_pos, mut player_controller, player_audio) =
-        player_query.single_mut();
-    let mut jump_timer = jump_timer.single_mut();
+        player_query.single_mut()?;
+    let mut jump_timer = jump_timer.single_mut()?;
     let mut direction_x = 0.0;
     let mut direction_y = 0.0;
-    let mut anim = |current_movement: PlayerMovement| match current_movement {
-        PlayerMovement::Run(player_direction) => {
-            let (mut anim_timer, mut sprite) = animation_query.single_mut();
-            anim_timer.tick(time.delta());
-            match player_direction {
-                PlayerDirection::Left => {
-                    sprite.flip_x = true;
-                    *player_collider = Collider::capsule(
-                        PLAYER_HITBOX.0 + PLAYER_HITBOX_TRANSLATION,
-                        PLAYER_HITBOX.1 + PLAYER_HITBOX_TRANSLATION,
-                        PLAYER_HITBOX.2,
-                    );
-                }
-                PlayerDirection::Right => {
-                    sprite.flip_x = false;
-                    *player_collider =
-                        Collider::capsule(PLAYER_HITBOX.0, PLAYER_HITBOX.1, PLAYER_HITBOX.2);
-                }
-            }
-            if anim_timer.just_finished() {
-                match state.get() {
-                    PlayerState::Jumping => {}
-                    PlayerState::Falling => {
-                        if let Some(texture) = &mut sprite.texture_atlas {
-                            cycle_texture(texture, 14..=16);
-                        }
+    let mut anim = |current_movement: PlayerMovement| -> Result<()> {
+        match current_movement {
+            PlayerMovement::Run(player_direction) => {
+                let (mut anim_timer, mut sprite) = animation_query.single_mut()?;
+                anim_timer.tick(time.delta());
+                match player_direction {
+                    PlayerDirection::Left => {
+                        sprite.flip_x = true;
+                        *player_collider = Collider::capsule(
+                            PLAYER_HITBOX.0 + PLAYER_HITBOX_TRANSLATION,
+                            PLAYER_HITBOX.1 + PLAYER_HITBOX_TRANSLATION,
+                            PLAYER_HITBOX.2,
+                        );
                     }
-                    PlayerState::Climbing => {
-                        if let Some(texture) = &mut sprite.texture_atlas {
-                            cycle_texture(texture, 33..=36);
-                        }
-                    }
-                    _ => {
-                        if let Some(texture) = &mut sprite.texture_atlas {
-                            cycle_texture(texture, 6..=10);
-                        }
+                    PlayerDirection::Right => {
+                        sprite.flip_x = false;
+                        *player_collider =
+                            Collider::capsule(PLAYER_HITBOX.0, PLAYER_HITBOX.1, PLAYER_HITBOX.2);
                     }
                 }
-            }
-        }
-        PlayerMovement::Idle => {
-            let (mut anim_timer, mut sprite) = animation_query.single_mut();
-            anim_timer.tick(time.delta());
-            if anim_timer.just_finished() {
-                match state.get() {
-                    PlayerState::Jumping => {}
-                    PlayerState::Climbing => {
-                        if let Some(texture) = &mut sprite.texture_atlas {
-                            texture.index = 34;
+                if anim_timer.just_finished() {
+                    match state.get() {
+                        PlayerState::Jumping => {}
+                        PlayerState::Falling => {
+                            if let Some(texture) = &mut sprite.texture_atlas {
+                                cycle_texture(texture, 14..=16);
+                            }
                         }
-                    }
-                    PlayerState::Falling => {
-                        if let Some(texture) = &mut sprite.texture_atlas {
-                            cycle_texture(texture, 14..=16);
+                        PlayerState::Climbing => {
+                            if let Some(texture) = &mut sprite.texture_atlas {
+                                cycle_texture(texture, 33..=36);
+                            }
                         }
-                    }
-                    _ => {
-                        if let Some(texture) = &mut sprite.texture_atlas {
-                            swing_texture(texture, 0..=4, &mut index_direction);
+                        _ => {
+                            if let Some(texture) = &mut sprite.texture_atlas {
+                                cycle_texture(texture, 6..=10);
+                            }
                         }
                     }
                 }
             }
-        }
-        PlayerMovement::Jump => {
-            let (_, mut sprite) = animation_query.single_mut();
-            if let Some(texture) = &mut sprite.texture_atlas {
-                texture.index = 11;
+            PlayerMovement::Idle => {
+                let (mut anim_timer, mut sprite) = animation_query.single_mut()?;
+                anim_timer.tick(time.delta());
+                if anim_timer.just_finished() {
+                    match state.get() {
+                        PlayerState::Jumping => {}
+                        PlayerState::Climbing => {
+                            if let Some(texture) = &mut sprite.texture_atlas {
+                                texture.index = 34;
+                            }
+                        }
+                        PlayerState::Falling => {
+                            if let Some(texture) = &mut sprite.texture_atlas {
+                                cycle_texture(texture, 14..=16);
+                            }
+                        }
+                        _ => {
+                            if let Some(texture) = &mut sprite.texture_atlas {
+                                swing_texture(texture, 0..=4, &mut index_direction);
+                            }
+                        }
+                    }
+                }
             }
-        }
-
-        PlayerMovement::Climb => {
-            let (mut anim_timer, mut sprite) = animation_query.single_mut();
-            anim_timer.tick(time.delta());
-            if anim_timer.just_finished() {
+            PlayerMovement::Jump => {
+                let (_, mut sprite) = animation_query.single_mut()?;
                 if let Some(texture) = &mut sprite.texture_atlas {
-                    cycle_texture(texture, 33..=36);
+                    texture.index = 11;
                 }
             }
-        }
-        PlayerMovement::Crouch => {
-            let (mut anim_timer, mut sprite) = animation_query.single_mut();
-            anim_timer.tick(time.delta());
-            if anim_timer.just_finished() {
-                if let Some(texture) = &mut sprite.texture_atlas {
-                    cycle_texture(texture, 33..=36);
-                }
-            }
-        }
 
-        PlayerMovement::Hit => {
-            let (_, mut sprite) = animation_query.single_mut();
-            if let Some(texture) = &mut sprite.texture_atlas {
-                texture.index = 26;
+            PlayerMovement::Climb => {
+                let (mut anim_timer, mut sprite) = animation_query.single_mut()?;
+                anim_timer.tick(time.delta());
+                if anim_timer.just_finished() {
+                    if let Some(texture) = &mut sprite.texture_atlas {
+                        cycle_texture(texture, 33..=36);
+                    }
+                }
+            }
+            PlayerMovement::Crouch => {
+                let (mut anim_timer, mut sprite) = animation_query.single_mut()?;
+                anim_timer.tick(time.delta());
+                if anim_timer.just_finished() {
+                    if let Some(texture) = &mut sprite.texture_atlas {
+                        cycle_texture(texture, 33..=36);
+                    }
+                }
+            }
+
+            PlayerMovement::Hit => {
+                let (_, mut sprite) = animation_query.single_mut()?;
+                if let Some(texture) = &mut sprite.texture_atlas {
+                    texture.index = 26;
+                }
             }
         }
+        Ok(())
     };
 
     jump_timer.tick(time.delta());
-    let input_state = input.single();
+    let input_state = input.single()?;
     let mut current_movement: PlayerMovement = PlayerMovement::Idle;
 
     if *state.get() == PlayerState::Hit {
         current_movement = PlayerMovement::Hit;
-        anim(current_movement);
+        let _ = anim(current_movement);
         player_controller.translation = Some(Vec2::new(0.0, PLAYER_SPEED * time.delta_secs()));
-        return;
+        return Ok(());
     }
 
     if !game_event.is_empty() {
@@ -375,13 +378,13 @@ fn move_player(
     if input_state.pressed(&PlayerMovement::Run(PlayerDirection::Left)) {
         direction_x = -1.0;
         current_movement = PlayerMovement::Run(PlayerDirection::Left);
-        anim(current_movement);
+        let _ = anim(current_movement);
     }
 
     if input_state.pressed(&PlayerMovement::Run(PlayerDirection::Right)) {
         direction_x = 1.0;
         current_movement = PlayerMovement::Run(PlayerDirection::Right);
-        anim(current_movement);
+        let _ = anim(current_movement);
     }
 
     if input_state.just_pressed(&PlayerMovement::Jump)
@@ -397,25 +400,25 @@ fn move_player(
             },
         ));
         current_movement = PlayerMovement::Jump;
-        anim(current_movement);
+        let _ = anim(current_movement);
     }
 
     if input_state.pressed(&PlayerMovement::Climb) && *ladder_collision {
         next_state.set(PlayerState::Climbing);
         direction_y = 1.0;
         current_movement = PlayerMovement::Climb;
-        anim(current_movement);
+        let _ = anim(current_movement);
     }
 
     if input_state.pressed(&PlayerMovement::Crouch) && *ladder_collision {
         next_state.set(PlayerState::Climbing);
         direction_y = -1.0;
         current_movement = PlayerMovement::Crouch;
-        anim(current_movement);
+        let _ = anim(current_movement);
     }
 
     if current_movement == PlayerMovement::Idle {
-        anim(PlayerMovement::Idle);
+        let _ = anim(PlayerMovement::Idle);
     }
 
     if state.get() == &PlayerState::Jumping {
@@ -463,6 +466,7 @@ fn move_player(
             -PLAYER_SPEED * time.delta_secs(),
         ));
     }
+    Ok(())
 }
 
 fn check_out_of_screen(
@@ -470,13 +474,13 @@ fn check_out_of_screen(
     current_level: Res<CurrentLevel>,
     mut player_query: Query<&mut Transform, With<Player>>,
     mut restart: EventWriter<Restart>,
-) {
+) -> Result<()> {
     let level = levels
         .iter()
         .find(|level| level.id == current_level.id)
         .unwrap();
 
-    let player = player_query.single_mut();
+    let player = player_query.single_mut()?;
 
     if level
         .map
@@ -487,8 +491,9 @@ fn check_out_of_screen(
         )
         .is_none()
     {
-        restart.send(Restart);
+        restart.write(Restart);
     }
+    Ok(())
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -501,15 +506,15 @@ fn check_hit(
     mut just_hit: Local<bool>,
     mut restart: EventWriter<Restart>,
     mut player_query: Query<&PlayerAudio, With<Player>>,
-) {
-    let mut jump_timer = jump_timer.single_mut();
+) -> Result<()> {
+    let mut jump_timer = jump_timer.single_mut()?;
     if !hit_event.is_empty() && state.get() != &PlayerState::Hit {
         debug!("hit event received");
         hit_event.clear();
         next_state.set(PlayerState::Hit);
         debug!("justhit {}", *just_hit);
         if !*just_hit {
-            let player_audio = player_query.single_mut();
+            let player_audio = player_query.single_mut()?;
             jump_timer.reset();
             *just_hit = true;
             commands.spawn((
@@ -526,8 +531,9 @@ fn check_hit(
     if state.get() == &PlayerState::Hit && jump_timer.finished() && *just_hit {
         debug!("timer finished");
         *just_hit = false;
-        restart.send(Restart);
+        restart.write(Restart);
     }
+    Ok(())
 }
 
 fn restart_level(
@@ -538,9 +544,9 @@ fn restart_level(
     mut life_event: EventWriter<LifeEvent>,
     mut next_state: ResMut<NextState<PlayerState>>,
     mut ladder_collision_stop: EventWriter<LadderCollisionStop>,
-) {
+) -> Result<()> {
     if restart.is_empty() {
-        return;
+        return Ok(());
     }
 
     restart.clear();
@@ -550,17 +556,18 @@ fn restart_level(
         .find(|level| level.id == current_level.id)
         .unwrap();
 
-    let mut player = player_query.single_mut();
+    let mut player = player_query.single_mut()?;
 
-    life_event.send(LifeEvent::Lost);
-    ladder_collision_stop.send(LadderCollisionStop);
+    life_event.write(LifeEvent::Lost);
+    ladder_collision_stop.write(LadderCollisionStop);
     player.translation =
         level.map.get_start_screen().get_center().extend(20.00) + PLAYER_START_OFFSET;
     next_state.set(PlayerState::Falling);
+    Ok(())
 }
 
 fn despawn_player(mut commands: Commands, player: Query<Entity, With<Player>>) {
-    if let Ok(player) = player.get_single() {
-        commands.entity(player).despawn_recursive();
+    if let Ok(player) = player.single() {
+        commands.entity(player).despawn();
     }
 }
