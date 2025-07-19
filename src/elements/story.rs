@@ -255,8 +255,6 @@ fn setup(
 
     let ui_node = commands
         .spawn((
-            // TODO: Add margin based on os cfg.
-            // Or based on GPU detection
             Node {
                 position_type: PositionType::Absolute,
                 left: Val::Px(params.box_position.x + WINDOW_WIDTH / 2.0 - params.box_size.x / 2.0),
