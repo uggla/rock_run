@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="800" height="135" tilewidth="16" tileheight="16" infinite="0" nextlayerid="22" nextobjectid="74">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="800" height="135" tilewidth="16" tileheight="16" infinite="0" nextlayerid="22" nextobjectid="74">
  <tileset firstgid="1" name="tileset-01" tilewidth="16" tileheight="16" tilecount="2030" columns="58">
   <image source="tileset-1.png" width="928" height="560"/>
  </tileset>
@@ -1421,8 +1421,8 @@
 </data>
  </layer>
  <objectgroup id="3" name="Ground">
-  <object id="1" name="Ground" x="17.6364" y="1764.73">
-   <polyline points="0,0 0,320 2528.61,318.136 2574.36,318.27 2574.36,398.27 4446.36,398.27 4446.36,318.27 8606.36,318.27 12766.4,318.27 12766.4,-1444.73"/>
+  <object id="1" name="Ground" x="17.6364" y="1764">
+   <polyline points="0,0 -1.6364,315.27 1294.36,319.27 2574.36,315.27 2574.36,398.27 4446.36,398.27 4446.36,315.27 8311.53,318.103 10543.3,318.718 12766.4,316 12766.4,-1444.73"/>
   </object>
  </objectgroup>
  <objectgroup id="13" name="Platforms">
