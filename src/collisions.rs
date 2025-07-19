@@ -771,7 +771,7 @@ fn position_sensor_collisions(
         );
 
         level_sensor_pos.insert(
-            3,
+            4,
             HashMap::from([
                 (
                     "bat01".to_string(),

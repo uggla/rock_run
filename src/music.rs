@@ -53,7 +53,7 @@ fn setup_music(
                 Music,
             ));
         }
-        3 => {
+        4 => {
             commands.spawn((
                 AudioPlayer::new(rock_run_assets.music_level03.clone()),
                 PlaybackSettings {

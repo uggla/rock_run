@@ -152,7 +152,7 @@ fn setup_moving_platforms(
         ],
     );
     level_moving_platforms.insert(
-        3,
+        4,
         vec![
             MovingPlatform {
                 start_pos: level.map.tiled_to_bevy_coord(Vec2::new(5920.0, 576.0)),

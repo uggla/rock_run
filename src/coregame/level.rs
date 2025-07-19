@@ -137,6 +137,23 @@ fn setup_background(mut commands: Commands, rock_run_assets: Res<RockRunAssets>)
             id: 3,
             handle: map_handle.clone(),
             map: Map::new(
+                "OOOOOOOOOO\nOOOOOOOOOO\nSOOOOOOOOO",
+                WINDOW_WIDTH as usize,
+                WINDOW_HEIGHT as usize,
+            ),
+        },
+    ));
+
+    let map_handle: Handle<helpers::tiled::TiledMap> = rock_run_assets.level04.clone();
+    commands.spawn((
+        helpers::tiled::TiledMapBundle {
+            tiled_map: TiledMapHandle(map_handle.clone()),
+            ..Default::default()
+        },
+        Level {
+            id: 4,
+            handle: map_handle.clone(),
+            map: Map::new(
                 "SHFXF\nXOFOO",
                 WINDOW_WIDTH as usize,
                 WINDOW_HEIGHT as usize,
@@ -161,7 +178,7 @@ fn show_level_shaders(
 
     #[allow(clippy::single_match)]
     match current_level.id {
-        3 => {
+        4 => {
             commands.spawn((
                 Mesh2d(meshes.add(Rectangle::default())),
                 MeshMaterial2d(mysterious_fog.add(MysteriousFogMaterial {

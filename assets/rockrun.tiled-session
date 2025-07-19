@@ -14,17 +14,17 @@
         },
         "level01.tmx": {
             "expandedObjectLayers": [
+                4,
                 5,
                 8,
                 6,
-                4,
                 9
             ],
             "scale": 2,
             "selectedLayer": 5,
             "viewCenter": {
-                "x": 12769.75,
-                "y": 640
+                "x": 6392.5,
+                "y": 572
             }
         },
         "level01.tmx#backgrounds": {
@@ -74,17 +74,17 @@
         "level02.tmx": {
             "expandedObjectLayers": [
                 8,
+                17,
+                3,
                 12,
                 10,
-                3,
-                17,
                 13
             ],
-            "scale": 0.33,
+            "scale": 0.0625,
             "selectedLayer": 10,
             "viewCenter": {
-                "x": 6400,
-                "y": 1078.787878787879
+                "x": 6680,
+                "y": 816
             }
         },
         "level02.tmx#cloud-1": {
@@ -135,17 +135,34 @@
         "level03.tmx": {
             "expandedObjectLayers": [
                 8,
-                3,
-                4
+                3
             ],
-            "scale": 1,
+            "scale": 0.25,
             "selectedLayer": 3,
             "viewCenter": {
-                "x": 1449.5,
-                "y": 320
+                "x": 1850,
+                "y": 912
             }
         },
+        "level03.tmx#cloud-1": {
+            "scaleInDock": 1
+        },
         "level03.tmx#grad-1": {
+            "scaleInDock": 1
+        },
+        "level03.tmx#grass-1": {
+            "scaleInDock": 1
+        },
+        "level03.tmx#grass-2": {
+            "scaleInDock": 1
+        },
+        "level03.tmx#grass-3": {
+            "scaleInDock": 1
+        },
+        "level03.tmx#monkey-1": {
+            "scaleInDock": 1
+        },
+        "level03.tmx#mountain-2": {
             "scaleInDock": 1
         },
         "level03.tmx#rock-1": {
@@ -157,7 +174,42 @@
         "level03.tmx#sky-2": {
             "scaleInDock": 1
         },
+        "level03.tmx#sky-4": {
+            "scaleInDock": 1
+        },
+        "level03.tmx#sky-5": {
+            "scaleInDock": 1
+        },
+        "level03.tmx#tileset-01": {
+            "scaleInDock": 1
+        },
         "level03.tmx#tileset-1": {
+            "scaleInDock": 1
+        },
+        "level03.tmx#wood-1": {
+            "scaleInDock": 1
+        },
+        "level04.tmx": {
+            "scale": 0.25,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 3054,
+                "y": 500
+            }
+        },
+        "level04.tmx#grad-1": {
+            "scaleInDock": 1
+        },
+        "level04.tmx#rock-1": {
+            "scaleInDock": 1
+        },
+        "level04.tmx#sky-1": {
+            "scaleInDock": 1
+        },
+        "level04.tmx#sky-2": {
+            "scaleInDock": 1
+        },
+        "level04.tmx#tileset-1": {
             "scaleInDock": 1
         },
         "menu.tmx": {

@@ -31,7 +31,7 @@ use crate::{
     messages::{LadderCollisionStop, NoMoreStoryMessages, SelectionChanged, StoryMessages},
 };
 
-const LAST_LEVEL: u8 = 3;
+const LAST_LEVEL: u8 = 4;
 
 #[derive(Component)]
 pub struct DrawBlinkTimer(pub Timer);
@@ -118,7 +118,7 @@ fn setup(
         Ok(level) => {
             let level = level.parse::<u8>().expect("ROCKRUN_LEVEL is not a number");
             match level {
-                1..=3 => start_level.0 = level,
+                1..=4 => start_level.0 = level,
                 _ => start_level.0 = 1,
             }
         }

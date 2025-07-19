@@ -351,7 +351,7 @@ fn spawn_enigma_materials(
             ));
         }
 
-        3 => {
+        4 => {
             let texture = rock_run_assets.warrior.clone();
             let layout = TextureAtlasLayout::from_grid(
                 UVec2::new(WARRIOR_WIDTH as u32, WARRIOR_HEIGHT as u32),
