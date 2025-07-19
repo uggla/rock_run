@@ -54,7 +54,8 @@ impl Plugin for VolcanoPlugin {
             )
             .add_systems(
                 Update,
-                (spawn_fireball).run_if(in_state(AppState::GameRunning)),
+                (spawn_fireball, despawn_fireballs_offscreen)
+                    .run_if(in_state(AppState::GameRunning)),
             );
         app.add_plugins(Material2dPlugin::<LavaMaterial>::default());
     }
@@ -281,6 +282,17 @@ fn despawn_volcano(mut commands: Commands, volcano: Query<Entity, With<Volcano>>
 fn despawn_fireballs(mut commands: Commands, fireballs: Query<Entity, With<Fireball>>) {
     for fireball in fireballs.iter() {
         commands.entity(fireball).despawn();
+    }
+}
+
+fn despawn_fireballs_offscreen(
+    mut commands: Commands,
+    fireballs: Query<(Entity, &Transform), With<Fireball>>,
+) {
+    for (fireball, pos) in fireballs.iter() {
+        if pos.translation.y < -450.0 {
+            commands.entity(fireball).despawn();
+        }
     }
 }
 
