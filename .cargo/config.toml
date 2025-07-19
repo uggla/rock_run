@@ -2,6 +2,7 @@
 # export CARGO_TARGET_WASM32_UNKNOWN_UNKNOWN_RUNNER=wasm-server-runner
 # cargo run --target wasm32-unknown-unknown
 runner = "wasm-server-runner"
+rustflags = ['--cfg', 'getrandom_backend="wasm_js"']
 
 [alias]
 # disable dynamic linking for the moment as it is not supported with jpeg features
