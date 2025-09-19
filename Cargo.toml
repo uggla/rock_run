@@ -12,11 +12,12 @@ bevy_asset_loader = { version = "0.23.0" }
 bevy_ecs_tilemap = { version = "0.16.0" }
 bevy_fluent = { git = "https://github.com/kgv/bevy_fluent", rev = "8ddc058a5fa8f20c6da9dc26b920cf9a2255150b" }
 bevy_pkv = "0.13.0"
-bevy_rapier2d = "0.30.0"
+bevy_rapier2d = "0.31.0"
 enum-iterator = "2.1.0"
-# Fluent cannot be upgraded yet because bevy_fluent is using fluent 0.16.1
+# Fluent cannot be upgraded yet because bevy_fluent is using fluent 0.16.1.
 fluent = "0.16.1"
 iyes_perf_ui = { version = "0.5.0" }
+# leafwing-input-manager cannot be upgraded 0.18.0 version requires bevy 0.17.0.
 leafwing-input-manager = "0.17.1"
 rand = "0.9.1"
 raqote = { version = "0.8.5", default-features = false, features = [
@@ -25,7 +26,7 @@ raqote = { version = "0.8.5", default-features = false, features = [
 serde = "1.0.219"
 serde_json = "1.0.140"
 thiserror = "2.0.12"
-tiled = { version = "0.14.0", default-features = false }
+tiled = { version = "0.15.0", default-features = false }
 unic-langid = { version = "0.9.6", features = ["unic-langid-macros"] }
 getrandom = { version = "0.3", features = ["wasm_js"] }
 
