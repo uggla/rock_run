@@ -29,25 +29,6 @@ pub struct Rock;
 #[derive(Component)]
 struct SmallRock;
 
-#[derive(Debug, Eq, PartialEq, Clone, Copy, Hash, Reflect)]
-pub enum RockMovement {
-    Run(RockDirection),
-    Crunch,
-}
-
-impl Default for RockMovement {
-    fn default() -> Self {
-        Self::Run(RockDirection::default())
-    }
-}
-
-#[derive(Debug, Eq, PartialEq, Clone, Copy, Hash, Reflect, Default)]
-pub enum RockDirection {
-    Left,
-    #[default]
-    Right,
-}
-
 pub struct RockPlugin;
 
 impl Plugin for RockPlugin {

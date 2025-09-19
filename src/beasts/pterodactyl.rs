@@ -298,10 +298,10 @@ fn move_pterodactyl(
                             *pterodactyl_collider = Collider::compound(get_collider_shapes(false));
                         }
                     }
-                    if anim_timer.just_finished() {
-                        if let Some(texture) = &mut sprite.texture_atlas {
-                            cycle_texture(texture, 0..=4);
-                        }
+                    if anim_timer.just_finished()
+                        && let Some(texture) = &mut sprite.texture_atlas
+                    {
+                        cycle_texture(texture, 0..=4);
                     }
                 }
 

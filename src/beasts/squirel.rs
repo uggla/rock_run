@@ -63,9 +63,6 @@ struct Vine {
 #[derive(Component, Deref, DerefMut)]
 struct AnimationTimer(Timer);
 
-#[derive(Component, Deref, DerefMut)]
-pub struct ChaseTimer(Timer);
-
 #[derive(Debug, Eq, PartialEq, Clone, Copy, Hash, Reflect)]
 pub enum SquirelMovement {
     Run(SquirelDirection),
@@ -354,20 +351,20 @@ fn move_squirel(
                         *squirel_collider = Collider::compound(get_collider_shapes(false));
                     }
                 }
-                if anim_timer.just_finished() {
-                    if let Some(texture) = &mut sprite.texture_atlas {
-                        cycle_texture(texture, 8..=13);
-                    }
+                if anim_timer.just_finished()
+                    && let Some(texture) = &mut sprite.texture_atlas
+                {
+                    cycle_texture(texture, 8..=13);
                 }
             }
 
             SquirelMovement::Idle => {
                 let (mut anim_timer, mut sprite) = animation_query.get_mut(squirel_entity).unwrap();
                 anim_timer.tick(time.delta());
-                if anim_timer.just_finished() {
-                    if let Some(texture) = &mut sprite.texture_atlas {
-                        cycle_texture(texture, 0..=7);
-                    }
+                if anim_timer.just_finished()
+                    && let Some(texture) = &mut sprite.texture_atlas
+                {
+                    cycle_texture(texture, 0..=7);
                 }
             }
         };
@@ -379,10 +376,10 @@ fn move_squirel(
         }
 
         for ev in enigna_result.read() {
-            if let EnigmaResult::Correct(enigma) = ev {
-                if enigma == "story05-04" || enigma == "story100-03" {
-                    squirel.current_movement = SquirelMovement::Run(SquirelDirection::Right);
-                }
+            if let EnigmaResult::Correct(enigma) = ev
+                && (enigma == "story05-04" || enigma == "story100-03")
+            {
+                squirel.current_movement = SquirelMovement::Run(SquirelDirection::Right);
             }
         }
 

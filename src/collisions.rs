@@ -835,17 +835,17 @@ fn position_sensor_collisions(
                         collision_event, collider_name
                     );
 
-                    if let Some(collider) = level_sensor_pos.get(&current_level.id) {
-                        if let Some(sensor_values) = collider.get(&collider_name.0) {
-                            if sensor_values.disable_next_collision {
-                                *active_collision_type = ActiveCollisionTypes::STATIC_STATIC;
-                            }
-                            event_start.write(PositionSensorCollisionStart {
-                                sensor_name: collider_name.0.clone(),
-                                spawn_pos: sensor_values.start_pos,
-                                exit_pos: sensor_values.end_pos,
-                            });
+                    if let Some(collider) = level_sensor_pos.get(&current_level.id)
+                        && let Some(sensor_values) = collider.get(&collider_name.0)
+                    {
+                        if sensor_values.disable_next_collision {
+                            *active_collision_type = ActiveCollisionTypes::STATIC_STATIC;
                         }
+                        event_start.write(PositionSensorCollisionStart {
+                            sensor_name: collider_name.0.clone(),
+                            spawn_pos: sensor_values.start_pos,
+                            exit_pos: sensor_values.end_pos,
+                        });
                     }
                 };
             }

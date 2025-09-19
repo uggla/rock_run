@@ -259,18 +259,18 @@ fn move_trex(
                             }
                         }
                     }
-                    if anim_timer.just_finished() {
-                        if let Some(texture) = &mut sprite.texture_atlas {
-                            cycle_texture(texture, 6..=18);
-                            if texture.index == 16 {
-                                commands.spawn((
-                                    AudioPlayer::new(rock_run_assets.trex_bite_sound.clone()),
-                                    PlaybackSettings {
-                                        mode: PlaybackMode::Despawn,
-                                        ..default()
-                                    },
-                                ));
-                            }
+                    if anim_timer.just_finished()
+                        && let Some(texture) = &mut sprite.texture_atlas
+                    {
+                        cycle_texture(texture, 6..=18);
+                        if texture.index == 16 {
+                            commands.spawn((
+                                AudioPlayer::new(rock_run_assets.trex_bite_sound.clone()),
+                                PlaybackSettings {
+                                    mode: PlaybackMode::Despawn,
+                                    ..default()
+                                },
+                            ));
                         }
                     }
                 }
@@ -278,10 +278,10 @@ fn move_trex(
                     let (mut anim_timer, mut _sprite) =
                         animation_query.get_mut(trex_entity).unwrap();
                     anim_timer.tick(time.delta());
-                    if anim_timer.just_finished() {
-                        if let Some(texture) = &mut _sprite.texture_atlas {
-                            cycle_texture(texture, 0..=5);
-                        }
+                    if anim_timer.just_finished()
+                        && let Some(texture) = &mut _sprite.texture_atlas
+                    {
+                        cycle_texture(texture, 0..=5);
                     }
                 }
             };

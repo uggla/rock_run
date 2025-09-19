@@ -177,18 +177,18 @@ fn move_monkey(
                             sprite.flip_x = true;
                         }
                     }
-                    if anim_timer.just_finished() {
-                        if let Some(texture) = &mut sprite.texture_atlas {
-                            texture.index = 9;
-                        }
+                    if anim_timer.just_finished()
+                        && let Some(texture) = &mut sprite.texture_atlas
+                    {
+                        texture.index = 9;
                     }
                 }
                 MonkeyMovement::Throw => {
                     anim_timer.tick(time.delta());
-                    if anim_timer.just_finished() {
-                        if let Some(texture) = &mut sprite.texture_atlas {
-                            texture.index += 1;
-                        }
+                    if anim_timer.just_finished()
+                        && let Some(texture) = &mut sprite.texture_atlas
+                    {
+                        texture.index += 1;
                     }
                 }
             };
@@ -202,10 +202,10 @@ fn move_monkey(
             }
         }
 
-        if let Some(texture) = &mut sprite.texture_atlas {
-            if texture.index == 9 {
-                monkey.current_movement = monkey.initial_movement;
-            }
+        if let Some(texture) = &mut sprite.texture_atlas
+            && texture.index == 9
+        {
+            monkey.current_movement = monkey.initial_movement;
         }
     }
 }

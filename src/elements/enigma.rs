@@ -781,10 +781,10 @@ fn move_warrior(
         let mut anim = || {
             let (mut anim_timer, mut sprite) = animation_query.get_mut(warrior_entity).unwrap();
             anim_timer.tick(time.delta());
-            if anim_timer.just_finished() {
-                if let Some(texture) = &mut sprite.texture_atlas {
-                    cycle_texture(texture, 0..=5);
-                }
+            if anim_timer.just_finished()
+                && let Some(texture) = &mut sprite.texture_atlas
+            {
+                cycle_texture(texture, 0..=5);
             }
         };
         anim();
@@ -886,14 +886,14 @@ fn move_platform(
     mut enigna_result: EventReader<EnigmaResult>,
 ) {
     for ev in enigna_result.read() {
-        if let EnigmaResult::Correct(enigma) = ev {
-            if enigma == "story05-04" {
-                for mut mvp in moving_platform_query.iter_mut() {
-                    if let MovingPlatformMovement::UpDown(ref mut data) = mvp.movement {
-                        if data.speed == 0.0 {
-                            data.speed = 2.0;
-                        }
-                    }
+        if let EnigmaResult::Correct(enigma) = ev
+            && enigma == "story05-04"
+        {
+            for mut mvp in moving_platform_query.iter_mut() {
+                if let MovingPlatformMovement::UpDown(ref mut data) = mvp.movement
+                    && data.speed == 0.0
+                {
+                    data.speed = 2.0;
                 }
             }
         }

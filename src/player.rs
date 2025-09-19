@@ -322,19 +322,19 @@ fn move_player(
             PlayerMovement::Climb => {
                 let (mut anim_timer, mut sprite) = animation_query.single_mut()?;
                 anim_timer.tick(time.delta());
-                if anim_timer.just_finished() {
-                    if let Some(texture) = &mut sprite.texture_atlas {
-                        cycle_texture(texture, 33..=36);
-                    }
+                if anim_timer.just_finished()
+                    && let Some(texture) = &mut sprite.texture_atlas
+                {
+                    cycle_texture(texture, 33..=36);
                 }
             }
             PlayerMovement::Crouch => {
                 let (mut anim_timer, mut sprite) = animation_query.single_mut()?;
                 anim_timer.tick(time.delta());
-                if anim_timer.just_finished() {
-                    if let Some(texture) = &mut sprite.texture_atlas {
-                        cycle_texture(texture, 33..=36);
-                    }
+                if anim_timer.just_finished()
+                    && let Some(texture) = &mut sprite.texture_atlas
+                {
+                    cycle_texture(texture, 33..=36);
                 }
             }
 
