@@ -534,7 +534,7 @@ fn manage_mcq(
 
     // Pick 3 random wrong answers and 1 random good answer.
     let wrong_answers = wrong_answers
-        .choose_multiple(&mut rng(), 3)
+        .sample(&mut rng(), 3)
         .map(|s| s.to_string())
         .collect::<Vec<String>>();
     let correct_answers = correct_answers.choose(&mut rng()).unwrap().to_string();

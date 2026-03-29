@@ -6,7 +6,7 @@ use bevy_rapier2d::{
     geometry::{ActiveCollisionTypes, Collider},
     prelude::Damping,
 };
-use rand::{Rng, rng};
+use rand::{RngExt, rng};
 
 use crate::{
     assets::RockRunAssets,

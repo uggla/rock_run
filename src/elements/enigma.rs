@@ -29,7 +29,7 @@ use bevy_rapier2d::{
     dynamics::{Ccd, ExternalImpulse, GravityScale, RigidBody, Velocity},
     prelude::{ActiveCollisionTypes, ActiveEvents, Collider, CollisionGroups, Group, Sensor},
 };
-use rand::{Rng, seq::SliceRandom};
+use rand::{RngExt, seq::SliceRandom};
 
 use super::moving_platform::MovingPlatform;
 

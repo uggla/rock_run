@@ -14,10 +14,10 @@ bevy_fluent = "0.14.0"
 bevy_pkv = "0.15.0"
 bevy_rapier2d = "0.33.0"
 enum-iterator = "2.3.0"
+# Kept on 0.16.x because bevy_fluent 0.14.0 still depends on fluent 0.16.x.
 fluent = "0.16.1"
 bevy_perf_ui = { version = "0.6.0" }
 leafwing-input-manager = "0.20.0"
-rand = "0.9.2"
 raqote = { version = "0.8.5", default-features = false, features = [
   "pathfinder_geometry",
 ] }
@@ -26,7 +26,8 @@ serde_json = "1.0.145"
 thiserror = "2.0.16"
 tiled = { version = "0.15.0", default-features = false }
 unic-langid = { version = "0.9.6", features = ["unic-langid-macros"] }
-getrandom = { version = "0.3.3", features = ["wasm_js"] }
+rand = "0.10.0"
+getrandom = { version = "0.4.2", features = ["wasm_js"] }
 
 [target.x86_64-unknown-linux-gnu.dependencies.bevy]
 version = "0.18.1"

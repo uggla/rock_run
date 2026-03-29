@@ -23,7 +23,7 @@ use bevy_rapier2d::prelude::{
     ActiveCollisionTypes, ActiveEvents, Collider, ExternalImpulse, RigidBody, Sensor,
 };
 
-use rand::{Rng, rng};
+use rand::{RngExt, rng};
 
 const FIREBALL_SCALE_FACTOR: f32 = 1.0;
 

@@ -13,7 +13,9 @@ mod player;
 mod screen_map;
 
 use bevy::{asset::AssetMetaCheck, ecs::message::MessageWriter, prelude::*, window::WindowResolution};
-use bevy_perf_ui::{PerfUiSet, entries::PerfUiAllEntries, ui::root::PerfUiRoot};
+use bevy_perf_ui::{entries::PerfUiAllEntries, ui::root::PerfUiRoot};
+#[cfg(all(debug_assertions, not(target_arch = "wasm32")))]
+use bevy_perf_ui::PerfUiSet;
 use key::KeyPlugin;
 
 use crate::{
