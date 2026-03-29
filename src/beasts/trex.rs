@@ -31,16 +31,11 @@ pub struct Trex {
 #[derive(Component, Deref, DerefMut)]
 struct AnimationTimer(Timer);
 
-#[derive(Debug, Eq, PartialEq, Clone, Copy, Hash, Reflect)]
+#[derive(Debug, Eq, PartialEq, Clone, Copy, Hash, Reflect, Default)]
 pub enum TrexMovement {
     Run(TrexDirection),
+    #[default]
     Idle,
-}
-
-impl Default for TrexMovement {
-    fn default() -> Self {
-        Self::Idle
-    }
 }
 
 #[derive(Debug, Eq, PartialEq, Clone, Copy, Hash, Reflect, Default)]

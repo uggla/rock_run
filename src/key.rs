@@ -1,5 +1,6 @@
 use bevy::{
     audio::{PlaybackMode, Volume},
+    ecs::message::MessageReader,
     prelude::*,
 };
 
@@ -40,7 +41,7 @@ impl Plugin for KeyPlugin {
 fn check_get_key(
     mut commands: Commands,
     rock_run_assets: Res<RockRunAssets>,
-    mut key_collision: EventReader<KeyCollision>,
+    mut key_collision: MessageReader<KeyCollision>,
     mut keys: ResMut<Keys>,
 ) {
     for ev in key_collision.read() {
@@ -61,7 +62,7 @@ fn check_get_key(
 fn despawn_key_on_restart(
     mut commands: Commands,
     keys: Query<Entity, With<Key>>,
-    restart_event: EventReader<Restart>,
+    restart_event: MessageReader<Restart>,
 ) {
     if restart_event.is_empty() {
         return;

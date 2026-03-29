@@ -1,5 +1,6 @@
 use bevy::{
     audio::{PlaybackMode, Volume},
+    ecs::message::MessageReader,
     platform::collections::HashMap,
     prelude::*,
 };
@@ -290,7 +291,7 @@ fn setup_nuts(
 fn check_get_nut(
     mut commands: Commands,
     rock_run_assets: Res<RockRunAssets>,
-    mut extralive_collision: EventReader<NutCollision>,
+    mut extralive_collision: MessageReader<NutCollision>,
     mut collected_nuts: ResMut<Nuts>,
 ) {
     for ev in extralive_collision.read() {
@@ -323,7 +324,7 @@ fn move_squirel(
     time: Res<Time>,
     mut squirel_query: Query<SquirelData, With<Squirel>>,
     mut animation_query: Query<(&mut AnimationTimer, &mut Sprite)>,
-    mut enigna_result: EventReader<EnigmaResult>,
+    mut enigna_result: MessageReader<EnigmaResult>,
     spikes: Query<&Transform, (With<Spike>, Without<Squirel>)>,
 ) {
     let nb_squirels = squirel_query.iter().count();
@@ -416,10 +417,10 @@ fn unroll_vine(
     time: Res<Time>,
     mut animation_timer: Local<Timer>,
     mut vines: Local<Vec<VineData>>,
-    mut enigna_result: EventReader<EnigmaResult>,
+    mut enigna_result: MessageReader<EnigmaResult>,
     mut vine_query: Query<(Entity, &mut Vine)>,
-    mut game_event_start: EventReader<StartGame>,
-    mut game_event_level: EventReader<NextLevel>,
+    mut game_event_start: MessageReader<StartGame>,
+    mut game_event_level: MessageReader<NextLevel>,
     state: Res<State<AppState>>,
 ) {
     if !game_event_start.is_empty() || !game_event_level.is_empty() {

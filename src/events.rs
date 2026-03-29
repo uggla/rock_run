@@ -5,98 +5,98 @@ use crate::elements::story::SelectionDirection;
 pub type MessageArgs = Option<HashMap<String, String>>;
 pub type Message = String;
 
-#[derive(Event)]
+#[derive(Message)]
 pub enum StoryMessages {
     Display(Vec<(Message, MessageArgs)>),
     Hide,
     Next,
 }
 
-#[derive(Event)]
+#[derive(Message)]
 pub struct NoMoreStoryMessages {
     pub latest: Message,
 }
 
-#[derive(Event)]
+#[derive(Message)]
 pub struct Hit;
 
-#[derive(Event)]
+#[derive(Message)]
 pub struct StartGame;
 
-#[derive(Event)]
+#[derive(Message)]
 pub struct Restart;
 
-#[derive(Event)]
+#[derive(Message)]
 pub struct NextLevel;
 
-#[derive(Event)]
+#[derive(Message)]
 pub struct ShakeCamera;
 
-#[derive(Event)]
+#[derive(Message)]
 pub enum LifeEvent {
     Win,
     Lost,
 }
 
-#[derive(Event)]
+#[derive(Message)]
 pub struct TriceratopsCollision {
     pub id: Entity,
 }
 
-#[derive(Event, Debug)]
+#[derive(Message, Debug)]
 pub struct PositionSensorCollisionStart {
     pub sensor_name: String,
     pub spawn_pos: Vec2,
     pub exit_pos: Vec2,
 }
 
-#[derive(Event, Debug)]
+#[derive(Message, Debug)]
 pub struct PositionSensorCollisionStop {
     pub sensor_name: String,
 }
 
-#[derive(Event)]
+#[derive(Message)]
 pub struct LadderCollisionStart;
 
-#[derive(Event)]
+#[derive(Message)]
 pub struct LadderCollisionStop;
 
-#[derive(Event)]
+#[derive(Message)]
 pub struct MovingPlatformCollision {
     pub entity: Entity,
 }
 
-#[derive(Event)]
+#[derive(Message)]
 pub struct MovingPlatformDescending {
     pub movement: Vec2,
 }
 
-#[derive(Event)]
+#[derive(Message)]
 pub struct SelectionChanged {
     pub movement: SelectionDirection,
 }
 
 #[allow(dead_code)]
-#[derive(Event, Debug)]
+#[derive(Message, Debug)]
 pub enum EnigmaResult {
     Correct(String),
     Incorrect(String),
 }
 
-#[derive(Event)]
+#[derive(Message)]
 pub struct ExtraLifeCollision {
     pub entity: Entity,
 }
 
-#[derive(Event)]
+#[derive(Message)]
 pub struct NutCollision {
     pub entity: Entity,
 }
 
-#[derive(Event)]
+#[derive(Message)]
 pub struct KeyCollision {
     pub entity: Entity,
 }
 
-#[derive(Event)]
+#[derive(Message)]
 pub struct SmallRockAboutToRelease;

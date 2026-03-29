@@ -1,4 +1,8 @@
-use bevy::{platform::collections::HashMap, prelude::*};
+use bevy::{
+    ecs::message::{MessageReader, MessageWriter},
+    platform::collections::HashMap,
+    prelude::*,
+};
 use bevy_rapier2d::{
     control::KinematicCharacterControllerOutput, dynamics::Velocity,
     geometry::ActiveCollisionTypes, pipeline::CollisionEvent,
@@ -70,16 +74,16 @@ impl Plugin for CollisionsPlugin {
                 .run_if(in_state(AppState::GameRunning)),
         )
         .add_systems(OnEnter(AppState::StartMenu), despawn_qm)
-        .add_event::<Hit>()
-        .add_event::<TriceratopsCollision>()
-        .add_event::<PositionSensorCollisionStart>()
-        .add_event::<PositionSensorCollisionStop>()
-        .add_event::<LadderCollisionStart>()
-        .add_event::<LadderCollisionStop>()
-        .add_event::<MovingPlatformCollision>()
-        .add_event::<ExtraLifeCollision>()
-        .add_event::<NutCollision>()
-        .add_event::<KeyCollision>();
+        .add_message::<Hit>()
+        .add_message::<TriceratopsCollision>()
+        .add_message::<PositionSensorCollisionStart>()
+        .add_message::<PositionSensorCollisionStop>()
+        .add_message::<LadderCollisionStart>()
+        .add_message::<LadderCollisionStop>()
+        .add_message::<MovingPlatformCollision>()
+        .add_message::<ExtraLifeCollision>()
+        .add_message::<NutCollision>()
+        .add_message::<KeyCollision>();
     }
 }
 
@@ -94,9 +98,9 @@ fn player_collisions_with_elements(
     moving_platforms: Query<Entity, With<MovingPlatform>>,
     rocks: Query<(Entity, &Velocity), With<Rock>>,
     rockgates: Query<(Entity, &Velocity), With<RockGate>>,
-    mut hit: EventWriter<Hit>,
-    mut moving_platform_collision: EventWriter<MovingPlatformCollision>,
-    mut life_event: EventReader<LifeEvent>,
+    mut hit: MessageWriter<Hit>,
+    mut moving_platform_collision: MessageWriter<MovingPlatformCollision>,
+    mut life_event: MessageReader<LifeEvent>,
     god_mode: Res<Godmode>,
 ) {
     if state.get() == &PlayerState::Hit {
@@ -193,8 +197,8 @@ fn player_collisions_with_beasts(
     triceratops: Query<Entity, With<Triceratops>>,
     trexes: Query<Entity, With<Trex>>,
     monkeys: Query<Entity, With<Monkey>>,
-    mut hit: EventWriter<Hit>,
-    mut life_event: EventReader<LifeEvent>,
+    mut hit: MessageWriter<Hit>,
+    mut life_event: MessageReader<LifeEvent>,
     god_mode: Res<Godmode>,
 ) {
     if god_mode.0 {
@@ -267,7 +271,7 @@ fn triceratops_collisions(
         With<Triceratops>,
     >,
     ground: Query<Entity, With<Ground>>,
-    mut collision_event: EventWriter<TriceratopsCollision>,
+    mut collision_event: MessageWriter<TriceratopsCollision>,
 ) {
     let ground_entity = match ground.single() {
         Ok(entity) => entity,
@@ -293,7 +297,7 @@ fn story_collisions(
     mut commands: Commands,
     rock_run_assets: Res<RockRunAssets>,
     stories: Query<(Entity, &ColliderName), With<Story>>,
-    mut collision_events: EventReader<CollisionEvent>,
+    mut collision_events: MessageReader<CollisionEvent>,
     entity_pos: Query<&Transform>,
     qm_entity: Query<(Entity, &StoryQM)>,
     player: Query<Entity, With<Player>>,
@@ -361,7 +365,7 @@ fn story_collisions(
 fn display_story(
     mut commands: Commands,
     qm_entity: Query<(Entity, &StoryQM)>,
-    mut msg_event: EventWriter<StoryMessages>,
+    mut msg_event: MessageWriter<StoryMessages>,
     enigmas: ResMut<Enigmas>,
     input: Query<
         &leafwing_input_manager::action_state::ActionState<player::PlayerMovement>,
@@ -556,9 +560,9 @@ fn manage_mcq(
 
 fn ladder_collisions(
     ladders: Query<(Entity, &ColliderName), With<Ladder>>,
-    mut collision_events: EventReader<CollisionEvent>,
-    mut ladder_collision_start: EventWriter<LadderCollisionStart>,
-    mut ladder_collision_stop: EventWriter<LadderCollisionStop>,
+    mut collision_events: MessageReader<CollisionEvent>,
+    mut ladder_collision_start: MessageWriter<LadderCollisionStart>,
+    mut ladder_collision_stop: MessageWriter<LadderCollisionStop>,
     player: Query<Entity, With<Player>>,
 ) {
     let player_entity = match player.single() {
@@ -605,9 +609,9 @@ fn ladder_collisions(
 
 fn fireball_collisions(
     fireballs: Query<(Entity, &ColliderName), With<Fireball>>,
-    mut collision_events: EventReader<CollisionEvent>,
+    mut collision_events: MessageReader<CollisionEvent>,
     player: Query<Entity, With<Player>>,
-    mut hit: EventWriter<Hit>,
+    mut hit: MessageWriter<Hit>,
     god_mode: Res<Godmode>,
 ) {
     if god_mode.0 {
@@ -661,12 +665,12 @@ fn position_sensor_collisions(
         (Entity, &ColliderName, &mut ActiveCollisionTypes),
         With<PositionSensor>,
     >,
-    mut collision_events: EventReader<CollisionEvent>,
-    mut event_start: EventWriter<PositionSensorCollisionStart>,
-    mut event_stop: EventWriter<PositionSensorCollisionStop>,
+    mut collision_events: MessageReader<CollisionEvent>,
+    mut event_start: MessageWriter<PositionSensorCollisionStart>,
+    mut event_stop: MessageWriter<PositionSensorCollisionStop>,
     levels: Query<&Level, With<Level>>,
     current_level: Res<CurrentLevel>,
-    mut restart_event: EventReader<Restart>,
+    mut restart_event: MessageReader<Restart>,
     player: Query<Entity, With<Player>>,
 ) {
     if !restart_event.is_empty() {
@@ -874,8 +878,8 @@ fn position_sensor_collisions(
 
 fn extra_life_collisions(
     extralifes: Query<(Entity, &ColliderName), With<ExtraLife>>,
-    mut collision_events: EventReader<CollisionEvent>,
-    mut extralife_collision: EventWriter<ExtraLifeCollision>,
+    mut collision_events: MessageReader<CollisionEvent>,
+    mut extralife_collision: MessageWriter<ExtraLifeCollision>,
     player: Query<Entity, With<Player>>,
 ) {
     let player_entity = match player.single() {
@@ -920,8 +924,8 @@ fn extra_life_collisions(
 
 fn nut_collisions(
     nuts: Query<(Entity, &ColliderName), With<Nut>>,
-    mut collision_events: EventReader<CollisionEvent>,
-    mut extralife_collision: EventWriter<NutCollision>,
+    mut collision_events: MessageReader<CollisionEvent>,
+    mut extralife_collision: MessageWriter<NutCollision>,
     player: Query<Entity, With<Player>>,
 ) {
     let player_entity = match player.single() {
@@ -966,8 +970,8 @@ fn nut_collisions(
 
 fn key_collisions(
     keys: Query<(Entity, &ColliderName), With<Key>>,
-    mut collision_events: EventReader<CollisionEvent>,
-    mut key_collision: EventWriter<KeyCollision>,
+    mut collision_events: MessageReader<CollisionEvent>,
+    mut key_collision: MessageWriter<KeyCollision>,
     player: Query<Entity, With<Player>>,
 ) {
     let player_entity = match player.single() {

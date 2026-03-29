@@ -1,6 +1,7 @@
 use std::env;
 
 use bevy::audio::Volume;
+use bevy::ecs::message::{MessageReader, MessageWriter};
 use bevy::ecs::system::SystemParam;
 use bevy::window::PrimaryWindow;
 use bevy::{app::AppExit, audio::PlaybackMode};
@@ -87,7 +88,7 @@ impl Plugin for MenuPlugin {
             )
             .add_systems(Update, update_menu.run_if(in_state(AppState::StartMenu)))
             .add_systems(OnEnter(AppState::Loading), setup)
-            .add_event::<StartGame>()
+            .add_message::<StartGame>()
             .insert_resource(Godmode(false))
             .insert_resource(StartLevel(1))
             .insert_resource(StartPos(None))
@@ -698,7 +699,7 @@ fn menu_blink_system(
 ) {
     for (entity, mut timer, visibility) in query.iter_mut() {
         timer.0.tick(time.delta());
-        if timer.0.finished() {
+        if timer.0.is_finished() {
             let new_visibility = if visibility.get() {
                 Visibility::Hidden
             } else {
@@ -714,14 +715,14 @@ fn menu_input_system(
     state: ResMut<State<AppState>>,
     mut next_state: ResMut<NextState<AppState>>,
     menu_action_state: Res<ActionState<MenuAction>>,
-    mut app_exit_events: EventWriter<AppExit>,
+    mut app_exit_events: MessageWriter<AppExit>,
     mut rapier_config: Query<&mut RapierConfiguration>,
-    mut msg_event: EventWriter<StoryMessages>,
-    mut selection_event: EventWriter<SelectionChanged>,
-    mut no_more_msg_event: EventReader<NoMoreStoryMessages>,
-    mut ladder_collision_stop: EventWriter<LadderCollisionStop>,
-    mut game_event_start: EventWriter<StartGame>,
-    mut game_event_level: EventWriter<NextLevel>,
+    mut msg_event: MessageWriter<StoryMessages>,
+    mut selection_event: MessageWriter<SelectionChanged>,
+    mut no_more_msg_event: MessageReader<NoMoreStoryMessages>,
+    mut ladder_collision_stop: MessageWriter<LadderCollisionStop>,
+    mut game_event_start: MessageWriter<StartGame>,
+    mut game_event_level: MessageWriter<NextLevel>,
     mut current_level: ResMut<CurrentLevel>,
     start_level: Res<StartLevel>,
 ) {
@@ -841,7 +842,7 @@ fn menu_input_system(
 
 fn game_messages(
     mut next_state: ResMut<NextState<AppState>>,
-    mut msg_event: EventReader<StoryMessages>,
+    mut msg_event: MessageReader<StoryMessages>,
 ) {
     for ev in msg_event.read() {
         match ev {

@@ -17,7 +17,8 @@ use std::path::Path;
 use std::sync::Arc;
 
 use bevy::asset::io::Reader;
-use bevy::asset::{AssetLoader, AssetPath};
+use bevy::asset::AssetLoader;
+use bevy::ecs::message::MessageReader;
 use bevy::platform::collections::HashMap;
 use bevy::{log, prelude::*};
 use bevy_ecs_tilemap::prelude::*;
@@ -95,6 +96,7 @@ impl tiled::ResourceReader for BytesResourceReader {
     }
 }
 
+#[derive(TypePath)]
 pub struct TiledLoader;
 
 #[derive(Debug, Error)]
@@ -123,7 +125,7 @@ impl AssetLoader for TiledLoader {
             BytesResourceReader::new(&bytes),
         );
         let map = loader
-            .load_tmx_map(load_context.path())
+            .load_tmx_map(load_context.path().path())
             .map_err(|e| std::io::Error::other(format!("Could not load TMX map: {e}")))?;
 
         let mut tilemap_textures = HashMap::default();
@@ -147,14 +149,18 @@ impl AssetLoader for TiledLoader {
                         let mut tile_images: Vec<Handle<Image>> = Vec::new();
                         for (tile_id, tile) in tileset.tiles() {
                             if let Some(img) = &tile.image {
+                                let img_source = img.source.to_string_lossy();
                                 // The load context path is the TMX file itself. If the file is at the root of the
                                 // assets/ directory structure then the tmx_dir will be empty, which is fine.
-                                let tmx_dir = load_context
+                                let asset_path = load_context
                                     .path()
-                                    .parent()
-                                    .expect("The asset load context was empty.");
-                                let tile_path = tmx_dir.join(&img.source);
-                                let asset_path = AssetPath::from(tile_path);
+                                    .resolve(&img_source)
+                                    .map_err(|e| {
+                                        std::io::Error::other(format!(
+                                            "Could not resolve tile asset path '{}': {e}",
+                                            img.source.display()
+                                        ))
+                                    })?;
                                 log::info!(
                                     "Loading tile image from {asset_path:?} as image ({tileset_index}, {tile_id})"
                                 );
@@ -169,14 +175,15 @@ impl AssetLoader for TiledLoader {
                     }
                 }
                 Some(img) => {
+                    let img_source = img.source.to_string_lossy();
                     // The load context path is the TMX file itself. If the file is at the root of the
                     // assets/ directory structure then the tmx_dir will be empty, which is fine.
-                    let tmx_dir = load_context
-                        .path()
-                        .parent()
-                        .expect("The asset load context was empty.");
-                    let tile_path = tmx_dir.join(&img.source);
-                    let asset_path = AssetPath::from(tile_path);
+                    let asset_path = load_context.path().resolve(&img_source).map_err(|e| {
+                        std::io::Error::other(format!(
+                            "Could not resolve tile asset path '{}': {e}",
+                            img.source.display()
+                        ))
+                    })?;
                     let texture: Handle<Image> = load_context.load(asset_path.clone());
 
                     TilemapTexture::Single(texture.clone())
@@ -193,7 +200,7 @@ impl AssetLoader for TiledLoader {
             tile_image_offsets,
         };
 
-        log::info!("Loaded map: {}", load_context.path().display());
+        log::info!("Loaded map: {}", load_context.path());
         Ok(asset_map)
     }
 
@@ -205,7 +212,7 @@ impl AssetLoader for TiledLoader {
 
 pub fn process_loaded_maps(
     mut commands: Commands,
-    mut map_events: EventReader<AssetEvent<TiledMap>>,
+    mut map_events: MessageReader<AssetEvent<TiledMap>>,
     maps: Res<Assets<TiledMap>>,
     tile_storage_query: Query<(Entity, &TileStorage)>,
     mut map_query: Query<(

@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use bevy::prelude::*;
+use bevy::{ecs::message::{MessageReader, MessageWriter}, prelude::*};
 use bevy_rapier2d::{
     dynamics::{Ccd, ExternalImpulse, GravityScale, RigidBody, Velocity},
     geometry::{ActiveCollisionTypes, Collider},
@@ -46,7 +46,7 @@ impl Plugin for RockPlugin {
                     .after(CollisionSet)
                     .run_if(in_state(AppState::GameRunning)),
             )
-            .add_event::<SmallRockAboutToRelease>();
+            .add_message::<SmallRockAboutToRelease>();
     }
 }
 
@@ -71,7 +71,7 @@ fn get_collider_shapes(y_mirror: bool) -> Vec<(Vec2, f32, Collider)> {
 fn spawn_rock(
     mut commands: Commands,
     rock_run_assets: Res<RockRunAssets>,
-    mut rock_sensor_collision: EventReader<PositionSensorCollisionStart>,
+    mut rock_sensor_collision: MessageReader<PositionSensorCollisionStart>,
 ) {
     for collision_event in rock_sensor_collision.read() {
         if !collision_event.sensor_name.contains("rock") {
@@ -114,7 +114,7 @@ fn spawn_small_rocks(
     mut spawn_timer: Local<Timer>,
     levels: Query<&Level, With<Level>>,
     current_level: Res<CurrentLevel>,
-    mut small_rock_event: EventWriter<SmallRockAboutToRelease>,
+    mut small_rock_event: MessageWriter<SmallRockAboutToRelease>,
     mut event_send: Local<bool>,
 ) {
     if current_level.id != 2 {
@@ -132,7 +132,7 @@ fn spawn_small_rocks(
         *event_send = true;
     }
 
-    if spawn_timer.finished() {
+    if spawn_timer.is_finished() {
         *event_send = false;
         let mut rng = rng();
         let spawn_time: f32 = rng.random_range(1.0..=3.5);
@@ -217,7 +217,7 @@ fn despawn_rock(mut commands: Commands, rocks: Query<Entity, With<Rock>>) {
 fn despawn_rock_on_restart(
     mut commands: Commands,
     rocks: Query<Entity, With<Rock>>,
-    restart_event: EventReader<Restart>,
+    restart_event: MessageReader<Restart>,
 ) {
     if restart_event.is_empty() {
         return;

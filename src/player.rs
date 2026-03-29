@@ -1,4 +1,8 @@
-use bevy::{audio::PlaybackMode, prelude::*};
+use bevy::{
+    audio::PlaybackMode,
+    ecs::message::{MessageReader, MessageWriter},
+    prelude::*,
+};
 use bevy_rapier2d::{
     control::KinematicCharacterController, dynamics::RigidBody, geometry::Collider, prelude::Ccd,
 };
@@ -235,10 +239,10 @@ fn move_player(
     mut next_state: ResMut<NextState<PlayerState>>,
     mut jump_timer: Query<&mut JumpTimer>,
     mut index_direction: Local<IndexDirection>,
-    mut ladder_collision_start: EventReader<LadderCollisionStart>,
-    mut ladder_collision_stop: EventReader<LadderCollisionStop>,
-    mut moving_platform_descending: EventReader<MovingPlatformDescending>,
-    mut game_event: EventReader<StartGame>,
+    mut ladder_collision_start: MessageReader<LadderCollisionStart>,
+    mut ladder_collision_stop: MessageReader<LadderCollisionStop>,
+    mut moving_platform_descending: MessageReader<MovingPlatformDescending>,
+    mut game_event: MessageReader<StartGame>,
     mut ladder_collision: Local<bool>,
     mut toggle: Local<bool>,
 ) -> Result<()> {
@@ -474,7 +478,7 @@ fn check_out_of_screen(
     levels: Query<&Level, With<Level>>,
     current_level: Res<CurrentLevel>,
     mut player_query: Query<&mut Transform, With<Player>>,
-    mut restart: EventWriter<Restart>,
+    mut restart: MessageWriter<Restart>,
 ) -> Result<()> {
     let level = levels
         .iter()
@@ -500,12 +504,12 @@ fn check_out_of_screen(
 #[allow(clippy::too_many_arguments)]
 fn check_hit(
     mut commands: Commands,
-    mut hit_event: EventReader<Hit>,
+    mut hit_event: MessageReader<Hit>,
     state: Res<State<PlayerState>>,
     mut next_state: ResMut<NextState<PlayerState>>,
     mut jump_timer: Query<&mut JumpTimer>,
     mut just_hit: Local<bool>,
-    mut restart: EventWriter<Restart>,
+    mut restart: MessageWriter<Restart>,
     mut player_query: Query<&PlayerAudio, With<Player>>,
 ) -> Result<()> {
     let mut jump_timer = jump_timer.single_mut()?;
@@ -529,7 +533,7 @@ fn check_hit(
         }
     }
 
-    if state.get() == &PlayerState::Hit && jump_timer.finished() && *just_hit {
+    if state.get() == &PlayerState::Hit && jump_timer.is_finished() && *just_hit {
         debug!("timer finished");
         *just_hit = false;
         restart.write(Restart);
@@ -538,13 +542,13 @@ fn check_hit(
 }
 
 fn restart_level(
-    mut restart: EventReader<Restart>,
+    mut restart: MessageReader<Restart>,
     levels: Query<&Level, With<Level>>,
     current_level: Res<CurrentLevel>,
     mut player_query: Query<&mut Transform, With<Player>>,
-    mut life_event: EventWriter<LifeEvent>,
+    mut life_event: MessageWriter<LifeEvent>,
     mut next_state: ResMut<NextState<PlayerState>>,
-    mut ladder_collision_stop: EventWriter<LadderCollisionStop>,
+    mut ladder_collision_stop: MessageWriter<LadderCollisionStop>,
 ) -> Result<()> {
     if restart.is_empty() {
         return Ok(());

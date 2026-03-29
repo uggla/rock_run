@@ -1,4 +1,4 @@
-use bevy::{platform::collections::HashMap, prelude::*};
+use bevy::{ecs::message::MessageReader, platform::collections::HashMap, prelude::*};
 use bevy_rapier2d::{
     control::KinematicCharacterController, dynamics::RigidBody, geometry::Collider,
     pipeline::QueryFilterFlags,
@@ -153,7 +153,7 @@ fn move_monkey(
     time: Res<Time>,
     mut monkey_query: Query<(Entity, &mut Monkey), With<Monkey>>,
     mut animation_query: Query<(&mut AnimationTimer, &mut Sprite)>,
-    mut small_rock_event: EventReader<SmallRockAboutToRelease>,
+    mut small_rock_event: MessageReader<SmallRockAboutToRelease>,
 ) {
     let mut event_received = false;
 

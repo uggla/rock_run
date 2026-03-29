@@ -1,4 +1,4 @@
-use bevy::{audio::PlaybackMode, prelude::*};
+use bevy::{audio::PlaybackMode, ecs::message::MessageReader, prelude::*};
 use bevy_rapier2d::{
     control::KinematicCharacterController, dynamics::RigidBody, geometry::Collider,
     pipeline::QueryFilterFlags,
@@ -86,7 +86,7 @@ fn spawn_bat(
     mut commands: Commands,
     rock_run_assets: Res<RockRunAssets>,
     mut texture_atlases: ResMut<Assets<TextureAtlasLayout>>,
-    mut bat_sensor_collision: EventReader<PositionSensorCollisionStart>,
+    mut bat_sensor_collision: MessageReader<PositionSensorCollisionStart>,
 ) {
     for collision_event in bat_sensor_collision.read() {
         if !collision_event.sensor_name.contains("bat") {
@@ -156,7 +156,7 @@ fn move_bat(
     >,
     mut animation_query: Query<(&mut AnimationTimer, &mut Sprite)>,
     player_query: Query<&mut Transform, (With<Player>, Without<Bat>)>,
-    hit: EventReader<Hit>,
+    hit: MessageReader<Hit>,
     mut chase_timer: Query<&mut ChaseTimer>,
 ) -> Result<()> {
     for (bat_entity, mut bat_collider, mut bat_controller, bat_pos, mut bat) in bat_query.iter_mut()
@@ -203,7 +203,7 @@ fn move_bat(
 
         chase_timer.tick(time.delta());
 
-        let direction = if chase_timer.finished() {
+        let direction = if chase_timer.0.is_finished() {
             debug!("chase_timer finished");
             debug!("bat_pos: {:?}", bat_pos);
             bat_controller.filter_flags = QueryFilterFlags::ONLY_KINEMATIC;
@@ -238,7 +238,7 @@ fn despawn_bat(mut commands: Commands, bats: Query<Entity, With<Bat>>) {
 fn despawn_bat_on_restart(
     mut commands: Commands,
     bats: Query<Entity, With<Bat>>,
-    restart_event: EventReader<Restart>,
+    restart_event: MessageReader<Restart>,
 ) {
     if restart_event.is_empty() {
         return;

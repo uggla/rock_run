@@ -1,6 +1,10 @@
 use std::f32::consts::PI;
 
-use bevy::{platform::collections::HashMap, prelude::*};
+use bevy::{
+    ecs::message::{MessageReader, MessageWriter},
+    platform::collections::HashMap,
+    prelude::*,
+};
 use bevy_rapier2d::{
     control::KinematicCharacterController, dynamics::RigidBody, geometry::Collider,
     pipeline::QueryFilterFlags,
@@ -82,7 +86,7 @@ impl Plugin for MovingPlatformPlugin {
                     .before(PlayerSet)
                     .run_if(in_state(AppState::GameRunning)),
             )
-            .add_event::<MovingPlatformDescending>();
+            .add_message::<MovingPlatformDescending>();
     }
 }
 
@@ -219,8 +223,8 @@ fn move_moving_platform(
     time: Res<Time>,
     state: Res<State<PlayerState>>,
     mut moving_platform_query: Query<(Entity, &mut Transform, &mut MovingPlatform)>,
-    mut moving_platform_collision: EventReader<MovingPlatformCollision>,
-    mut moving_platform_descending: EventWriter<MovingPlatformDescending>,
+    mut moving_platform_collision: MessageReader<MovingPlatformCollision>,
+    mut moving_platform_descending: MessageWriter<MovingPlatformDescending>,
 ) {
     let player_on_platform_events = moving_platform_collision.read().collect::<Vec<_>>();
     for (moving_platform_entity, mut moving_platform_pos, mut moving_platform) in

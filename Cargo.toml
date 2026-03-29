@@ -7,18 +7,16 @@ edition = "2024"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bevy = { version = "0.16.1", features = ["jpeg"] }
-bevy_asset_loader = { version = "0.23.0" }
-bevy_ecs_tilemap = { version = "0.16.0" }
-bevy_fluent = { git = "https://github.com/kgv/bevy_fluent", rev = "8ddc058a5fa8f20c6da9dc26b920cf9a2255150b" }
-bevy_pkv = "0.13.0"
-bevy_rapier2d = "0.31.0"
+bevy = { version = "0.18.1", features = ["jpeg"] }
+bevy_asset_loader = { version = "0.25.0" }
+bevy_ecs_tilemap = { version = "0.18.1" }
+bevy_fluent = "0.14.0"
+bevy_pkv = "0.15.0"
+bevy_rapier2d = "0.33.0"
 enum-iterator = "2.3.0"
-# Fluent cannot be upgraded yet because bevy_fluent is using fluent 0.16.1.
 fluent = "0.16.1"
-iyes_perf_ui = { version = "0.5.0" }
-# leafwing-input-manager cannot be upgraded 0.18.0 version requires bevy 0.17.0.
-leafwing-input-manager = "0.17.1"
+bevy_perf_ui = { version = "0.6.0" }
+leafwing-input-manager = "0.20.0"
 rand = "0.9.2"
 raqote = { version = "0.8.5", default-features = false, features = [
   "pathfinder_geometry",
@@ -31,7 +29,7 @@ unic-langid = { version = "0.9.6", features = ["unic-langid-macros"] }
 getrandom = { version = "0.3.3", features = ["wasm_js"] }
 
 [target.x86_64-unknown-linux-gnu.dependencies.bevy]
-version = "0.16.1"
+version = "0.18.1"
 features = ["wayland"]
 # dynamic linking must be removed for release builds
 # this is handled by aliases in .cargo/config.toml

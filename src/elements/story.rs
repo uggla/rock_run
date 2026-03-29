@@ -1,13 +1,11 @@
 use std::f32::consts::PI;
 
 use bevy::{
-    asset::AssetPath,
+    asset::{AssetPath, RenderAssetUsages},
     audio::PlaybackMode,
+    ecs::message::MessageReader,
     prelude::*,
-    render::{
-        render_asset::RenderAssetUsages,
-        render_resource::{Extent3d, TextureDimension, TextureFormat},
-    },
+    render::render_resource::{Extent3d, TextureDimension, TextureFormat},
 };
 
 use raqote::{DrawOptions, DrawTarget, Gradient, GradientStop, PathBuilder, Point, Source, Spread};
@@ -185,7 +183,7 @@ impl Plugin for StoryPlugin {
                 Update,
                 manage_selection.run_if(in_state(AppState::GameMessage)),
             )
-            .add_event::<SelectionChanged>();
+            .add_message::<SelectionChanged>();
     }
 }
 
@@ -279,7 +277,7 @@ fn setup(
         .spawn((
             Text::new(""),
             TextLayout {
-                justify: JustifyText::Left,
+                justify: Justify::Left,
                 ..default()
             },
             RootText,
@@ -500,7 +498,7 @@ fn toggle_visibility(
 }
 
 fn display_or_hide_messages(
-    mut msg_event: EventReader<StoryMessages>,
+    mut msg_event: MessageReader<StoryMessages>,
     mut next_state: ResMut<NextState<TextSyllableState>>,
 ) {
     for ev in msg_event.read() {
@@ -519,7 +517,7 @@ fn display_or_hide_messages(
 fn manage_selection(
     mut commands: Commands,
     mut params: ResMut<TextSyllableValues>,
-    mut selection_event: EventReader<SelectionChanged>,
+    mut selection_event: MessageReader<SelectionChanged>,
     rock_run_assets: Res<RockRunAssets>,
 ) {
     for ev in selection_event.read() {

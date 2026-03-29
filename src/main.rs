@@ -12,7 +12,8 @@ mod music;
 mod player;
 mod screen_map;
 
-use bevy::{asset::AssetMetaCheck, prelude::*, window::WindowResolution};
+use bevy::{asset::AssetMetaCheck, ecs::message::MessageWriter, prelude::*, window::WindowResolution};
+use bevy_perf_ui::{PerfUiSet, entries::PerfUiAllEntries, ui::root::PerfUiRoot};
 use key::KeyPlugin;
 
 use crate::{
@@ -36,7 +37,7 @@ pub const WINDOW_HEIGHT: f32 = 720.0;
 
 fn main() {
     let mut app = App::new();
-    let resolution = WindowResolution::new(WINDOW_WIDTH, WINDOW_HEIGHT);
+    let resolution = WindowResolution::new(WINDOW_WIDTH as u32, WINDOW_HEIGHT as u32);
     app.add_plugins((
         DefaultPlugins
             .set(WindowPlugin {
@@ -85,13 +86,13 @@ fn main() {
             helpers::camera::movement,
         ),
     )
-    .add_event::<StoryMessages>()
-    .add_event::<NoMoreStoryMessages>();
+    .add_message::<StoryMessages>()
+    .add_message::<NoMoreStoryMessages>();
 
     #[cfg(all(debug_assertions, not(target_arch = "wasm32")))]
     app.add_systems(
         Update,
-        toggle_perf_ui.before(iyes_perf_ui::PerfUiSet::Setup),
+        toggle_perf_ui.before(PerfUiSet::Setup),
     );
 
     app.run();
@@ -100,7 +101,7 @@ fn main() {
 #[allow(dead_code)]
 fn toggle_perf_ui(
     mut commands: Commands,
-    q_root: Query<Entity, With<iyes_perf_ui::ui::root::PerfUiRoot>>,
+    q_root: Query<Entity, With<PerfUiRoot>>,
     kbd: Res<ButtonInput<KeyCode>>,
 ) {
     if kbd.just_pressed(KeyCode::F12) {
@@ -110,7 +111,7 @@ fn toggle_perf_ui(
         } else {
             // create a simple Perf UI with default settings
             // and all entries provided by the crate:
-            commands.spawn(iyes_perf_ui::prelude::PerfUiAllEntries::default());
+            commands.spawn(PerfUiAllEntries::default());
         }
     }
 }
@@ -118,7 +119,7 @@ fn toggle_perf_ui(
 // TODO: remove as this is for debugging purpose
 #[allow(unused)]
 fn update_text(
-    mut event: EventWriter<events::ShakeCamera>,
+    mut event: MessageWriter<events::ShakeCamera>,
     input: Query<
         &leafwing_input_manager::action_state::ActionState<player::PlayerMovement>,
         With<player::Player>,

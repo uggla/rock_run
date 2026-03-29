@@ -4,7 +4,11 @@ use crate::{
     elements::story::TextSyllableValues,
     events::{Message, MessageArgs, NoMoreStoryMessages, StoryMessages},
 };
-use bevy::{platform::collections::HashMap, prelude::*};
+use bevy::{
+    ecs::message::{MessageReader, MessageWriter},
+    platform::collections::HashMap,
+    prelude::*,
+};
 use bevy_fluent::{BundleAsset, Locale};
 use fluent::{FluentArgs, FluentValue};
 use unic_langid::langid;
@@ -51,8 +55,8 @@ pub fn get_translation(
 
 #[allow(clippy::too_many_arguments)]
 fn localize_story_messages(
-    mut msg_event_reader: EventReader<StoryMessages>,
-    mut msg_event_writer: EventWriter<NoMoreStoryMessages>,
+    mut msg_event_reader: MessageReader<StoryMessages>,
+    mut msg_event_writer: MessageWriter<NoMoreStoryMessages>,
     assets: Res<Assets<BundleAsset>>,
     locale: Res<Locale>,
     rock_run_assets: Res<RockRunAssets>,

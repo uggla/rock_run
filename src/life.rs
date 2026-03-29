@@ -1,5 +1,6 @@
 use bevy::{
     audio::{PlaybackMode, Volume},
+    ecs::message::{MessageReader, MessageWriter},
     platform::collections::HashMap,
     prelude::*,
 };
@@ -54,7 +55,7 @@ impl Plugin for LifePlugin {
                     .run_if(in_state(AppState::GameRunning)),
             )
             .insert_resource(Life::default())
-            .add_event::<LifeEvent>();
+            .add_message::<LifeEvent>();
     }
 }
 
@@ -120,7 +121,7 @@ fn life_management(
     rock_run_assets: Res<RockRunAssets>,
     mut life_ui: Query<&Sprite, With<LifeUI>>,
     mut life: ResMut<Life>,
-    mut life_event: EventReader<LifeEvent>,
+    mut life_event: MessageReader<LifeEvent>,
     mut next_state: ResMut<NextState<AppState>>,
 ) -> Result<()> {
     for ev in life_event.read() {
@@ -220,8 +221,8 @@ fn setup_extralife(
 
 fn check_get_extralife(
     mut commands: Commands,
-    mut life_event: EventWriter<LifeEvent>,
-    mut extralive_collision: EventReader<ExtraLifeCollision>,
+    mut life_event: MessageWriter<LifeEvent>,
+    mut extralive_collision: MessageReader<ExtraLifeCollision>,
 ) {
     for ev in extralive_collision.read() {
         commands.entity(ev.entity).despawn();

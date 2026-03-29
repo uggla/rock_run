@@ -1,4 +1,4 @@
-use bevy::{audio::PlaybackMode, prelude::*};
+use bevy::{audio::PlaybackMode, ecs::message::MessageReader, prelude::*};
 use bevy_rapier2d::{
     control::KinematicCharacterController,
     dynamics::{Ccd, GravityScale, RigidBody, Velocity},
@@ -105,11 +105,11 @@ fn spawn_pterodactyl(
     time: Res<Time>,
     rock_run_assets: Res<RockRunAssets>,
     mut texture_atlases: ResMut<Assets<TextureAtlasLayout>>,
-    mut pterodactyl_sensor_collision: EventReader<PositionSensorCollisionStart>,
+    mut pterodactyl_sensor_collision: MessageReader<PositionSensorCollisionStart>,
     mut pterodactyls: Local<Vec<Pterodactyl>>,
     mut spawn_timer: Local<Timer>,
-    mut game_event: EventReader<StartGame>,
-    mut restart_event: EventReader<Restart>,
+    mut game_event: MessageReader<StartGame>,
+    mut restart_event: MessageReader<Restart>,
     player_query: Query<&Transform, With<Player>>,
     camera_query: Query<&mut Transform, (With<Camera2d>, Without<Player>)>,
 ) -> Result<()> {
@@ -127,7 +127,7 @@ fn spawn_pterodactyl(
 
     spawn_timer.tick(time.delta());
 
-    if !pterodactyls.is_empty() && spawn_timer.finished() {
+    if !pterodactyls.is_empty() && spawn_timer.is_finished() {
         let spawn_time_values = [0.3, 0.6, 1.0];
         let spawn_y_values = [-50.0, 0.0, 50.0];
         let mut rng = rng();
@@ -337,7 +337,7 @@ fn move_pterodactyl(
 
         let direction = match pterodactyl.attack {
             false => {
-                if chase_timer.finished() {
+                if chase_timer.is_finished() {
                     debug!("chase_timer finished");
                     debug!("pterodactyl_pos: {:?}", pterodactyl_pos);
                     (pterodactyl.exit_pos - pterodactyl_pos).normalize()
@@ -435,7 +435,7 @@ fn despawn_pterodactyl(mut commands: Commands, pterodactyls: Query<Entity, With<
 fn despawn_pterodactyl_on_restart(
     mut commands: Commands,
     pterodactyls: Query<Entity, With<Pterodactyl>>,
-    restart_event: EventReader<Restart>,
+    restart_event: MessageReader<Restart>,
 ) {
     if restart_event.is_empty() {
         return;

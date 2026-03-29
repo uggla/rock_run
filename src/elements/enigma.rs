@@ -20,6 +20,7 @@ use crate::{
 };
 use bevy::{
     audio::{PlaybackMode, Volume},
+    ecs::message::{MessageReader, MessageWriter},
     platform::collections::HashMap,
     prelude::*,
 };
@@ -103,7 +104,7 @@ impl Plugin for EnigmaPlugin {
                 (move_gate, move_rockgate, check_enigma, move_platform)
                     .run_if(not(in_state(AppState::Loading))),
             )
-            .add_event::<EnigmaResult>();
+            .add_message::<EnigmaResult>();
     }
 }
 
@@ -411,10 +412,10 @@ fn spawn_enigma_materials(
 fn check_enigma(
     mut commands: Commands,
     rock_run_assets: Res<RockRunAssets>,
-    mut no_more_msg_event: EventReader<NoMoreStoryMessages>,
+    mut no_more_msg_event: MessageReader<NoMoreStoryMessages>,
     enigmas: ResMut<Enigmas>,
     params: ResMut<TextSyllableValues>,
-    mut enigna_result: EventWriter<EnigmaResult>,
+    mut enigna_result: MessageWriter<EnigmaResult>,
     nuts: Res<Nuts>,
     levels: Query<&Level, With<Level>>,
     current_level: Res<CurrentLevel>,
@@ -687,7 +688,7 @@ fn check_mcq<F>(
     story: &str,
     enigmas: &ResMut<Enigmas>,
     params: &ResMut<TextSyllableValues>,
-    enigna_result: &mut EventWriter<EnigmaResult>,
+    enigna_result: &mut MessageWriter<EnigmaResult>,
     commands: &mut Commands,
     rock_run_assets: &Res<RockRunAssets>,
     level: &Level,
@@ -732,7 +733,7 @@ fn check_mcq<F>(
 }
 
 fn wrong_answer(
-    enigna_result: &mut EventWriter<EnigmaResult>,
+    enigna_result: &mut MessageWriter<EnigmaResult>,
     story: &str,
     commands: &mut Commands,
     rock_run_assets: &Res<RockRunAssets>,
@@ -749,7 +750,7 @@ fn wrong_answer(
 }
 
 fn correct_answer(
-    enigna_result: &mut EventWriter<EnigmaResult>,
+    enigna_result: &mut MessageWriter<EnigmaResult>,
     story: &str,
     commands: &mut Commands,
     rock_run_assets: &Res<RockRunAssets>,
@@ -795,7 +796,7 @@ fn move_gate(
     time: Res<Time>,
     mut gate_query: Query<(Entity, &Gate), With<Gate>>,
     mut animation_query: Query<(&mut AnimationTimer, &mut Transform, &mut Sprite)>,
-    mut enigna_result: EventReader<EnigmaResult>,
+    mut enigna_result: MessageReader<EnigmaResult>,
     mut iteration: Local<usize>,
     mut gate: Local<Option<Entity>>,
 ) {
@@ -837,7 +838,7 @@ fn move_gate(
 
 fn move_rockgate(
     mut rockgate_query: Query<(Entity, &RockGate), With<RockGate>>,
-    mut enigna_result: EventReader<EnigmaResult>,
+    mut enigna_result: MessageReader<EnigmaResult>,
     mut ext_impulses: Query<&mut ExternalImpulse, With<RockGate>>,
 ) {
     for ev in enigna_result.read() {
@@ -883,7 +884,7 @@ fn move_rockgate(
 
 fn move_platform(
     mut moving_platform_query: Query<&mut MovingPlatform>,
-    mut enigna_result: EventReader<EnigmaResult>,
+    mut enigna_result: MessageReader<EnigmaResult>,
 ) {
     for ev in enigna_result.read() {
         if let EnigmaResult::Correct(enigma) = ev

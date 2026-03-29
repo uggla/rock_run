@@ -6,7 +6,7 @@ use crate::{
     player::PlayerSet,
     screen_map::Transition,
 };
-use bevy::prelude::*;
+use bevy::{ecs::message::MessageReader, prelude::*};
 
 use crate::{
     coregame::level::{CurrentLevel, Level},
@@ -36,7 +36,7 @@ impl Plugin for CameraPlugin {
                 .after(PlayerSet)
                 .run_if(in_state(AppState::GameRunning)),
         );
-        app.add_event::<ShakeCamera>();
+        app.add_message::<ShakeCamera>();
         app.insert_resource(Shake::default());
     }
 }
@@ -195,13 +195,13 @@ fn camera_follows_player(
 }
 
 fn shake_camera(
-    mut shake_events: EventReader<ShakeCamera>,
+    mut shake_events: MessageReader<ShakeCamera>,
     mut camera_query: Query<(&mut Transform, &mut Projection), With<Camera2d>>,
     time: Res<Time>,
     mut shake: ResMut<Shake>,
     mut shake_timer: Local<Timer>,
-    mut game_event: EventReader<StartGame>,
-    mut restart_event: EventReader<Restart>,
+    mut game_event: MessageReader<StartGame>,
+    mut restart_event: MessageReader<Restart>,
 ) -> Result<()> {
     let shake_duration_sec = 6.0;
     let shake_amplitude = 20.0;
@@ -242,7 +242,7 @@ fn shake_camera(
         *shake_timer = Timer::from_seconds(shake_duration_sec, TimerMode::Once);
     }
 
-    if *shake == Shake(true) && !shake_timer.finished() {
+    if *shake == Shake(true) && !shake_timer.is_finished() {
         shake_timer.tick(time.delta());
 
         match *camera_projection {
@@ -257,7 +257,7 @@ fn shake_camera(
             * (5.0 * 2.0 * PI * shake_timer.elapsed().as_secs_f32()).cos();
     }
 
-    if *shake == Shake(true) && shake_timer.finished() {
+    if *shake == Shake(true) && shake_timer.is_finished() {
         *shake = Shake(false);
     }
     Ok(())

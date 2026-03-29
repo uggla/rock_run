@@ -21,9 +21,9 @@ impl PluginGroup for ExternalPlugins {
         {
             // we want Bevy to measure these values for us:
             group = group.add(bevy::diagnostic::FrameTimeDiagnosticsPlugin::default());
-            group = group.add(bevy::diagnostic::EntityCountDiagnosticsPlugin);
+            group = group.add(bevy::diagnostic::EntityCountDiagnosticsPlugin::default());
             group = group.add(bevy::diagnostic::SystemInformationDiagnosticsPlugin);
-            group = group.add(iyes_perf_ui::PerfUiPlugin);
+            group = group.add(bevy_perf_ui::PerfUiPlugin);
         }
         group
     }

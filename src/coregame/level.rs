@@ -1,9 +1,11 @@
 use bevy::{
     color,
+    ecs::message::MessageReader,
     platform::collections::HashMap,
     prelude::*,
-    render::render_resource::{AsBindGroup, ShaderRef},
-    sprite::{Material2d, Material2dPlugin},
+    render::render_resource::AsBindGroup,
+    shader::ShaderRef,
+    sprite_render::{Material2d, Material2dPlugin},
 };
 use bevy_ecs_tilemap::tiles::{TileStorage, TileVisible};
 use bevy_fluent::{BundleAsset, Locale};
@@ -87,8 +89,8 @@ impl Plugin for LevelPlugin {
                 (check_exit, fade_display_level).run_if(in_state(AppState::GameRunning)),
             )
             .insert_resource(CurrentLevel { id: 1 })
-            .add_event::<Restart>()
-            .add_event::<NextLevel>();
+            .add_message::<Restart>()
+            .add_message::<NextLevel>();
 
         app.add_plugins(Material2dPlugin::<MysteriousFogMaterial>::default());
     }
@@ -267,7 +269,7 @@ fn fade_display_level(
     if let Ok(mut display_level_timer) = display_level_timer.single_mut() {
         display_level_timer.tick(time.delta());
 
-        if display_level_timer.finished() {
+        if display_level_timer.is_finished() {
             let mut text_color = display_level_text.single_mut()?;
             let transparency = text_color.alpha();
             let color: Srgba = Color::srgb_u8(0xF4, 0x78, 0x04).into();
@@ -344,8 +346,8 @@ fn get_tiles(
 
 fn check_exit(
     mut next_state: ResMut<NextState<AppState>>,
-    mut sensor_collision_start: EventReader<PositionSensorCollisionStart>,
-    mut sensor_collision_stop: EventReader<PositionSensorCollisionStop>,
+    mut sensor_collision_start: MessageReader<PositionSensorCollisionStart>,
+    mut sensor_collision_stop: MessageReader<PositionSensorCollisionStop>,
     input: Query<
         &leafwing_input_manager::action_state::ActionState<player::PlayerMovement>,
         With<player::Player>,

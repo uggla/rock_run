@@ -11,10 +11,12 @@ use crate::{
 use bevy::{
     audio::PlaybackMode,
     color,
+    ecs::message::{MessageReader, MessageWriter},
     platform::collections::HashMap,
     prelude::*,
-    render::render_resource::{AsBindGroup, ShaderRef},
-    sprite::{Material2d, Material2dPlugin},
+    render::render_resource::AsBindGroup,
+    shader::ShaderRef,
+    sprite_render::{Material2d, Material2dPlugin},
 };
 
 use bevy_rapier2d::prelude::{
@@ -124,14 +126,14 @@ fn spawn_fireball(
     mut commands: Commands,
     time: Res<Time>,
     rock_run_assets: Res<RockRunAssets>,
-    mut fireball_sensor_collision: EventReader<PositionSensorCollisionStart>,
+    mut fireball_sensor_collision: MessageReader<PositionSensorCollisionStart>,
     mut fireballs: Local<bool>,
     mut spawn_timer: Local<Timer>,
     mut spawn_pos: Local<Vec2>,
-    mut game_event: EventReader<StartGame>,
-    mut restart_event: EventReader<Restart>,
-    mut next_level_event: EventReader<NextLevel>,
-    mut shake_event: EventWriter<ShakeCamera>,
+    mut game_event: MessageReader<StartGame>,
+    mut restart_event: MessageReader<Restart>,
+    mut next_level_event: MessageReader<NextLevel>,
+    mut shake_event: MessageWriter<ShakeCamera>,
 ) {
     if !game_event.is_empty() {
         *fireballs = false;
@@ -183,7 +185,7 @@ fn spawn_fireball(
         ));
     }
 
-    if *fireballs && spawn_timer.finished() {
+    if *fireballs && spawn_timer.is_finished() {
         let mut rng = rng();
         let impulse_x: f32 = rng.random_range(-15.0..=15.0);
         let impulse_y: f32 = rng.random_range(3.0..=4.0);
