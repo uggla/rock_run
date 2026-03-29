@@ -154,7 +154,7 @@ impl AssetLoader for TiledLoader {
                                 // assets/ directory structure then the tmx_dir will be empty, which is fine.
                                 let asset_path = load_context
                                     .path()
-                                    .resolve(&img_source)
+                                    .resolve_embed(&img_source)
                                     .map_err(|e| {
                                         std::io::Error::other(format!(
                                             "Could not resolve tile asset path '{}': {e}",
@@ -178,7 +178,7 @@ impl AssetLoader for TiledLoader {
                     let img_source = img.source.to_string_lossy();
                     // The load context path is the TMX file itself. If the file is at the root of the
                     // assets/ directory structure then the tmx_dir will be empty, which is fine.
-                    let asset_path = load_context.path().resolve(&img_source).map_err(|e| {
+                    let asset_path = load_context.path().resolve_embed(&img_source).map_err(|e| {
                         std::io::Error::other(format!(
                             "Could not resolve tile asset path '{}': {e}",
                             img.source.display()

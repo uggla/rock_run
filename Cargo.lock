@@ -4822,7 +4822,7 @@ checksum = "4e27ee8bb91ca0adcf0ecb116293afa12d393f9c2b9b9cd54d33e8078fe19839"
 
 [[package]]
 name = "rock_run"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "bevy",
  "bevy_asset_loader",
