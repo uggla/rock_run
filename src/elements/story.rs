@@ -15,7 +15,7 @@ use crate::{
     WINDOW_HEIGHT, WINDOW_WIDTH,
     assets::RockRunAssets,
     coregame::state::AppState,
-    events::{SelectionChanged, StoryMessages},
+    messages::{SelectionChanged, StoryMessages},
 };
 
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States)]

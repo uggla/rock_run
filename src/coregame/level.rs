@@ -17,7 +17,7 @@ use crate::{
         localization::{convert_to_fluent_args, get_translation},
         state::AppState,
     },
-    events::{NextLevel, PositionSensorCollisionStart, PositionSensorCollisionStop, Restart},
+    messages::{NextLevel, PositionSensorCollisionStart, PositionSensorCollisionStop, Restart},
     helpers::{
         self,
         tiled::{TiledMap, TiledMapHandle, TilesetLayerToStorageEntity},

@@ -7,7 +7,7 @@ use bevy::{
 use crate::{
     assets::RockRunAssets,
     coregame::{camera::CameraSet, state::AppState},
-    events::{KeyCollision, Restart},
+    messages::{KeyCollision, Restart},
 };
 
 pub const KEY_SCALE_FACTOR: f32 = 2.0;

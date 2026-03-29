@@ -18,7 +18,7 @@ use leafwing_input_manager::{
 use unic_langid::langid;
 
 use crate::WINDOW_HEIGHT;
-use crate::events::{NextLevel, StartGame};
+use crate::messages::{NextLevel, StartGame};
 use crate::{
     WINDOW_WIDTH,
     assets::RockRunAssets,
@@ -28,7 +28,7 @@ use crate::{
         state::{AppState, ForState},
     },
     elements::story::SelectionDirection,
-    events::{LadderCollisionStop, NoMoreStoryMessages, SelectionChanged, StoryMessages},
+    messages::{LadderCollisionStop, NoMoreStoryMessages, SelectionChanged, StoryMessages},
 };
 
 const LAST_LEVEL: u8 = 3;

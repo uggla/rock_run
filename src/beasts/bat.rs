@@ -8,7 +8,7 @@ use crate::{
     assets::RockRunAssets,
     collisions::CollisionSet,
     coregame::state::AppState,
-    events::{Hit, PositionSensorCollisionStart, Restart},
+    messages::{Hit, PositionSensorCollisionStart, Restart},
     helpers::texture::cycle_texture,
     player::Player,
 };

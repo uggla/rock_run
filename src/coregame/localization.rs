@@ -2,7 +2,7 @@ use crate::{
     assets::RockRunAssets,
     coregame::state::AppState,
     elements::story::TextSyllableValues,
-    events::{Message, MessageArgs, NoMoreStoryMessages, StoryMessages},
+    messages::{Message, MessageArgs, NoMoreStoryMessages, StoryMessages},
 };
 use bevy::{
     ecs::message::{MessageReader, MessageWriter},

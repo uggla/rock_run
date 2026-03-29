@@ -5,7 +5,7 @@ use crate::{
         level::{CurrentLevel, Level},
         state::AppState,
     },
-    events::{NextLevel, PositionSensorCollisionStart, Restart, ShakeCamera, StartGame},
+    messages::{NextLevel, PositionSensorCollisionStart, Restart, ShakeCamera, StartGame},
 };
 
 use bevy::{

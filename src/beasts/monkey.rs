@@ -11,7 +11,7 @@ use crate::{
         level::{CurrentLevel, Level},
         state::AppState,
     },
-    events::SmallRockAboutToRelease,
+    messages::SmallRockAboutToRelease,
 };
 
 const MONKEY_SCALE_FACTOR: f32 = 1.0;

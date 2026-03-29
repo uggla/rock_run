@@ -29,7 +29,7 @@ use crate::{
         story::{UserSelection, compose_selection_msg},
         volcano::Fireball,
     },
-    events::{
+    messages::{
         ExtraLifeCollision, Hit, KeyCollision, LadderCollisionStart, LadderCollisionStop,
         LifeEvent, MovingPlatformCollision, NutCollision, PositionSensorCollisionStart,
         PositionSensorCollisionStop, Restart, StoryMessages, TriceratopsCollision,

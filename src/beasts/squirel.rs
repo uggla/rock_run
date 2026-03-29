@@ -20,7 +20,7 @@ use crate::{
         level::{CurrentLevel, Level},
         state::AppState,
     },
-    events::{EnigmaResult, NextLevel, NutCollision, StartGame},
+    messages::{EnigmaResult, NextLevel, NutCollision, StartGame},
     helpers::texture::cycle_texture,
 };
 

@@ -3,7 +3,7 @@ mod beasts;
 mod collisions;
 mod coregame;
 mod elements;
-mod events;
+mod messages;
 mod external_plugins;
 mod helpers;
 mod key;
@@ -24,7 +24,7 @@ use crate::{
     collisions::CollisionsPlugin,
     coregame::{plugins::CoreGamePlugins, state::AppState},
     elements::plugins::ElementsPlugins,
-    events::{NoMoreStoryMessages, StoryMessages},
+    messages::{NoMoreStoryMessages, StoryMessages},
     external_plugins::ExternalPlugins,
     life::LifePlugin,
     music::MusicPlugin,
@@ -121,7 +121,7 @@ fn toggle_perf_ui(
 // TODO: remove as this is for debugging purpose
 #[allow(unused)]
 fn update_text(
-    mut event: MessageWriter<events::ShakeCamera>,
+    mut event: MessageWriter<messages::ShakeCamera>,
     input: Query<
         &leafwing_input_manager::action_state::ActionState<player::PlayerMovement>,
         With<player::Player>,
@@ -134,6 +134,6 @@ fn update_text(
 
     if input_state.just_pressed(&player::PlayerMovement::Crouch) {
         debug!("debugging you press crouch(down array key)");
-        // event.send(events::ShakeCamera);
+        // event.send(messages::ShakeCamera);
     }
 }

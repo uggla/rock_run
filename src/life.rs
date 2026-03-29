@@ -15,7 +15,7 @@ use crate::{
         level::{CurrentLevel, Level},
         state::AppState,
     },
-    events::{ExtraLifeCollision, LifeEvent},
+    messages::{ExtraLifeCollision, LifeEvent},
 };
 
 const LIFE_SCALE_FACTOR: f32 = 2.0;

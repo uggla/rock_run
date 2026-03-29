@@ -11,7 +11,7 @@ use crate::{
         level::{CurrentLevel, Level},
         state::AppState,
     },
-    events::TriceratopsCollision,
+    messages::TriceratopsCollision,
     helpers::texture::cycle_texture,
 };
 

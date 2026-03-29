@@ -16,7 +16,7 @@ use crate::{
         level::{CurrentLevel, Level},
         state::AppState,
     },
-    events::{MovingPlatformCollision, MovingPlatformDescending},
+    messages::{MovingPlatformCollision, MovingPlatformDescending},
     player::{PlayerSet, PlayerState},
 };
 

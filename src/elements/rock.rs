@@ -15,7 +15,7 @@ use crate::{
         level::{CurrentLevel, Level},
         state::AppState,
     },
-    events::{PositionSensorCollisionStart, Restart, SmallRockAboutToRelease},
+    messages::{PositionSensorCollisionStart, Restart, SmallRockAboutToRelease},
 };
 
 use super::volcano::Lava;

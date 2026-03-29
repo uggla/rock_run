@@ -2,7 +2,7 @@ use std::f32::consts::PI;
 
 use crate::{
     coregame::state::AppState,
-    events::{Restart, ShakeCamera, StartGame},
+    messages::{Restart, ShakeCamera, StartGame},
     player::PlayerSet,
     screen_map::Transition,
 };

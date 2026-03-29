@@ -19,7 +19,7 @@ use crate::{
         menu::StartPos,
         state::AppState,
     },
-    events::{
+    messages::{
         Hit, LadderCollisionStart, LadderCollisionStop, LifeEvent, MovingPlatformDescending,
         Restart, StartGame,
     },

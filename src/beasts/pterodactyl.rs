@@ -13,7 +13,7 @@ use crate::{
     collisions::CollisionSet,
     coregame::state::AppState,
     elements::rock::Rock,
-    events::{PositionSensorCollisionStart, Restart, StartGame},
+    messages::{PositionSensorCollisionStart, Restart, StartGame},
     helpers::texture::cycle_texture,
     player::Player,
 };
