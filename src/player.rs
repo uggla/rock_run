@@ -289,131 +289,26 @@ fn move_player(
         mut jump_timer,
         player_audio,
     ) = player_query.single_mut()?;
-    let mut direction_x = 0.0;
-    let mut direction_y = 0.0;
-    let riding_platform_preview = platform_carry.contact_frames_left > 0;
-    let grounded_preview =
-        player_controller_output.is_some_and(|output| output.grounded) || riding_platform_preview;
-    let mut anim = |current_movement: PlayerMovement| -> Result<()> {
-        match current_movement {
-            PlayerMovement::Run(player_direction) => {
-                let (mut anim_timer, mut sprite) = animation_query.single_mut()?;
-                anim_timer.tick(time.delta());
-                match player_direction {
-                    PlayerDirection::Left => {
-                        sprite.flip_x = true;
-                        *player_collider = Collider::capsule(
-                            PLAYER_HITBOX.0 + PLAYER_HITBOX_TRANSLATION,
-                            PLAYER_HITBOX.1 + PLAYER_HITBOX_TRANSLATION,
-                            PLAYER_HITBOX.2,
-                        );
-                    }
-                    PlayerDirection::Right => {
-                        sprite.flip_x = false;
-                        *player_collider =
-                            Collider::capsule(PLAYER_HITBOX.0, PLAYER_HITBOX.1, PLAYER_HITBOX.2);
-                    }
-                }
-                if anim_timer.just_finished() {
-                    match state.get() {
-                        PlayerState::Jumping => {}
-                        PlayerState::Falling if !grounded_preview => {
-                            if let Some(texture) = &mut sprite.texture_atlas {
-                                cycle_texture(texture, 14..=16);
-                            }
-                        }
-                        PlayerState::Climbing => {
-                            if let Some(texture) = &mut sprite.texture_atlas {
-                                cycle_texture(texture, 33..=36);
-                            }
-                        }
-                        _ => {
-                            if let Some(texture) = &mut sprite.texture_atlas {
-                                if riding_platform_preview {
-                                    texture.index = 6;
-                                } else {
-                                    cycle_texture(texture, 6..=10);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            PlayerMovement::Idle => {
-                let (mut anim_timer, mut sprite) = animation_query.single_mut()?;
-                anim_timer.tick(time.delta());
-                if anim_timer.just_finished() {
-                    match state.get() {
-                        PlayerState::Jumping => {}
-                        PlayerState::Climbing => {
-                            if let Some(texture) = &mut sprite.texture_atlas {
-                                texture.index = 34;
-                            }
-                        }
-                        PlayerState::Falling if !grounded_preview => {
-                            if let Some(texture) = &mut sprite.texture_atlas {
-                                cycle_texture(texture, 14..=16);
-                            }
-                        }
-                        _ => {
-                            if let Some(texture) = &mut sprite.texture_atlas {
-                                if riding_platform_preview {
-                                    texture.index = 0;
-                                } else {
-                                    swing_texture(texture, 0..=4, &mut index_direction);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            PlayerMovement::Jump => {
-                let (_, mut sprite) = animation_query.single_mut()?;
-                if let Some(texture) = &mut sprite.texture_atlas {
-                    texture.index = 11;
-                }
-            }
-
-            PlayerMovement::Climb => {
-                let (mut anim_timer, mut sprite) = animation_query.single_mut()?;
-                anim_timer.tick(time.delta());
-                if anim_timer.just_finished()
-                    && let Some(texture) = &mut sprite.texture_atlas
-                {
-                    cycle_texture(texture, 33..=36);
-                }
-            }
-            PlayerMovement::Crouch => {
-                let (mut anim_timer, mut sprite) = animation_query.single_mut()?;
-                anim_timer.tick(time.delta());
-                if anim_timer.just_finished()
-                    && let Some(texture) = &mut sprite.texture_atlas
-                {
-                    cycle_texture(texture, 33..=36);
-                }
-            }
-
-            PlayerMovement::Hit => {
-                let (_, mut sprite) = animation_query.single_mut()?;
-                if let Some(texture) = &mut sprite.texture_atlas {
-                    texture.index = 26;
-                }
-            }
-        }
-        Ok(())
-    };
 
     jump_timer.tick(time.delta());
     let input_state = input.single()?;
-    let mut current_movement: PlayerMovement = PlayerMovement::Idle;
 
+    // Handle hit state — early return
     if *state.get() == PlayerState::Hit {
-        current_movement = PlayerMovement::Hit;
-        let _ = anim(current_movement);
+        let _ = animate_player(
+            PlayerMovement::Hit,
+            state.get(),
+            false,
+            false,
+            &time,
+            &mut animation_query,
+            &mut index_direction,
+        );
         player_controller.translation = Some(Vec2::new(0.0, PLAYER_SPEED * time.delta_secs()));
         return Ok(());
     }
 
+    // Handle reset events
     if !restart_event.is_empty() {
         *ladder_collision = false;
         *toggle = false;
@@ -428,6 +323,7 @@ fn move_player(
         next_state.set(PlayerState::Falling);
     }
 
+    // Update ladder collision state
     if !ladder_collision_start.is_empty() {
         *ladder_collision = true;
         ladder_collision_start.clear();
@@ -439,16 +335,23 @@ fn move_player(
         next_state.set(PlayerState::Falling);
     }
 
+    let riding_platform_preview = platform_carry.contact_frames_left > 0;
+    let grounded_preview =
+        player_controller_output.is_some_and(|output| output.grounded) || riding_platform_preview;
+
+    // Read input
+    let mut direction_x = 0.0;
+    let mut direction_y = 0.0;
+    let mut current_movement = PlayerMovement::Idle;
+
     if input_state.pressed(&PlayerMovement::Run(PlayerDirection::Left)) {
         direction_x = -1.0;
         current_movement = PlayerMovement::Run(PlayerDirection::Left);
-        let _ = anim(current_movement);
     }
 
     if input_state.pressed(&PlayerMovement::Run(PlayerDirection::Right)) {
         direction_x = 1.0;
         current_movement = PlayerMovement::Run(PlayerDirection::Right);
-        let _ = anim(current_movement);
     }
 
     if input_state.just_pressed(&PlayerMovement::Jump)
@@ -464,27 +367,35 @@ fn move_player(
             },
         ));
         current_movement = PlayerMovement::Jump;
-        let _ = anim(current_movement);
     }
 
     if input_state.pressed(&PlayerMovement::Climb) && *ladder_collision {
         next_state.set(PlayerState::Climbing);
         direction_y = 1.0;
         current_movement = PlayerMovement::Climb;
-        let _ = anim(current_movement);
     }
 
     if input_state.pressed(&PlayerMovement::Crouch) && *ladder_collision {
         next_state.set(PlayerState::Climbing);
         direction_y = -1.0;
         current_movement = PlayerMovement::Crouch;
-        let _ = anim(current_movement);
     }
 
-    if current_movement == PlayerMovement::Idle {
-        let _ = anim(PlayerMovement::Idle);
-    }
+    // Update facing direction and collider
+    update_player_direction(direction_x, &mut animation_query, &mut player_collider)?;
 
+    // Animate
+    let _ = animate_player(
+        current_movement,
+        state.get(),
+        grounded_preview,
+        riding_platform_preview,
+        &time,
+        &mut animation_query,
+        &mut index_direction,
+    );
+
+    // Apply physics
     if state.get() == &PlayerState::Jumping {
         if jump_timer.just_finished() {
             next_state.set(PlayerState::Falling);
@@ -513,63 +424,15 @@ fn move_player(
             ));
         }
     } else {
-        // Moving platform collision can miss a frame around direction changes.
-        // Keep contact and carry for a short grace period to avoid dropping off.
-        let current_platform = player_controller_output.and_then(|output| {
-            output.collisions.iter().find_map(|collision| {
-                moving_platforms
-                    .get(collision.entity)
-                    .ok()
-                    .map(|_| collision.entity)
-            })
-        });
-
-        if let Some(entity) = current_platform {
-            if platform_carry.entity != Some(entity)
-                && let Ok((platform_transform, _)) = moving_platforms.get(entity)
-            {
-                platform_carry.horizontal_offset =
-                    player_pos.translation.x - platform_transform.translation.x;
-                platform_carry.vertical_offset =
-                    player_pos.translation.y - platform_transform.translation.y;
-            }
-            platform_carry.entity = Some(entity);
-            platform_carry.contact_frames_left = 3;
-        } else if platform_carry.contact_frames_left > 0
-            && player_controller_output.is_some_and(|output| output.grounded)
-        {
-            platform_carry.contact_frames_left -= 1;
-        } else {
-            platform_carry.entity = None;
-            platform_carry.contact_frames_left = 0;
-        }
-
-        let riding_platform = platform_carry.contact_frames_left > 0;
-        let platform_state = platform_carry
-            .entity
-            .and_then(|entity| moving_platforms.get(entity).ok())
-            .filter(|_| riding_platform);
-        let platform_movement = platform_state
-            .map(|(_, delta)| **delta)
-            .unwrap_or(Vec2::ZERO);
+        let (riding_platform, platform_movement) = update_platform_carry(
+            &mut platform_carry,
+            &mut player_pos,
+            player_controller_output,
+            &moving_platforms,
+            direction_x,
+            &time,
+        );
         let on_moving_platform = platform_movement != Vec2::ZERO;
-
-        if riding_platform {
-            platform_carry.horizontal_offset += direction_x * PLAYER_SPEED * time.delta_secs();
-        }
-
-        if let Some((platform_transform, _)) = platform_state {
-            // Keep the player horizontally anchored to the current platform while
-            // preserving the relative offset measured when contact was acquired.
-            player_pos.translation.x =
-                platform_transform.translation.x + platform_carry.horizontal_offset;
-            if platform_movement.y > 0.0 {
-                player_pos.translation.y =
-                    platform_transform.translation.y + platform_carry.vertical_offset;
-            } else {
-                player_pos.translation.y += platform_movement.y;
-            }
-        }
 
         let vertical_translation = if riding_platform
             || on_moving_platform
@@ -599,6 +462,187 @@ fn move_player(
         ));
     }
     Ok(())
+}
+
+fn update_player_direction(
+    direction_x: f32,
+    animation_query: &mut Query<(&mut AnimationTimer, &mut Sprite)>,
+    collider: &mut Collider,
+) -> Result<()> {
+    if direction_x < 0.0 {
+        let (_, mut sprite) = animation_query.single_mut()?;
+        sprite.flip_x = true;
+        *collider = Collider::capsule(
+            PLAYER_HITBOX.0 + PLAYER_HITBOX_TRANSLATION,
+            PLAYER_HITBOX.1 + PLAYER_HITBOX_TRANSLATION,
+            PLAYER_HITBOX.2,
+        );
+    } else if direction_x > 0.0 {
+        let (_, mut sprite) = animation_query.single_mut()?;
+        sprite.flip_x = false;
+        *collider = Collider::capsule(PLAYER_HITBOX.0, PLAYER_HITBOX.1, PLAYER_HITBOX.2);
+    }
+    Ok(())
+}
+
+fn animate_player(
+    movement: PlayerMovement,
+    state: &PlayerState,
+    grounded: bool,
+    riding_platform: bool,
+    time: &Time,
+    animation_query: &mut Query<(&mut AnimationTimer, &mut Sprite)>,
+    index_direction: &mut Local<IndexDirection>,
+) -> Result<()> {
+    match movement {
+        PlayerMovement::Run(_) => {
+            let (mut anim_timer, mut sprite) = animation_query.single_mut()?;
+            anim_timer.tick(time.delta());
+            if anim_timer.just_finished() {
+                match state {
+                    PlayerState::Jumping => {}
+                    PlayerState::Falling if !grounded => {
+                        if let Some(texture) = &mut sprite.texture_atlas {
+                            cycle_texture(texture, 14..=16);
+                        }
+                    }
+                    PlayerState::Climbing => {
+                        if let Some(texture) = &mut sprite.texture_atlas {
+                            cycle_texture(texture, 33..=36);
+                        }
+                    }
+                    _ => {
+                        if let Some(texture) = &mut sprite.texture_atlas {
+                            if riding_platform {
+                                texture.index = 6;
+                            } else {
+                                cycle_texture(texture, 6..=10);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        PlayerMovement::Idle => {
+            let (mut anim_timer, mut sprite) = animation_query.single_mut()?;
+            anim_timer.tick(time.delta());
+            if anim_timer.just_finished() {
+                match state {
+                    PlayerState::Jumping => {}
+                    PlayerState::Climbing => {
+                        if let Some(texture) = &mut sprite.texture_atlas {
+                            texture.index = 34;
+                        }
+                    }
+                    PlayerState::Falling if !grounded => {
+                        if let Some(texture) = &mut sprite.texture_atlas {
+                            cycle_texture(texture, 14..=16);
+                        }
+                    }
+                    _ => {
+                        if let Some(texture) = &mut sprite.texture_atlas {
+                            if riding_platform {
+                                texture.index = 0;
+                            } else {
+                                swing_texture(texture, 0..=4, index_direction);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        PlayerMovement::Jump => {
+            let (_, mut sprite) = animation_query.single_mut()?;
+            if let Some(texture) = &mut sprite.texture_atlas {
+                texture.index = 11;
+            }
+        }
+        PlayerMovement::Climb | PlayerMovement::Crouch => {
+            let (mut anim_timer, mut sprite) = animation_query.single_mut()?;
+            anim_timer.tick(time.delta());
+            if anim_timer.just_finished()
+                && let Some(texture) = &mut sprite.texture_atlas
+            {
+                cycle_texture(texture, 33..=36);
+            }
+        }
+        PlayerMovement::Hit => {
+            let (_, mut sprite) = animation_query.single_mut()?;
+            if let Some(texture) = &mut sprite.texture_atlas {
+                texture.index = 26;
+            }
+        }
+    }
+    Ok(())
+}
+
+#[allow(clippy::type_complexity)]
+fn update_platform_carry(
+    platform_carry: &mut PlatformCarryState,
+    player_pos: &mut Transform,
+    player_controller_output: Option<&KinematicCharacterControllerOutput>,
+    moving_platforms: &Query<(&Transform, &PlatformDelta), (With<MovingPlatform>, Without<Player>)>,
+    direction_x: f32,
+    time: &Time,
+) -> (bool, Vec2) {
+    // Moving platform collision can miss a frame around direction changes.
+    // Keep contact and carry for a short grace period to avoid dropping off.
+    let current_platform = player_controller_output.and_then(|output| {
+        output.collisions.iter().find_map(|collision| {
+            moving_platforms
+                .get(collision.entity)
+                .ok()
+                .map(|_| collision.entity)
+        })
+    });
+
+    if let Some(entity) = current_platform {
+        if platform_carry.entity != Some(entity)
+            && let Ok((platform_transform, _)) = moving_platforms.get(entity)
+        {
+            platform_carry.horizontal_offset =
+                player_pos.translation.x - platform_transform.translation.x;
+            platform_carry.vertical_offset =
+                player_pos.translation.y - platform_transform.translation.y;
+        }
+        platform_carry.entity = Some(entity);
+        platform_carry.contact_frames_left = 3;
+    } else if platform_carry.contact_frames_left > 0
+        && player_controller_output.is_some_and(|output| output.grounded)
+    {
+        platform_carry.contact_frames_left -= 1;
+    } else {
+        platform_carry.entity = None;
+        platform_carry.contact_frames_left = 0;
+    }
+
+    let riding_platform = platform_carry.contact_frames_left > 0;
+    let platform_state = platform_carry
+        .entity
+        .and_then(|entity| moving_platforms.get(entity).ok())
+        .filter(|_| riding_platform);
+    let platform_movement = platform_state
+        .map(|(_, delta)| **delta)
+        .unwrap_or(Vec2::ZERO);
+
+    if riding_platform {
+        platform_carry.horizontal_offset += direction_x * PLAYER_SPEED * time.delta_secs();
+    }
+
+    if let Some((platform_transform, _)) = platform_state {
+        // Keep the player horizontally anchored to the current platform while
+        // preserving the relative offset measured when contact was acquired.
+        player_pos.translation.x =
+            platform_transform.translation.x + platform_carry.horizontal_offset;
+        if platform_movement.y > 0.0 {
+            player_pos.translation.y =
+                platform_transform.translation.y + platform_carry.vertical_offset;
+        } else {
+            player_pos.translation.y += platform_movement.y;
+        }
+    }
+
+    (riding_platform, platform_movement)
 }
 
 fn check_out_of_screen(
