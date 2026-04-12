@@ -154,6 +154,16 @@ fn spawn_enigma_materials(
             "non-largest-animal",
             "largest-animal",
         ),
+        (
+            "water-boils-question",
+            "non-water-boils",
+            "water-boils",
+        ),
+        (
+            "largest-continent-question",
+            "non-largest-continent",
+            "largest-continent",
+        ),
     ];
 
     mcqs.shuffle(&mut rng);
