@@ -16,8 +16,8 @@ use std::io::Cursor;
 use std::path::Path;
 use std::sync::Arc;
 
-use bevy::asset::io::Reader;
 use bevy::asset::AssetLoader;
+use bevy::asset::io::Reader;
 use bevy::ecs::message::MessageReader;
 use bevy::platform::collections::HashMap;
 use bevy::{log, prelude::*};
@@ -178,12 +178,16 @@ impl AssetLoader for TiledLoader {
                     let img_source = img.source.to_string_lossy();
                     // The load context path is the TMX file itself. If the file is at the root of the
                     // assets/ directory structure then the tmx_dir will be empty, which is fine.
-                    let asset_path = load_context.path().resolve_embed(&img_source).map_err(|e| {
-                        std::io::Error::other(format!(
-                            "Could not resolve tile asset path '{}': {e}",
-                            img.source.display()
-                        ))
-                    })?;
+                    let asset_path =
+                        load_context
+                            .path()
+                            .resolve_embed(&img_source)
+                            .map_err(|e| {
+                                std::io::Error::other(format!(
+                                    "Could not resolve tile asset path '{}': {e}",
+                                    img.source.display()
+                                ))
+                            })?;
                     let texture: Handle<Image> = load_context.load(asset_path.clone());
 
                     TilemapTexture::Single(texture.clone())

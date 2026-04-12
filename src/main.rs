@@ -3,19 +3,21 @@ mod beasts;
 mod collisions;
 mod coregame;
 mod elements;
-mod messages;
 mod external_plugins;
 mod helpers;
 mod key;
 mod life;
+mod messages;
 mod music;
 mod player;
 mod screen_map;
 
-use bevy::{asset::AssetMetaCheck, ecs::message::MessageWriter, prelude::*, window::WindowResolution};
-use bevy_perf_ui::{entries::PerfUiAllEntries, ui::root::PerfUiRoot};
+use bevy::{
+    asset::AssetMetaCheck, ecs::message::MessageWriter, prelude::*, window::WindowResolution,
+};
 #[cfg(all(debug_assertions, not(target_arch = "wasm32")))]
 use bevy_perf_ui::PerfUiSet;
+use bevy_perf_ui::{entries::PerfUiAllEntries, ui::root::PerfUiRoot};
 use key::KeyPlugin;
 
 use crate::{
@@ -24,9 +26,9 @@ use crate::{
     collisions::CollisionsPlugin,
     coregame::{plugins::CoreGamePlugins, state::AppState},
     elements::plugins::ElementsPlugins,
-    messages::{NoMoreStoryMessages, StoryMessages},
     external_plugins::ExternalPlugins,
     life::LifePlugin,
+    messages::{NoMoreStoryMessages, StoryMessages},
     music::MusicPlugin,
     player::PlayerPlugin,
 };
@@ -92,10 +94,7 @@ fn main() {
     .add_message::<NoMoreStoryMessages>();
 
     #[cfg(all(debug_assertions, not(target_arch = "wasm32")))]
-    app.add_systems(
-        Update,
-        toggle_perf_ui.before(PerfUiSet::Setup),
-    );
+    app.add_systems(Update, toggle_perf_ui.before(PerfUiSet::Setup));
 
     app.run();
 }

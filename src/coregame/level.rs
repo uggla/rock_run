@@ -17,11 +17,11 @@ use crate::{
         localization::{convert_to_fluent_args, get_translation},
         state::AppState,
     },
-    messages::{NextLevel, PositionSensorCollisionStart, PositionSensorCollisionStop, Restart},
     helpers::{
         self,
         tiled::{TiledMap, TiledMapHandle, TilesetLayerToStorageEntity},
     },
+    messages::{NextLevel, PositionSensorCollisionStart, PositionSensorCollisionStop, Restart},
     player,
 };
 

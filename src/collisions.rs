@@ -29,13 +29,13 @@ use crate::{
         story::{UserSelection, compose_selection_msg},
         volcano::Fireball,
     },
+    key::Key,
+    life::ExtraLife,
     messages::{
         ExtraLifeCollision, Hit, KeyCollision, LadderCollisionStart, LadderCollisionStop,
         LifeEvent, MovingPlatformCollision, NutCollision, PositionSensorCollisionStart,
         PositionSensorCollisionStop, Restart, StoryMessages, TriceratopsCollision,
     },
-    key::Key,
-    life::ExtraLife,
     player::{self, PLAYER_HEIGHT, Player, PlayerState},
 };
 

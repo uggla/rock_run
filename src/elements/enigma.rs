@@ -14,9 +14,9 @@ use crate::{
         rock::{ROCK_DIAMETER, ROCK_SCALE_FACTOR},
         story::{TextSyllableValues, decompose_selection_msg},
     },
-    messages::{EnigmaResult, NoMoreStoryMessages},
     helpers::texture::cycle_texture,
     key::{KEY_HEIGHT, KEY_SCALE_FACTOR, KEY_WIDTH, Key, Keys},
+    messages::{EnigmaResult, NoMoreStoryMessages},
 };
 use bevy::{
     audio::{PlaybackMode, Volume},

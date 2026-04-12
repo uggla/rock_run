@@ -20,8 +20,8 @@ use crate::{
         level::{CurrentLevel, Level},
         state::AppState,
     },
-    messages::{EnigmaResult, NextLevel, NutCollision, StartGame},
     helpers::texture::cycle_texture,
+    messages::{EnigmaResult, NextLevel, NutCollision, StartGame},
 };
 
 const SQUIREL_SPEED: f32 = 500.0;

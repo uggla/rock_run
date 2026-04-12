@@ -1,6 +1,9 @@
 use std::time::Duration;
 
-use bevy::{ecs::message::{MessageReader, MessageWriter}, prelude::*};
+use bevy::{
+    ecs::message::{MessageReader, MessageWriter},
+    prelude::*,
+};
 use bevy_rapier2d::{
     dynamics::{Ccd, ExternalImpulse, GravityScale, RigidBody, Velocity},
     geometry::{ActiveCollisionTypes, Collider},

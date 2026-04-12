@@ -11,8 +11,8 @@ use crate::{
         level::{CurrentLevel, Level},
         state::AppState,
     },
-    messages::TriceratopsCollision,
     helpers::texture::cycle_texture,
+    messages::TriceratopsCollision,
 };
 
 const TRICERATOPS_SPEED: f32 = 300.0;
