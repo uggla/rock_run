@@ -541,6 +541,7 @@ fn move_player(
         let vertical_translation = if riding_platform
             || on_moving_platform
             || !player_controller_output.is_some_and(|output| output.grounded)
+            || player_controller_output.is_some_and(|output| output.is_sliding_down_slope)
         {
             -PLAYER_SPEED * time.delta_secs()
         } else {
