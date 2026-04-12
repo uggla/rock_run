@@ -8,7 +8,7 @@ edition = "2024"
 
 [dependencies]
 bevy = { version = "0.18.1", features = ["jpeg"] }
-bevy_asset_loader = { version = "0.25.0" }
+bevy_asset_loader = { version = "0.26.0" }
 bevy_ecs_tilemap = { version = "0.18.1" }
 bevy_fluent = "0.14.0"
 bevy_pkv = "0.15.0"
