@@ -1,10 +1,6 @@
 use std::f32::consts::PI;
 
-use bevy::{
-    ecs::message::{MessageReader, MessageWriter},
-    platform::collections::HashMap,
-    prelude::*,
-};
+use bevy::{ecs::message::MessageReader, platform::collections::HashMap, prelude::*};
 use bevy_rapier2d::{
     control::KinematicCharacterController, dynamics::RigidBody, geometry::Collider,
     pipeline::QueryFilterFlags,
@@ -16,8 +12,8 @@ use crate::{
         level::{CurrentLevel, Level},
         state::AppState,
     },
-    messages::{MovingPlatformCollision, MovingPlatformDescending},
-    player::{PlayerSet, PlayerState},
+    messages::MovingPlatformCollision,
+    player::PlayerSet,
 };
 
 const MOVING_PLATFORM_SCALE_FACTOR: f32 = 1.0;
@@ -29,6 +25,9 @@ pub struct MovingPlatform {
     pub start_pos: Vec2,
     pub movement: MovingPlatformMovement,
 }
+
+#[derive(Component, Default, Deref, DerefMut)]
+pub struct PlatformDelta(pub Vec2);
 
 #[allow(dead_code)]
 #[derive(Debug, PartialEq, Clone, Copy)]
@@ -85,8 +84,7 @@ impl Plugin for MovingPlatformPlugin {
                 (move_moving_platform)
                     .before(PlayerSet)
                     .run_if(in_state(AppState::GameRunning)),
-            )
-            .add_message::<MovingPlatformDescending>();
+            );
     }
 }
 
@@ -213,6 +211,7 @@ fn setup_moving_platforms(
                 filter_flags: QueryFilterFlags::ONLY_KINEMATIC,
                 ..default()
             },
+            PlatformDelta::default(),
             moving_platform.clone(),
         ));
     }
@@ -221,14 +220,21 @@ fn setup_moving_platforms(
 #[allow(clippy::too_many_arguments)]
 fn move_moving_platform(
     time: Res<Time>,
-    state: Res<State<PlayerState>>,
-    mut moving_platform_query: Query<(Entity, &mut Transform, &mut MovingPlatform)>,
+    mut moving_platform_query: Query<(
+        Entity,
+        &mut Transform,
+        &mut MovingPlatform,
+        &mut PlatformDelta,
+    )>,
     mut moving_platform_collision: MessageReader<MovingPlatformCollision>,
-    mut moving_platform_descending: MessageWriter<MovingPlatformDescending>,
 ) {
     let player_on_platform_events = moving_platform_collision.read().collect::<Vec<_>>();
-    for (moving_platform_entity, mut moving_platform_pos, mut moving_platform) in
-        moving_platform_query.iter_mut()
+    for (
+        moving_platform_entity,
+        mut moving_platform_pos,
+        mut moving_platform,
+        mut platform_delta,
+    ) in moving_platform_query.iter_mut()
     {
         let (translation_x, translation_y) = match moving_platform.movement {
             MovingPlatformMovement::LeftRight(ref mut right_left_data) => {
@@ -298,18 +304,15 @@ fn move_moving_platform(
             },
         };
 
-        moving_platform_pos.translation += Vec2::new(translation_x, translation_y).extend(0.0);
+        let delta = Vec2::new(translation_x, translation_y);
+        **platform_delta = delta;
+        moving_platform_pos.translation += delta.extend(0.0);
 
         if let Some(current_platform) = player_on_platform_events
             .iter()
             .find(|e| e.entity == moving_platform_entity)
         {
             trace!("Player on moving platform {:?}", current_platform.entity);
-            if translation_y < 0.0 && state.get() == &PlayerState::Idling {
-                moving_platform_descending.write(MovingPlatformDescending {
-                    movement: Vec2::new(translation_x, translation_y),
-                });
-            }
         }
     }
 }

@@ -67,11 +67,6 @@ pub struct MovingPlatformCollision {
 }
 
 #[derive(Message)]
-pub struct MovingPlatformDescending {
-    pub movement: Vec2,
-}
-
-#[derive(Message)]
 pub struct SelectionChanged {
     pub movement: SelectionDirection,
 }
