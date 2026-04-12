@@ -50,13 +50,26 @@ struct AnimationTimer(Timer);
 #[derive(Component, Deref, DerefMut)]
 struct JumpTimer(Timer);
 
-#[derive(Default)]
-struct PlatformCarryState {
+#[derive(Component, Default)]
+struct PlayerPlatformCarry {
     entity: Option<Entity>,
     contact_frames_left: u8,
     horizontal_offset: f32,
     vertical_offset: f32,
 }
+
+#[derive(Component, Default)]
+struct PlayerLadderState {
+    touching_ladder: bool,
+    climb_nudge_right: bool,
+}
+
+type MovingPlatformQuery<'w, 's> = Query<
+    'w,
+    's,
+    (&'static Transform, &'static PlatformDelta),
+    (With<MovingPlatform>, Without<Player>),
+>;
 
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States)]
 pub enum PlayerState {
@@ -82,6 +95,49 @@ pub enum PlayerMovement {
 pub enum PlayerDirection {
     Left,
     Right,
+}
+
+#[derive(Debug, Clone, Copy)]
+struct PlayerIntent {
+    movement: PlayerMovement,
+    direction_x: f32,
+    direction_y: f32,
+    jump_requested: bool,
+}
+
+impl Default for PlayerIntent {
+    fn default() -> Self {
+        Self {
+            movement: PlayerMovement::Idle,
+            direction_x: 0.0,
+            direction_y: 0.0,
+            jump_requested: false,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, Default)]
+struct PlayerMotion {
+    controller_translation: Vec2,
+    grounded_preview: bool,
+    riding_platform: bool,
+}
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+enum PlayerVisualState {
+    Idle,
+    Run,
+    Jump,
+    Fall,
+    Climb,
+    ClimbIdle,
+    Hit,
+}
+
+struct PlayerMotionContext<'a, 'w, 's> {
+    controller_output: Option<&'a KinematicCharacterControllerOutput>,
+    moving_platforms: &'a MovingPlatformQuery<'w, 's>,
+    time: &'a Time,
 }
 
 pub struct PlayerPlugin;
@@ -233,6 +289,8 @@ fn spawn_player(
         },
         Ccd::enabled(),
         Player,
+        PlayerLadderState::default(),
+        PlayerPlatformCarry::default(),
         PlayerAudio {
             jump_sound: rock_run_assets.jump_sound.clone(),
             hit_sound: rock_run_assets.hit_sound.clone(),
@@ -264,11 +322,13 @@ fn move_player(
             &mut KinematicCharacterController,
             Option<&KinematicCharacterControllerOutput>,
             &mut JumpTimer,
+            &mut PlayerLadderState,
+            &mut PlayerPlatformCarry,
             &PlayerAudio,
         ),
         (With<Player>, Without<MovingPlatform>),
     >,
-    moving_platforms: Query<(&Transform, &PlatformDelta), (With<MovingPlatform>, Without<Player>)>,
+    moving_platforms: MovingPlatformQuery,
     mut animation_query: Query<(&mut AnimationTimer, &mut Sprite)>,
     state: Res<State<PlayerState>>,
     mut next_state: ResMut<NextState<PlayerState>>,
@@ -277,9 +337,6 @@ fn move_player(
     mut ladder_collision_stop: MessageReader<LadderCollisionStop>,
     restart_event: MessageReader<Restart>,
     mut game_event: MessageReader<StartGame>,
-    mut ladder_collision: Local<bool>,
-    mut toggle: Local<bool>,
-    mut platform_carry: Local<PlatformCarryState>,
 ) -> Result<()> {
     let (
         mut player_collider,
@@ -287,6 +344,8 @@ fn move_player(
         mut player_controller,
         player_controller_output,
         mut jump_timer,
+        mut ladder_state,
+        mut platform_carry,
         player_audio,
     ) = player_query.single_mut()?;
 
@@ -295,10 +354,8 @@ fn move_player(
 
     // Handle hit state — early return
     if *state.get() == PlayerState::Hit {
-        let _ = animate_player(
-            PlayerMovement::Hit,
-            state.get(),
-            false,
+        let _ = animate_player_visual(
+            PlayerVisualState::Hit,
             false,
             &time,
             &mut animation_query,
@@ -308,160 +365,163 @@ fn move_player(
         return Ok(());
     }
 
-    // Handle reset events
     if !restart_event.is_empty() {
-        *ladder_collision = false;
-        *toggle = false;
-        *platform_carry = PlatformCarryState::default();
+        reset_player_runtime_state(&mut ladder_state, &mut platform_carry);
     }
 
     if !game_event.is_empty() {
         game_event.clear();
-        *ladder_collision = false;
-        *toggle = false;
-        *platform_carry = PlatformCarryState::default();
+        reset_player_runtime_state(&mut ladder_state, &mut platform_carry);
         next_state.set(PlayerState::Falling);
     }
 
-    // Update ladder collision state
-    if !ladder_collision_start.is_empty() {
-        *ladder_collision = true;
-        ladder_collision_start.clear();
-    }
+    update_ladder_state(
+        &mut ladder_state,
+        &mut ladder_collision_start,
+        &mut ladder_collision_stop,
+        &mut next_state,
+    );
 
-    if !ladder_collision_stop.is_empty() {
-        *ladder_collision = false;
-        ladder_collision_stop.clear();
-        next_state.set(PlayerState::Falling);
-    }
+    let intent = read_player_intent(input_state, ladder_state.touching_ladder);
 
-    let riding_platform_preview = platform_carry.contact_frames_left > 0;
-    let grounded_preview =
-        player_controller_output.is_some_and(|output| output.grounded) || riding_platform_preview;
+    handle_jump_request(
+        intent,
+        state.get(),
+        &mut next_state,
+        &mut jump_timer,
+        player_audio,
+        &mut commands,
+    );
 
-    // Read input
-    let mut direction_x = 0.0;
-    let mut direction_y = 0.0;
-    let mut current_movement = PlayerMovement::Idle;
-
-    if input_state.pressed(&PlayerMovement::Run(PlayerDirection::Left)) {
-        direction_x = -1.0;
-        current_movement = PlayerMovement::Run(PlayerDirection::Left);
-    }
-
-    if input_state.pressed(&PlayerMovement::Run(PlayerDirection::Right)) {
-        direction_x = 1.0;
-        current_movement = PlayerMovement::Run(PlayerDirection::Right);
-    }
-
-    if input_state.just_pressed(&PlayerMovement::Jump)
-        && !(state.get() == &PlayerState::Jumping || state.get() == &PlayerState::Falling)
+    if matches!(
+        intent.movement,
+        PlayerMovement::Climb | PlayerMovement::Crouch
+    ) && ladder_state.touching_ladder
     {
-        next_state.set(PlayerState::Jumping);
-        jump_timer.reset();
-        commands.spawn((
-            AudioPlayer::new(player_audio.jump_sound.clone()),
-            PlaybackSettings {
-                mode: PlaybackMode::Despawn,
-                ..default()
-            },
-        ));
-        current_movement = PlayerMovement::Jump;
-    }
-
-    if input_state.pressed(&PlayerMovement::Climb) && *ladder_collision {
         next_state.set(PlayerState::Climbing);
-        direction_y = 1.0;
-        current_movement = PlayerMovement::Climb;
-    }
-
-    if input_state.pressed(&PlayerMovement::Crouch) && *ladder_collision {
-        next_state.set(PlayerState::Climbing);
-        direction_y = -1.0;
-        current_movement = PlayerMovement::Crouch;
     }
 
     // Update facing direction and collider
-    update_player_direction(direction_x, &mut animation_query, &mut player_collider)?;
+    update_player_direction(
+        intent.direction_x,
+        &mut animation_query,
+        &mut player_collider,
+    )?;
 
-    // Animate
-    let _ = animate_player(
-        current_movement,
+    let motion = compute_player_motion(
         state.get(),
-        grounded_preview,
-        riding_platform_preview,
+        intent,
+        &mut player_pos,
+        &mut jump_timer,
+        &mut ladder_state,
+        &mut platform_carry,
+        PlayerMotionContext {
+            controller_output: player_controller_output,
+            moving_platforms: &moving_platforms,
+            time: &time,
+        },
+    );
+
+    sync_player_state(
+        state.get(),
+        motion,
+        jump_timer.just_finished(),
+        &mut next_state,
+    );
+
+    let visual_state = compute_player_visual_state(state.get(), intent, motion);
+    let _ = animate_player_visual(
+        visual_state,
+        motion.riding_platform,
         &time,
         &mut animation_query,
         &mut index_direction,
     );
-
-    // Apply physics
-    if state.get() == &PlayerState::Jumping {
-        if jump_timer.just_finished() {
-            next_state.set(PlayerState::Falling);
-        } else {
-            player_controller.translation = Some(Vec2::new(
-                direction_x * PLAYER_SPEED * time.delta_secs(),
-                PLAYER_SPEED * time.delta_secs(),
-            ));
-        }
-    } else if *ladder_collision && state.get() == &PlayerState::Climbing {
-        // If the player is stationary, beasts are blocked by the player's
-        // hitbox and collision is not detected. Therefore, initiate a slight,
-        // imperceptible movement to trigger the collision.
-        if direction_x == 0.0 && direction_y == 0.0 {
-            if *toggle {
-                player_controller.translation = Some(Vec2::new(0.1 * time.delta_secs(), 0.0));
-                *toggle = false;
-            } else {
-                player_controller.translation = Some(Vec2::new(-0.1 * time.delta_secs(), 0.0));
-                *toggle = true;
-            }
-        } else {
-            player_controller.translation = Some(Vec2::new(
-                direction_x * PLAYER_SPEED * time.delta_secs(),
-                direction_y * PLAYER_SPEED * time.delta_secs(),
-            ));
-        }
-    } else {
-        let (riding_platform, platform_movement) = update_platform_carry(
-            &mut platform_carry,
-            &mut player_pos,
-            player_controller_output,
-            &moving_platforms,
-            direction_x,
-            &time,
-        );
-        let on_moving_platform = platform_movement != Vec2::ZERO;
-
-        let vertical_translation = if riding_platform
-            || on_moving_platform
-            || !player_controller_output.is_some_and(|output| output.grounded)
-            || player_controller_output.is_some_and(|output| output.is_sliding_down_slope)
-        {
-            -PLAYER_SPEED * time.delta_secs()
-        } else {
-            0.0
-        };
-
-        if (player_controller_output.is_some_and(|output| output.grounded) || riding_platform)
-            && state.get() == &PlayerState::Falling
-        {
-            next_state.set(PlayerState::Idling);
-        }
-
-        // Normal movement, if the player is on a moving platform following line will not move the
-        // player but is required to detect collisions
-        player_controller.translation = Some(Vec2::new(
-            if on_moving_platform {
-                0.0
-            } else {
-                direction_x * PLAYER_SPEED * time.delta_secs()
-            },
-            vertical_translation,
-        ));
-    }
+    apply_player_motion(&mut player_controller, motion);
     Ok(())
+}
+
+fn reset_player_runtime_state(
+    ladder_state: &mut PlayerLadderState,
+    platform_carry: &mut PlayerPlatformCarry,
+) {
+    *ladder_state = PlayerLadderState::default();
+    *platform_carry = PlayerPlatformCarry::default();
+}
+
+fn update_ladder_state(
+    ladder_state: &mut PlayerLadderState,
+    ladder_collision_start: &mut MessageReader<LadderCollisionStart>,
+    ladder_collision_stop: &mut MessageReader<LadderCollisionStop>,
+    next_state: &mut ResMut<NextState<PlayerState>>,
+) {
+    if !ladder_collision_start.is_empty() {
+        ladder_state.touching_ladder = true;
+        ladder_collision_start.clear();
+    }
+
+    if !ladder_collision_stop.is_empty() {
+        ladder_state.touching_ladder = false;
+        ladder_collision_stop.clear();
+        next_state.set(PlayerState::Falling);
+    }
+}
+
+fn handle_jump_request(
+    intent: PlayerIntent,
+    state: &PlayerState,
+    next_state: &mut ResMut<NextState<PlayerState>>,
+    jump_timer: &mut JumpTimer,
+    player_audio: &PlayerAudio,
+    commands: &mut Commands,
+) {
+    if !intent.jump_requested || matches!(state, PlayerState::Jumping | PlayerState::Falling) {
+        return;
+    }
+
+    next_state.set(PlayerState::Jumping);
+    jump_timer.reset();
+    commands.spawn((
+        AudioPlayer::new(player_audio.jump_sound.clone()),
+        PlaybackSettings {
+            mode: PlaybackMode::Despawn,
+            ..default()
+        },
+    ));
+}
+
+fn read_player_intent(
+    input_state: &ActionState<PlayerMovement>,
+    touching_ladder: bool,
+) -> PlayerIntent {
+    let mut intent = PlayerIntent::default();
+
+    if input_state.pressed(&PlayerMovement::Run(PlayerDirection::Left)) {
+        intent.direction_x = -1.0;
+        intent.movement = PlayerMovement::Run(PlayerDirection::Left);
+    }
+
+    if input_state.pressed(&PlayerMovement::Run(PlayerDirection::Right)) {
+        intent.direction_x = 1.0;
+        intent.movement = PlayerMovement::Run(PlayerDirection::Right);
+    }
+
+    if input_state.just_pressed(&PlayerMovement::Jump) {
+        intent.jump_requested = true;
+        intent.movement = PlayerMovement::Jump;
+    }
+
+    if touching_ladder && input_state.pressed(&PlayerMovement::Climb) {
+        intent.direction_y = 1.0;
+        intent.movement = PlayerMovement::Climb;
+    }
+
+    if touching_ladder && input_state.pressed(&PlayerMovement::Crouch) {
+        intent.direction_y = -1.0;
+        intent.movement = PlayerMovement::Crouch;
+    }
+
+    intent
 }
 
 fn update_player_direction(
@@ -485,79 +545,192 @@ fn update_player_direction(
     Ok(())
 }
 
-fn animate_player(
-    movement: PlayerMovement,
+fn compute_player_motion(
     state: &PlayerState,
-    grounded: bool,
+    intent: PlayerIntent,
+    player_pos: &mut Transform,
+    jump_timer: &mut JumpTimer,
+    ladder_state: &mut PlayerLadderState,
+    platform_carry: &mut PlayerPlatformCarry,
+    context: PlayerMotionContext,
+) -> PlayerMotion {
+    let PlayerMotionContext {
+        controller_output,
+        moving_platforms,
+        time,
+    } = context;
+
+    if state == &PlayerState::Jumping {
+        if jump_timer.just_finished() {
+            return PlayerMotion {
+                controller_translation: Vec2::ZERO,
+                grounded_preview: false,
+                riding_platform: false,
+            };
+        }
+
+        return PlayerMotion {
+            controller_translation: Vec2::new(
+                intent.direction_x * PLAYER_SPEED * time.delta_secs(),
+                PLAYER_SPEED * time.delta_secs(),
+            ),
+            grounded_preview: false,
+            riding_platform: false,
+        };
+    }
+
+    if ladder_state.touching_ladder && state == &PlayerState::Climbing {
+        let controller_translation = if intent.direction_x == 0.0 && intent.direction_y == 0.0 {
+            let direction = if ladder_state.climb_nudge_right {
+                0.1
+            } else {
+                -0.1
+            };
+            ladder_state.climb_nudge_right = !ladder_state.climb_nudge_right;
+            Vec2::new(direction * time.delta_secs(), 0.0)
+        } else {
+            Vec2::new(
+                intent.direction_x * PLAYER_SPEED * time.delta_secs(),
+                intent.direction_y * PLAYER_SPEED * time.delta_secs(),
+            )
+        };
+
+        return PlayerMotion {
+            controller_translation,
+            grounded_preview: false,
+            riding_platform: false,
+        };
+    }
+
+    let (riding_platform, platform_movement) = update_platform_carry(
+        platform_carry,
+        player_pos,
+        controller_output,
+        moving_platforms,
+        intent.direction_x,
+        time,
+    );
+    let on_moving_platform = platform_movement != Vec2::ZERO;
+    let grounded = controller_output.is_some_and(|output| output.grounded);
+    let grounded_preview = grounded || riding_platform;
+
+    let vertical_translation = if riding_platform
+        || on_moving_platform
+        || !grounded
+        || controller_output.is_some_and(|output| output.is_sliding_down_slope)
+    {
+        -PLAYER_SPEED * time.delta_secs()
+    } else {
+        0.0
+    };
+
+    let horizontal_translation = if on_moving_platform {
+        0.0
+    } else {
+        intent.direction_x * PLAYER_SPEED * time.delta_secs()
+    };
+
+    PlayerMotion {
+        controller_translation: Vec2::new(horizontal_translation, vertical_translation),
+        grounded_preview,
+        riding_platform,
+    }
+}
+
+fn compute_player_visual_state(
+    state: &PlayerState,
+    intent: PlayerIntent,
+    motion: PlayerMotion,
+) -> PlayerVisualState {
+    match state {
+        PlayerState::Hit => PlayerVisualState::Hit,
+        PlayerState::Jumping => PlayerVisualState::Jump,
+        PlayerState::Falling if !motion.grounded_preview => PlayerVisualState::Fall,
+        PlayerState::Climbing => {
+            if intent.direction_y == 0.0 {
+                PlayerVisualState::ClimbIdle
+            } else {
+                PlayerVisualState::Climb
+            }
+        }
+        _ => match intent.movement {
+            PlayerMovement::Run(_) => PlayerVisualState::Run,
+            PlayerMovement::Jump => PlayerVisualState::Jump,
+            PlayerMovement::Climb | PlayerMovement::Crouch => PlayerVisualState::Climb,
+            _ => PlayerVisualState::Idle,
+        },
+    }
+}
+
+fn apply_player_motion(player_controller: &mut KinematicCharacterController, motion: PlayerMotion) {
+    player_controller.translation = Some(motion.controller_translation);
+}
+
+fn sync_player_state(
+    state: &PlayerState,
+    motion: PlayerMotion,
+    jump_finished: bool,
+    next_state: &mut ResMut<NextState<PlayerState>>,
+) {
+    if state == &PlayerState::Jumping && jump_finished {
+        next_state.set(PlayerState::Falling);
+    }
+
+    if motion.grounded_preview && state == &PlayerState::Falling {
+        next_state.set(PlayerState::Idling);
+    }
+}
+
+fn animate_player_visual(
+    visual_state: PlayerVisualState,
     riding_platform: bool,
     time: &Time,
     animation_query: &mut Query<(&mut AnimationTimer, &mut Sprite)>,
     index_direction: &mut Local<IndexDirection>,
 ) -> Result<()> {
-    match movement {
-        PlayerMovement::Run(_) => {
+    match visual_state {
+        PlayerVisualState::Run => {
             let (mut anim_timer, mut sprite) = animation_query.single_mut()?;
             anim_timer.tick(time.delta());
-            if anim_timer.just_finished() {
-                match state {
-                    PlayerState::Jumping => {}
-                    PlayerState::Falling if !grounded => {
-                        if let Some(texture) = &mut sprite.texture_atlas {
-                            cycle_texture(texture, 14..=16);
-                        }
-                    }
-                    PlayerState::Climbing => {
-                        if let Some(texture) = &mut sprite.texture_atlas {
-                            cycle_texture(texture, 33..=36);
-                        }
-                    }
-                    _ => {
-                        if let Some(texture) = &mut sprite.texture_atlas {
-                            if riding_platform {
-                                texture.index = 6;
-                            } else {
-                                cycle_texture(texture, 6..=10);
-                            }
-                        }
-                    }
+            if anim_timer.just_finished()
+                && let Some(texture) = &mut sprite.texture_atlas
+            {
+                if riding_platform {
+                    texture.index = 6;
+                } else {
+                    cycle_texture(texture, 6..=10);
                 }
             }
         }
-        PlayerMovement::Idle => {
+        PlayerVisualState::Idle => {
             let (mut anim_timer, mut sprite) = animation_query.single_mut()?;
             anim_timer.tick(time.delta());
-            if anim_timer.just_finished() {
-                match state {
-                    PlayerState::Jumping => {}
-                    PlayerState::Climbing => {
-                        if let Some(texture) = &mut sprite.texture_atlas {
-                            texture.index = 34;
-                        }
-                    }
-                    PlayerState::Falling if !grounded => {
-                        if let Some(texture) = &mut sprite.texture_atlas {
-                            cycle_texture(texture, 14..=16);
-                        }
-                    }
-                    _ => {
-                        if let Some(texture) = &mut sprite.texture_atlas {
-                            if riding_platform {
-                                texture.index = 0;
-                            } else {
-                                swing_texture(texture, 0..=4, index_direction);
-                            }
-                        }
-                    }
+            if anim_timer.just_finished()
+                && let Some(texture) = &mut sprite.texture_atlas
+            {
+                if riding_platform {
+                    texture.index = 0;
+                } else {
+                    swing_texture(texture, 0..=4, index_direction);
                 }
             }
         }
-        PlayerMovement::Jump => {
+        PlayerVisualState::Jump => {
             let (_, mut sprite) = animation_query.single_mut()?;
             if let Some(texture) = &mut sprite.texture_atlas {
                 texture.index = 11;
             }
         }
-        PlayerMovement::Climb | PlayerMovement::Crouch => {
+        PlayerVisualState::Fall => {
+            let (mut anim_timer, mut sprite) = animation_query.single_mut()?;
+            anim_timer.tick(time.delta());
+            if anim_timer.just_finished()
+                && let Some(texture) = &mut sprite.texture_atlas
+            {
+                cycle_texture(texture, 14..=16);
+            }
+        }
+        PlayerVisualState::Climb => {
             let (mut anim_timer, mut sprite) = animation_query.single_mut()?;
             anim_timer.tick(time.delta());
             if anim_timer.just_finished()
@@ -566,7 +739,13 @@ fn animate_player(
                 cycle_texture(texture, 33..=36);
             }
         }
-        PlayerMovement::Hit => {
+        PlayerVisualState::ClimbIdle => {
+            let (_, mut sprite) = animation_query.single_mut()?;
+            if let Some(texture) = &mut sprite.texture_atlas {
+                texture.index = 34;
+            }
+        }
+        PlayerVisualState::Hit => {
             let (_, mut sprite) = animation_query.single_mut()?;
             if let Some(texture) = &mut sprite.texture_atlas {
                 texture.index = 26;
@@ -576,12 +755,27 @@ fn animate_player(
     Ok(())
 }
 
+/// Updates the player's moving-platform attachment state and applies the
+/// platform carry directly to the player's transform.
+///
+/// The function does three things:
+/// - detect which moving platform, if any, is currently supporting the player
+/// - preserve a short contact grace period to avoid dropping the player during
+///   direction changes or brief collision misses
+/// - keep the player's relative offset on the platform while still returning
+///   the platform delta used by the controller motion logic
+///
+/// Horizontal carry is applied by re-anchoring the player's `x` position to
+/// the platform plus the stored offset. Vertical carry is asymmetric on
+/// purpose: when the platform moves upward we snap to the saved offset to avoid
+/// visible gaps under the feet, and when it moves downward we apply the delta
+/// incrementally to reduce the risk of pushing the player into the platform.
 #[allow(clippy::type_complexity)]
 fn update_platform_carry(
-    platform_carry: &mut PlatformCarryState,
+    platform_carry: &mut PlayerPlatformCarry,
     player_pos: &mut Transform,
     player_controller_output: Option<&KinematicCharacterControllerOutput>,
-    moving_platforms: &Query<(&Transform, &PlatformDelta), (With<MovingPlatform>, Without<Player>)>,
+    moving_platforms: &MovingPlatformQuery,
     direction_x: f32,
     time: &Time,
 ) -> (bool, Vec2) {

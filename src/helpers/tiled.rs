@@ -367,11 +367,17 @@ pub fn process_loaded_maps(
                                 let texture_index = match tilemap_texture {
                                     TilemapTexture::Single(_) => layer_tile.id(),
                                     #[cfg(not(feature = "atlas"))]
-                                    TilemapTexture::Vector(_) =>
-                                        *tiled_map.tile_image_offsets.get(&(tileset_index, layer_tile.id()))
+                                    TilemapTexture::Vector(_) => *tiled_map
+                                        .tile_image_offsets
+                                        .get(&(tileset_index, layer_tile.id()))
                                         .expect("The offset into to image vector should have been saved during the initial load."),
-                                    #[cfg(not(feature = "atlas"))]
-                                    _ => unreachable!()
+                                    TilemapTexture::TextureContainer(_) => unreachable!(
+                                        "TextureContainer is not produced by the Tiled loader"
+                                    ),
+                                    #[cfg(feature = "atlas")]
+                                    TilemapTexture::Vector(_) => unreachable!(
+                                        "Vector textures are only expected without the atlas feature"
+                                    ),
                                 };
 
                                 let tile_pos = TilePos { x, y };
