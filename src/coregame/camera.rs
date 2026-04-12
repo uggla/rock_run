@@ -76,15 +76,29 @@ fn camera_follows_player(
     current_level: Res<CurrentLevel>,
     levels: Query<&Level, With<Level>>,
     mut offset: Local<Vec2>,
+    restart_event: MessageReader<Restart>,
     shake: Res<Shake>,
 ) -> Result<()> {
     let mut camera = camera_query.single_mut()?;
     let player = player_query.single()?;
 
+    if !restart_event.is_empty() {
+        *offset = Vec2::ZERO;
+    }
+
     levels
         .iter()
         .filter(|level| level.id == current_level.id)
         .for_each(|level| {
+            if !restart_event.is_empty() {
+                let camera_target = level
+                    .map
+                    .get_screen(player.translation.xy(), 0.0, 0.0)
+                    .map(|screen| screen.get_center())
+                    .unwrap_or(player.translation.xy());
+                camera.translation = camera_target.extend(0.0);
+            }
+
             let is_screen_above_exists = level
                 .map
                 .get_above_screen(camera.translation.xy())

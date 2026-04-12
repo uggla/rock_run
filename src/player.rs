@@ -100,6 +100,7 @@ impl Plugin for PlayerPlugin {
             .add_systems(
                 Update,
                 (move_player, check_out_of_screen, check_hit, restart_level)
+                    .chain()
                     .in_set(PlayerSet)
                     .after(CollisionSet)
                     .run_if(in_state(AppState::GameRunning)),
@@ -121,6 +122,24 @@ fn setup_player(
         .iter()
         .find(|level| level.id == current_level.id)
         .unwrap();
+
+    spawn_player(
+        &mut commands,
+        &rock_run_assets,
+        &mut texture_atlases,
+        level,
+        &start_position,
+    );
+}
+
+fn spawn_player(
+    commands: &mut Commands,
+    rock_run_assets: &Res<RockRunAssets>,
+    texture_atlases: &mut ResMut<Assets<TextureAtlasLayout>>,
+    level: &Level,
+    start_position: &StartPos,
+) {
+    info!("spawn_player");
 
     let texture = rock_run_assets.player.clone();
 
@@ -185,13 +204,7 @@ fn setup_player(
         },
     );
 
-    let start_position: Vec3 = match start_position.0 {
-        Some(position) => {
-            info!("Tiled start_position: {:?}", position);
-            level.map.tiled_to_bevy_coord(position).extend(20.0)
-        }
-        None => level.map.get_start_screen().get_center().extend(20.0) + PLAYER_START_OFFSET,
-    };
+    let start_position = player_start_translation(level, start_position);
 
     commands.spawn((
         Sprite {
@@ -228,6 +241,17 @@ fn setup_player(
     ));
 }
 
+fn player_start_translation(level: &Level, start_position: &StartPos) -> Vec3 {
+    match start_position.0 {
+        Some(position) => {
+            info!("Tiled start_position: {:?}", position);
+            level.map.tiled_to_bevy_coord(position).extend(20.0)
+        }
+        None => level.map.get_start_screen().get_center().extend(20.0) + PLAYER_START_OFFSET,
+    }
+}
+
+#[allow(clippy::type_complexity)]
 #[allow(clippy::too_many_arguments)]
 fn move_player(
     mut commands: Commands,
@@ -251,6 +275,7 @@ fn move_player(
     mut index_direction: Local<IndexDirection>,
     mut ladder_collision_start: MessageReader<LadderCollisionStart>,
     mut ladder_collision_stop: MessageReader<LadderCollisionStop>,
+    restart_event: MessageReader<Restart>,
     mut game_event: MessageReader<StartGame>,
     mut ladder_collision: Local<bool>,
     mut toggle: Local<bool>,
@@ -389,9 +414,17 @@ fn move_player(
         return Ok(());
     }
 
+    if !restart_event.is_empty() {
+        *ladder_collision = false;
+        *toggle = false;
+        *platform_carry = PlatformCarryState::default();
+    }
+
     if !game_event.is_empty() {
         game_event.clear();
         *ladder_collision = false;
+        *toggle = false;
+        *platform_carry = PlatformCarryState::default();
         next_state.set(PlayerState::Falling);
     }
 
@@ -635,11 +668,16 @@ fn check_hit(
     Ok(())
 }
 
+#[allow(clippy::too_many_arguments)]
 fn restart_level(
+    mut commands: Commands,
+    rock_run_assets: Res<RockRunAssets>,
+    mut texture_atlases: ResMut<Assets<TextureAtlasLayout>>,
     mut restart: MessageReader<Restart>,
     levels: Query<&Level, With<Level>>,
     current_level: Res<CurrentLevel>,
-    mut player_query: Query<&mut Transform, With<Player>>,
+    start_position: Res<StartPos>,
+    player_query: Query<Entity, With<Player>>,
     mut life_event: MessageWriter<LifeEvent>,
     mut next_state: ResMut<NextState<PlayerState>>,
     mut ladder_collision_stop: MessageWriter<LadderCollisionStop>,
@@ -655,12 +693,18 @@ fn restart_level(
         .find(|level| level.id == current_level.id)
         .unwrap();
 
-    let mut player = player_query.single_mut()?;
+    let player = player_query.single()?;
 
     life_event.write(LifeEvent::Lost);
     ladder_collision_stop.write(LadderCollisionStop);
-    player.translation =
-        level.map.get_start_screen().get_center().extend(20.00) + PLAYER_START_OFFSET;
+    commands.entity(player).despawn();
+    spawn_player(
+        &mut commands,
+        &rock_run_assets,
+        &mut texture_atlases,
+        level,
+        &start_position,
+    );
     next_state.set(PlayerState::Falling);
     Ok(())
 }
