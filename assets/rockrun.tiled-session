@@ -3,7 +3,7 @@
         "height": 4300,
         "width": 2
     },
-    "activeFile": "level03.tmx",
+    "activeFile": "level04.tmx",
     "expandedProjectPaths": [
         "."
     ],
@@ -14,17 +14,17 @@
         },
         "level01.tmx": {
             "expandedObjectLayers": [
-                4,
+                9,
                 5,
+                4,
                 8,
-                6,
-                9
+                6
             ],
-            "scale": 2,
-            "selectedLayer": 5,
+            "scale": 4,
+            "selectedLayer": 0,
             "viewCenter": {
-                "x": 6392.5,
-                "y": 572
+                "x": 6400,
+                "y": 360
             }
         },
         "level01.tmx#backgrounds": {
@@ -34,7 +34,7 @@
         },
         "level01.tmx#cloud-1": {
             "dynamicWrapping": false,
-            "scaleInDock": 0.25
+            "scaleInDock": 0.75
         },
         "level01.tmx#forest-1": {
             "scaleInDock": 0.33
@@ -56,7 +56,8 @@
             "scaleInDock": 1
         },
         "level01.tmx#sky-3": {
-            "scaleInDock": 0.25
+            "scaleInDock": 5.5,
+            "scaleInEditor": 2
         },
         "level01.tmx#tileset-1": {
             "dynamicWrapping": false,
@@ -73,18 +74,18 @@
         },
         "level02.tmx": {
             "expandedObjectLayers": [
-                8,
-                17,
-                3,
-                12,
                 10,
-                13
+                3,
+                17,
+                13,
+                8,
+                12
             ],
-            "scale": 0.0625,
-            "selectedLayer": 10,
+            "scale": 0.25,
+            "selectedLayer": 4,
             "viewCenter": {
-                "x": 6680,
-                "y": 816
+                "x": 5704,
+                "y": 1080
             }
         },
         "level02.tmx#cloud-1": {
@@ -134,14 +135,14 @@
         },
         "level03.tmx": {
             "expandedObjectLayers": [
-                8,
-                3
+                3,
+                8
             ],
-            "scale": 0.25,
+            "scale": 0.125,
             "selectedLayer": 3,
             "viewCenter": {
-                "x": 1850,
-                "y": 912
+                "x": 6400,
+                "y": 1080
             }
         },
         "level03.tmx#cloud-1": {
@@ -191,10 +192,10 @@
         },
         "level04.tmx": {
             "scale": 0.25,
-            "selectedLayer": 0,
+            "selectedLayer": 1,
             "viewCenter": {
-                "x": 3054,
-                "y": 500
+                "x": -682,
+                "y": 496
             }
         },
         "level04.tmx#grad-1": {
@@ -237,13 +238,15 @@
     "openFiles": [
         "level01.tmx",
         "level02.tmx",
-        "level03.tmx"
+        "level03.tmx",
+        "level04.tmx"
     ],
     "project": "rockrun.tiled-project",
     "recentFiles": [
         "level01.tmx",
         "level02.tmx",
         "level03.tmx",
+        "level04.tmx",
         "menu.tmx"
     ],
     "tileset.embedInMap": true,

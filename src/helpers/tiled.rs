@@ -56,6 +56,37 @@ pub struct TilesetLayerToStorageEntity {
 #[derive(Component, Default)]
 pub struct TiledMapHandle(pub Handle<TiledMap>);
 
+#[derive(Component, Debug, Clone, Copy)]
+pub struct TiledLayerParallax {
+    base_translation: Vec3,
+    factor: Vec2,
+    origin: Vec2,
+}
+
+impl TiledLayerParallax {
+    pub fn new(base_translation: Vec3, factor: Vec2) -> Self {
+        Self {
+            base_translation,
+            factor,
+            origin: Vec2::ZERO,
+        }
+    }
+
+    pub fn set_origin(&mut self, origin: Vec2) {
+        self.origin = origin;
+    }
+
+    pub fn translation_for_camera(&self, camera_translation: Vec2) -> Vec3 {
+        let camera_delta = camera_translation - self.origin;
+
+        Vec3::new(
+            self.base_translation.x + camera_delta.x * (1.0 - self.factor.x),
+            self.base_translation.y + camera_delta.y * (1.0 - self.factor.y),
+            self.base_translation.z,
+        )
+    }
+}
+
 impl TilesetLayerToStorageEntity {
     pub fn get_entities(&self) -> Vec<&Entity> {
         self.storage
@@ -338,6 +369,8 @@ pub fn process_loaded_maps(
 
                         let mut tile_storage = TileStorage::empty(map_size);
                         let layer_entity = commands.spawn_empty().id();
+                        let base_translation = Vec3::new(offset_x, -offset_y, layer_index as f32);
+                        let parallax_factor = Vec2::new(layer.parallax_x, layer.parallax_y);
 
                         for x in 0..map_size.x {
                             for y in 0..map_size.y {
@@ -399,19 +432,22 @@ pub fn process_loaded_maps(
                             }
                         }
 
-                        commands.entity(layer_entity).insert(TilemapBundle {
-                            grid_size,
-                            size: map_size,
-                            storage: tile_storage,
-                            texture: tilemap_texture.clone(),
-                            tile_size,
-                            spacing: tile_spacing,
-                            anchor: TilemapAnchor::Center,
-                            transform: Transform::from_xyz(offset_x, -offset_y, layer_index as f32),
-                            map_type,
-                            render_settings: *render_settings,
-                            ..Default::default()
-                        });
+                        commands
+                            .entity(layer_entity)
+                            .insert(TilemapBundle {
+                                grid_size,
+                                size: map_size,
+                                storage: tile_storage,
+                                texture: tilemap_texture.clone(),
+                                tile_size,
+                                spacing: tile_spacing,
+                                anchor: TilemapAnchor::Center,
+                                transform: Transform::from_translation(base_translation),
+                                map_type,
+                                render_settings: *render_settings,
+                                ..Default::default()
+                            })
+                            .insert(TiledLayerParallax::new(base_translation, parallax_factor));
 
                         layers_map.insert(layer_index as u32, layer_entity);
                     }

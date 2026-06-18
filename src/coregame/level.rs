@@ -14,12 +14,13 @@ use crate::{
     WINDOW_HEIGHT, WINDOW_WIDTH,
     assets::RockRunAssets,
     coregame::{
+        camera::CameraSet,
         localization::{convert_to_fluent_args, get_translation},
         state::AppState,
     },
     helpers::{
         self,
-        tiled::{TiledMap, TiledMapHandle, TilesetLayerToStorageEntity},
+        tiled::{TiledLayerParallax, TiledMap, TiledMapHandle, TilesetLayerToStorageEntity},
     },
     messages::{NextLevel, PositionSensorCollisionStart, PositionSensorCollisionStop, Restart},
     player,
@@ -86,7 +87,12 @@ impl Plugin for LevelPlugin {
             )
             .add_systems(
                 Update,
-                (check_exit, fade_display_level).run_if(in_state(AppState::GameRunning)),
+                (
+                    check_exit,
+                    fade_display_level,
+                    update_current_level_parallax.after(CameraSet),
+                )
+                    .run_if(in_state(AppState::GameRunning)),
             )
             .insert_resource(CurrentLevel { id: 1 })
             .add_message::<Restart>()
@@ -319,14 +325,17 @@ fn show_level_background(
     mut tile_query: Query<&mut TileVisible>,
     map_query: Query<(&Level, &TilesetLayerToStorageEntity), With<Level>>,
     tile_storage_query: Query<(Entity, &TileStorage)>,
+    mut parallax_query: Query<&mut TiledLayerParallax>,
 ) {
     debug!("show_level_background {:?}", current_level.id);
-    let mut tiles = get_tiles(map_query, current_level, tile_storage_query);
+    let mut tiles = get_tiles(&map_query, &current_level, &tile_storage_query);
 
     tiles.iter_mut().for_each(|tile| {
         let mut tile_visible = tile_query.get_mut(*tile).unwrap();
         tile_visible.0 = true;
     });
+
+    reset_current_level_parallax_origins(&map_query, &current_level, &mut parallax_query);
 }
 
 fn hide_level_background(
@@ -336,7 +345,7 @@ fn hide_level_background(
     tile_storage_query: Query<(Entity, &TileStorage)>,
 ) {
     debug!("hide_level_background {:?}", current_level.id);
-    let mut tiles = get_tiles(map_query, current_level, tile_storage_query);
+    let mut tiles = get_tiles(&map_query, &current_level, &tile_storage_query);
 
     tiles.iter_mut().for_each(|tile| {
         let mut tile_visible = tile_query.get_mut(*tile).unwrap();
@@ -345,9 +354,9 @@ fn hide_level_background(
 }
 
 fn get_tiles(
-    map_query: Query<(&Level, &TilesetLayerToStorageEntity), With<Level>>,
-    current_level: Res<CurrentLevel>,
-    tile_storage_query: Query<(Entity, &TileStorage), ()>,
+    map_query: &Query<(&Level, &TilesetLayerToStorageEntity), With<Level>>,
+    current_level: &Res<CurrentLevel>,
+    tile_storage_query: &Query<(Entity, &TileStorage), ()>,
 ) -> Vec<Entity> {
     map_query
         .iter()
@@ -359,6 +368,49 @@ fn get_tiles(
         .filter_map(|layer_entity| tile_storage_query.get(**layer_entity).ok())
         .flat_map(|(_, layer_tile_storage)| layer_tile_storage.iter().flatten().copied())
         .collect::<Vec<_>>()
+}
+
+fn reset_current_level_parallax_origins(
+    map_query: &Query<(&Level, &TilesetLayerToStorageEntity), With<Level>>,
+    current_level: &Res<CurrentLevel>,
+    parallax_query: &mut Query<&mut TiledLayerParallax>,
+) {
+    let Some((level, storage)) = map_query
+        .iter()
+        .find(|(level, _)| level.id == current_level.id)
+    else {
+        return;
+    };
+    let origin = level.map.get_start_screen().get_center();
+
+    for layer_entity in storage.get_entities() {
+        if let Ok(mut parallax) = parallax_query.get_mut(*layer_entity) {
+            parallax.set_origin(origin);
+        }
+    }
+}
+
+fn update_current_level_parallax(
+    camera_query: Query<&Transform, (With<Camera2d>, Without<TiledLayerParallax>)>,
+    current_level: Res<CurrentLevel>,
+    map_query: Query<(&Level, &TilesetLayerToStorageEntity), With<Level>>,
+    mut parallax_query: Query<(&mut Transform, &TiledLayerParallax)>,
+) -> Result<()> {
+    let camera_translation = camera_query.single()?.translation.xy();
+    let Some((_, storage)) = map_query
+        .iter()
+        .find(|(level, _)| level.id == current_level.id)
+    else {
+        return Ok(());
+    };
+
+    for layer_entity in storage.get_entities() {
+        if let Ok((mut transform, parallax)) = parallax_query.get_mut(*layer_entity) {
+            transform.translation = parallax.translation_for_camera(camera_translation);
+        }
+    }
+
+    Ok(())
 }
 
 fn check_exit(
