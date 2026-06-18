@@ -5,7 +5,7 @@ use bevy::{
     prelude::*,
     render::render_resource::AsBindGroup,
     shader::ShaderRef,
-    sprite_render::{Material2d, Material2dPlugin},
+    sprite_render::{AlphaMode2d, Material2d, Material2dPlugin},
 };
 use bevy_ecs_tilemap::tiles::{TileStorage, TileVisible};
 use bevy_fluent::{BundleAsset, Locale};
@@ -42,6 +42,9 @@ pub struct Level {
 
 #[derive(Component)]
 struct ShaderLevel;
+
+#[derive(Component)]
+struct CameraFollowShader;
 
 #[derive(Component)]
 struct DisplayLevel;
@@ -91,6 +94,7 @@ impl Plugin for LevelPlugin {
                     check_exit,
                     fade_display_level,
                     update_current_level_parallax.after(CameraSet),
+                    update_camera_follow_shaders.after(CameraSet),
                 )
                     .run_if(in_state(AppState::GameRunning)),
             )
@@ -98,7 +102,10 @@ impl Plugin for LevelPlugin {
             .add_message::<Restart>()
             .add_message::<NextLevel>();
 
-        app.add_plugins(Material2dPlugin::<MysteriousFogMaterial>::default());
+        app.add_plugins((
+            Material2dPlugin::<MysteriousFogMaterial>::default(),
+            Material2dPlugin::<SnowMaterial>::default(),
+        ));
     }
 }
 
@@ -174,6 +181,7 @@ fn show_level_shaders(
     levels: Query<&Level, With<Level>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut mysterious_fog: ResMut<Assets<MysteriousFogMaterial>>,
+    mut snow: ResMut<Assets<SnowMaterial>>,
 ) {
     info!("show level shaders for level {:?}", current_level.id);
 
@@ -184,6 +192,21 @@ fn show_level_shaders(
 
     #[allow(clippy::single_match)]
     match current_level.id {
+        3 => {
+            commands.spawn((
+                Mesh2d(meshes.add(Rectangle::default())),
+                MeshMaterial2d(snow.add(SnowMaterial {
+                    color: LinearRgba::from(color::palettes::css::WHITE),
+                })),
+                Transform {
+                    translation: level.map.get_start_screen().get_center().extend(9.5),
+                    scale: Vec3::new(WINDOW_WIDTH, WINDOW_HEIGHT, 1.0),
+                    ..default()
+                },
+                CameraFollowShader,
+                ShaderLevel,
+            ));
+        }
         4 => {
             commands.spawn((
                 Mesh2d(meshes.add(Rectangle::default())),
@@ -223,6 +246,22 @@ struct MysteriousFogMaterial {
 impl Material2d for MysteriousFogMaterial {
     fn fragment_shader() -> ShaderRef {
         "shaders/mysterious_fog_material.wgsl".into()
+    }
+}
+
+#[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
+struct SnowMaterial {
+    #[uniform(0)]
+    color: LinearRgba,
+}
+
+impl Material2d for SnowMaterial {
+    fn fragment_shader() -> ShaderRef {
+        "shaders/snow_material.wgsl".into()
+    }
+
+    fn alpha_mode(&self) -> AlphaMode2d {
+        AlphaMode2d::Blend
     }
 }
 
@@ -408,6 +447,20 @@ fn update_current_level_parallax(
         if let Ok((mut transform, parallax)) = parallax_query.get_mut(*layer_entity) {
             transform.translation = parallax.translation_for_camera(camera_translation);
         }
+    }
+
+    Ok(())
+}
+
+fn update_camera_follow_shaders(
+    camera_query: Query<&Transform, (With<Camera2d>, Without<CameraFollowShader>)>,
+    mut shader_query: Query<&mut Transform, With<CameraFollowShader>>,
+) -> Result<()> {
+    let camera_translation = camera_query.single()?.translation.xy();
+
+    for mut transform in shader_query.iter_mut() {
+        transform.translation.x = camera_translation.x;
+        transform.translation.y = camera_translation.y;
     }
 
     Ok(())
