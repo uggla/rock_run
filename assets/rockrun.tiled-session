@@ -14,17 +14,17 @@
         },
         "level01.tmx": {
             "expandedObjectLayers": [
-                9,
-                5,
-                4,
+                6,
                 8,
-                6
+                4,
+                5,
+                9
             ],
-            "scale": 4,
-            "selectedLayer": 0,
+            "scale": 1,
+            "selectedLayer": 5,
             "viewCenter": {
-                "x": 6400,
-                "y": 360
+                "x": 12505.5,
+                "y": 170
             }
         },
         "level01.tmx#backgrounds": {
@@ -75,17 +75,17 @@
         "level02.tmx": {
             "expandedObjectLayers": [
                 10,
-                3,
-                17,
-                13,
                 8,
-                12
+                13,
+                3,
+                12,
+                17
             ],
-            "scale": 0.25,
-            "selectedLayer": 4,
+            "scale": 0.0625,
+            "selectedLayer": 10,
             "viewCenter": {
-                "x": 5704,
-                "y": 1080
+                "x": 3480,
+                "y": -1328
             }
         },
         "level02.tmx#cloud-1": {
@@ -135,14 +135,14 @@
         },
         "level03.tmx": {
             "expandedObjectLayers": [
-                3,
-                8
+                8,
+                3
             ],
             "scale": 0.125,
-            "selectedLayer": 3,
+            "selectedLayer": 10,
             "viewCenter": {
-                "x": 6400,
-                "y": 1080
+                "x": 3140,
+                "y": 1472
             }
         },
         "level03.tmx#cloud-1": {
@@ -191,11 +191,11 @@
             "scaleInDock": 1
         },
         "level04.tmx": {
-            "scale": 0.25,
-            "selectedLayer": 1,
+            "scale": 0.75,
+            "selectedLayer": 3,
             "viewCenter": {
-                "x": -682,
-                "y": 496
+                "x": 5927.333333333333,
+                "y": 788
             }
         },
         "level04.tmx#grad-1": {

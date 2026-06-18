@@ -4,7 +4,7 @@ use bevy::{
     prelude::*,
 };
 use bevy_rapier2d::{
-    control::{KinematicCharacterController, KinematicCharacterControllerOutput},
+    control::{CharacterLength, KinematicCharacterController, KinematicCharacterControllerOutput},
     dynamics::RigidBody,
     geometry::Collider,
     prelude::Ccd,
@@ -31,6 +31,9 @@ pub const PLAYER_SPEED: f32 = 500.0;
 const ICE_ACCELERATION: f32 = 550.0;
 const ICE_DECELERATION: f32 = 450.0;
 const ICE_TURN_DECELERATION: f32 = 700.0;
+const PLAYER_CONTROLLER_OFFSET: f32 = 1.0;
+const PLAYER_CONTROLLER_GROUND_SNAP: f32 = 8.0;
+const PLAYER_SLIDE_NORMAL_X_THRESHOLD: f32 = 0.35;
 const PLAYER_SCALE_FACTOR: f32 = 1.0;
 pub const PLAYER_WIDTH: f32 = 100.0;
 pub const PLAYER_HEIGHT: f32 = 75.0;
@@ -70,6 +73,7 @@ struct PlayerLadderState {
 #[derive(Component, Default)]
 struct PlayerIceMotion {
     horizontal_velocity: f32,
+    had_ground_contact: bool,
 }
 
 type MovingPlatformQuery<'w, 's> = Query<
@@ -128,6 +132,9 @@ impl Default for PlayerIntent {
 struct PlayerMotion {
     controller_translation: Vec2,
     grounded_preview: bool,
+    ice_slope_contact: bool,
+    ice_ground_memory: bool,
+    steep_slope_contact: bool,
     riding_platform: bool,
     uses_ice_motion: bool,
 }
@@ -290,6 +297,8 @@ fn spawn_player(
         JumpTimer(Timer::from_seconds(0.250, TimerMode::Once)),
         Collider::capsule(PLAYER_HITBOX.0, PLAYER_HITBOX.1, PLAYER_HITBOX.2),
         KinematicCharacterController {
+            offset: CharacterLength::Absolute(PLAYER_CONTROLLER_OFFSET),
+            snap_to_ground: Some(CharacterLength::Absolute(PLAYER_CONTROLLER_GROUND_SNAP)),
             max_slope_climb_angle: 30.0f32.to_radians(),
             // Automatically slide down on slopes smaller than 30 degrees.
             min_slope_slide_angle: 30.0f32.to_radians(),
@@ -375,6 +384,7 @@ fn move_player(
             &mut index_direction,
         );
         ice_motion.horizontal_velocity = 0.0;
+        ice_motion.had_ground_contact = false;
         player_controller.translation = Some(Vec2::new(0.0, PLAYER_SPEED * time.delta_secs()));
         return Ok(());
     }
@@ -454,6 +464,15 @@ fn move_player(
         &mut index_direction,
     );
     apply_player_motion(&mut player_controller, motion);
+    debug_player_motion(
+        current_level.id,
+        state.get(),
+        intent,
+        motion,
+        &player_pos,
+        player_controller_output,
+        &ice_motion,
+    );
     Ok(())
 }
 
@@ -587,10 +606,14 @@ fn compute_player_motion(
 
     if state == &PlayerState::Jumping {
         ice_motion.horizontal_velocity = 0.0;
+        ice_motion.had_ground_contact = false;
         if jump_timer.just_finished() {
             return PlayerMotion {
                 controller_translation: Vec2::ZERO,
                 grounded_preview: false,
+                ice_slope_contact: false,
+                ice_ground_memory: false,
+                steep_slope_contact: false,
                 riding_platform: false,
                 uses_ice_motion: false,
             };
@@ -602,6 +625,9 @@ fn compute_player_motion(
                 PLAYER_SPEED * time.delta_secs(),
             ),
             grounded_preview: false,
+            ice_slope_contact: false,
+            ice_ground_memory: false,
+            steep_slope_contact: false,
             riding_platform: false,
             uses_ice_motion: false,
         };
@@ -609,6 +635,7 @@ fn compute_player_motion(
 
     if ladder_state.touching_ladder && state == &PlayerState::Climbing {
         ice_motion.horizontal_velocity = 0.0;
+        ice_motion.had_ground_contact = false;
         let controller_translation = if intent.direction_x == 0.0 && intent.direction_y == 0.0 {
             let direction = if ladder_state.climb_nudge_right {
                 0.1
@@ -627,6 +654,9 @@ fn compute_player_motion(
         return PlayerMotion {
             controller_translation,
             grounded_preview: false,
+            ice_slope_contact: false,
+            ice_ground_memory: false,
+            steep_slope_contact: false,
             riding_platform: false,
             uses_ice_motion: false,
         };
@@ -642,20 +672,23 @@ fn compute_player_motion(
     );
     let on_moving_platform = platform_movement != Vec2::ZERO;
     let grounded = controller_output.is_some_and(|output| output.grounded);
+    let sliding_down_slope = controller_output.is_some_and(|output| output.is_sliding_down_slope);
+    let steep_slope_contact = controller_output.is_some_and(has_steep_slope_contact);
+    let ice_motion_enabled = current_level_id == 3;
+    let ice_slope_contact = ice_motion_enabled && !grounded && sliding_down_slope;
+    let ice_ground_memory = ice_motion_enabled && ice_motion.had_ground_contact && !grounded;
+    let has_ice_contact = grounded || ice_slope_contact || ice_ground_memory;
     let grounded_preview = grounded || riding_platform;
 
-    let vertical_translation = if riding_platform
-        || on_moving_platform
-        || !grounded
-        || controller_output.is_some_and(|output| output.is_sliding_down_slope)
-    {
-        -PLAYER_SPEED * time.delta_secs()
-    } else {
-        0.0
-    };
+    let vertical_translation =
+        if riding_platform || on_moving_platform || !grounded || steep_slope_contact {
+            -PLAYER_SPEED * time.delta_secs()
+        } else {
+            0.0
+        };
 
     let use_ice_motion =
-        current_level_id == 3 && grounded && !riding_platform && !on_moving_platform;
+        ice_motion_enabled && has_ice_contact && !riding_platform && !on_moving_platform;
     let horizontal_translation = if on_moving_platform {
         ice_motion.horizontal_velocity = 0.0;
         0.0
@@ -667,13 +700,28 @@ fn compute_player_motion(
             use_ice_motion,
         )
     };
+    ice_motion.had_ground_contact = grounded || ice_slope_contact;
 
     PlayerMotion {
         controller_translation: Vec2::new(horizontal_translation, vertical_translation),
         grounded_preview,
+        ice_slope_contact,
+        ice_ground_memory,
+        steep_slope_contact,
         riding_platform,
         uses_ice_motion: use_ice_motion,
     }
+}
+
+fn has_steep_slope_contact(output: &KinematicCharacterControllerOutput) -> bool {
+    output.is_sliding_down_slope
+        && output.collisions.iter().any(|collision| {
+            collision
+                .hit
+                .details
+                .as_ref()
+                .is_some_and(|details| details.normal1.x.abs() >= PLAYER_SLIDE_NORMAL_X_THRESHOLD)
+        })
 }
 
 fn compute_horizontal_translation(
@@ -743,6 +791,59 @@ fn compute_player_visual_state(
 
 fn apply_player_motion(player_controller: &mut KinematicCharacterController, motion: PlayerMotion) {
     player_controller.translation = Some(motion.controller_translation);
+}
+
+fn debug_player_motion(
+    current_level_id: u8,
+    state: &PlayerState,
+    intent: PlayerIntent,
+    motion: PlayerMotion,
+    player_pos: &Transform,
+    player_controller_output: Option<&KinematicCharacterControllerOutput>,
+    ice_motion: &PlayerIceMotion,
+) {
+    if let Some(output) = player_controller_output {
+        debug!(
+            "player motion: level={} pos={:?} state={:?} input=({}, {}) jump={} ice_velocity={} command={:?} uses_ice={} grounded_preview={} ice_slope_contact={} ice_ground_memory={} steep_slope_contact={} riding_platform={} rapier_desired={:?} rapier_effective={:?} rapier_grounded={} rapier_slope={} collisions={:?}",
+            current_level_id,
+            player_pos.translation,
+            state,
+            intent.direction_x,
+            intent.direction_y,
+            intent.jump_requested,
+            ice_motion.horizontal_velocity,
+            motion.controller_translation,
+            motion.uses_ice_motion,
+            motion.grounded_preview,
+            motion.ice_slope_contact,
+            motion.ice_ground_memory,
+            motion.steep_slope_contact,
+            motion.riding_platform,
+            output.desired_translation,
+            output.effective_translation,
+            output.grounded,
+            output.is_sliding_down_slope,
+            output.collisions,
+        );
+    } else {
+        debug!(
+            "player motion: level={} pos={:?} state={:?} input=({}, {}) jump={} ice_velocity={} command={:?} uses_ice={} grounded_preview={} ice_slope_contact={} ice_ground_memory={} steep_slope_contact={} riding_platform={} rapier_output=None",
+            current_level_id,
+            player_pos.translation,
+            state,
+            intent.direction_x,
+            intent.direction_y,
+            intent.jump_requested,
+            ice_motion.horizontal_velocity,
+            motion.controller_translation,
+            motion.uses_ice_motion,
+            motion.grounded_preview,
+            motion.ice_slope_contact,
+            motion.ice_ground_memory,
+            motion.steep_slope_contact,
+            motion.riding_platform,
+        );
+    }
 }
 
 fn sync_player_state(
@@ -1089,6 +1190,7 @@ mod tests {
     fn direct_horizontal_translation_ignores_stored_ice_velocity() {
         let mut ice_motion = PlayerIceMotion {
             horizontal_velocity: 200.0,
+            had_ground_contact: false,
         };
         let translation = compute_horizontal_translation(&mut ice_motion, 1.0, 0.1, false);
 
@@ -1100,6 +1202,7 @@ mod tests {
     fn ice_translation_marks_ice_motion_as_active() {
         let mut ice_motion = PlayerIceMotion {
             horizontal_velocity: 130.0,
+            had_ground_contact: false,
         };
         let translation = compute_horizontal_translation(&mut ice_motion, -1.0, 0.1, true);
 
