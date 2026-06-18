@@ -38,6 +38,14 @@ pub struct Level {
     pub id: u8,
     pub handle: Handle<TiledMap>,
     pub map: Map,
+    pub player_movement_profile: PlayerMovementProfile,
+}
+
+#[derive(Debug, Clone, Copy, Default, Eq, PartialEq)]
+pub enum PlayerMovementProfile {
+    #[default]
+    Default,
+    Icy,
 }
 
 #[derive(Component)]
@@ -120,6 +128,7 @@ fn setup_background(mut commands: Commands, rock_run_assets: Res<RockRunAssets>)
             id: 1,
             handle: map_handle.clone(),
             map: Map::new("SOOOOOOOOO", WINDOW_WIDTH as usize, WINDOW_HEIGHT as usize),
+            player_movement_profile: PlayerMovementProfile::Default,
         },
     ));
 
@@ -137,6 +146,7 @@ fn setup_background(mut commands: Commands, rock_run_assets: Res<RockRunAssets>)
                 WINDOW_WIDTH as usize,
                 WINDOW_HEIGHT as usize,
             ),
+            player_movement_profile: PlayerMovementProfile::Default,
         },
     ));
 
@@ -154,6 +164,7 @@ fn setup_background(mut commands: Commands, rock_run_assets: Res<RockRunAssets>)
                 WINDOW_WIDTH as usize,
                 WINDOW_HEIGHT as usize,
             ),
+            player_movement_profile: PlayerMovementProfile::Icy,
         },
     ));
 
@@ -171,6 +182,7 @@ fn setup_background(mut commands: Commands, rock_run_assets: Res<RockRunAssets>)
                 WINDOW_WIDTH as usize,
                 WINDOW_HEIGHT as usize,
             ),
+            player_movement_profile: PlayerMovementProfile::Default,
         },
     ));
 }

@@ -18,7 +18,7 @@ use crate::{
     assets::RockRunAssets,
     collisions::CollisionSet,
     coregame::{
-        level::{CurrentLevel, Level},
+        level::{CurrentLevel, Level, PlayerMovementProfile},
         menu::StartPos,
         state::AppState,
     },
@@ -84,6 +84,19 @@ type MovingPlatformQuery<'w, 's> = Query<
     (With<MovingPlatform>, Without<Player>),
 >;
 
+impl PlayerMovementProfile {
+    fn uses_ice_motion(self) -> bool {
+        self == Self::Icy
+    }
+
+    fn slide_min_angle_degrees(self) -> f32 {
+        match self {
+            Self::Default => PLAYER_DEFAULT_SLIDE_MIN_ANGLE_DEGREES,
+            Self::Icy => PLAYER_ICE_SLIDE_MIN_ANGLE_DEGREES,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States)]
 pub enum PlayerState {
     Idling,
@@ -132,13 +145,95 @@ impl Default for PlayerIntent {
 #[derive(Debug, Clone, Copy, Default)]
 struct PlayerMotion {
     controller_translation: Vec2,
-    grounded_preview: bool,
-    ice_slope_contact: bool,
-    ice_ground_memory: bool,
-    ice_airborne: bool,
-    steep_slope_contact: bool,
-    riding_platform: bool,
+    contact: PlayerContact,
+    platform: PlayerPlatformMotion,
     uses_ice_motion: bool,
+}
+
+impl PlayerMotion {
+    fn new(controller_translation: Vec2) -> Self {
+        Self {
+            controller_translation,
+            ..default()
+        }
+    }
+
+    fn grounded_preview(&self) -> bool {
+        self.contact.grounded_preview
+    }
+
+    fn riding_platform(&self) -> bool {
+        self.platform.riding
+    }
+}
+
+#[derive(Debug, Clone, Copy, Default)]
+struct PlayerContact {
+    grounded_preview: bool,
+    ground: PlayerGroundContact,
+    steep_slope_contact: bool,
+}
+
+impl PlayerContact {
+    fn airborne() -> Self {
+        Self {
+            ground: PlayerGroundContact::Airborne,
+            ..default()
+        }
+    }
+
+    fn from_floor(grounded: bool, riding_platform: bool, steep_slope_contact: bool) -> Self {
+        Self {
+            grounded_preview: grounded || riding_platform,
+            ground: if grounded {
+                PlayerGroundContact::Grounded
+            } else {
+                PlayerGroundContact::Airborne
+            },
+            steep_slope_contact,
+        }
+    }
+
+    fn with_ice_ground(mut self, ice_ground: PlayerGroundContact) -> Self {
+        self.ground = ice_ground;
+        self
+    }
+
+    fn is_ice_slope(self) -> bool {
+        self.ground == PlayerGroundContact::IceSlope
+    }
+
+    fn is_ice_ground_memory(self) -> bool {
+        self.ground == PlayerGroundContact::IceGroundMemory
+    }
+
+    fn is_ice_airborne(self) -> bool {
+        self.ground == PlayerGroundContact::IceAirborneMomentum
+    }
+}
+
+#[derive(Debug, Clone, Copy, Default, Eq, PartialEq)]
+enum PlayerGroundContact {
+    /// No usable ground contact for horizontal movement.
+    #[default]
+    Airborne,
+    /// Rapier reports a stable ground contact.
+    Grounded,
+    /// The player is no longer grounded, but Rapier reports a slope slide.
+    /// On ice this still counts as a surface contact so inertia is preserved.
+    IceSlope,
+    /// Short-lived ice contact after losing ground, used to bridge frames where
+    /// Rapier misses contact while the player is still effectively on the slope.
+    IceGroundMemory,
+    /// No current ice contact, but the player keeps the last ice velocity while
+    /// airborne so landing after a jump does not kill momentum.
+    IceAirborneMomentum,
+}
+
+#[derive(Debug, Clone, Copy, Default)]
+struct PlayerPlatformMotion {
+    riding: bool,
+    moving: bool,
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
@@ -360,6 +455,7 @@ fn move_player(
     restart_event: MessageReader<Restart>,
     mut game_event: MessageReader<StartGame>,
     current_level: Res<CurrentLevel>,
+    levels: Query<&Level, With<Level>>,
 ) -> Result<()> {
     let (
         mut player_collider,
@@ -408,6 +504,7 @@ fn move_player(
         &mut next_state,
     );
 
+    let movement_profile = active_player_movement_profile(&levels, current_level.id);
     let intent = read_player_intent(input_state, ladder_state.touching_ladder);
 
     handle_jump_request(
@@ -435,7 +532,7 @@ fn move_player(
         &mut ladder_state,
         &mut platform_carry,
         &mut ice_motion,
-        current_level.id,
+        movement_profile,
         PlayerMotionContext {
             controller_output: player_controller_output,
             moving_platforms: &moving_platforms,
@@ -460,7 +557,7 @@ fn move_player(
     let visual_state = compute_player_visual_state(state.get(), intent, motion);
     let _ = animate_player_visual(
         visual_state,
-        motion.riding_platform,
+        motion.riding_platform(),
         &time,
         &mut animation_query,
         &mut index_direction,
@@ -476,6 +573,17 @@ fn move_player(
         &ice_motion,
     );
     Ok(())
+}
+
+fn active_player_movement_profile(
+    levels: &Query<&Level, With<Level>>,
+    current_level_id: u8,
+) -> PlayerMovementProfile {
+    levels
+        .iter()
+        .find(|level| level.id == current_level_id)
+        .map(|level| level.player_movement_profile)
+        .unwrap_or_default()
 }
 
 fn reset_player_runtime_state(
@@ -597,7 +705,7 @@ fn compute_player_motion(
     ladder_state: &mut PlayerLadderState,
     platform_carry: &mut PlayerPlatformCarry,
     ice_motion: &mut PlayerIceMotion,
-    current_level_id: u8,
+    movement_profile: PlayerMovementProfile,
     context: PlayerMotionContext,
 ) -> PlayerMotion {
     let PlayerMotionContext {
@@ -606,72 +714,90 @@ fn compute_player_motion(
         time,
     } = context;
 
-    if state == &PlayerState::Jumping {
-        let horizontal_translation = compute_jump_horizontal_translation(
-            ice_motion,
-            intent.direction_x,
-            time.delta_secs(),
-            current_level_id == 3,
-        );
-        ice_motion.had_ground_contact = false;
-        if jump_timer.just_finished() {
-            return PlayerMotion {
-                controller_translation: Vec2::ZERO,
-                grounded_preview: false,
-                ice_slope_contact: false,
-                ice_ground_memory: false,
-                ice_airborne: false,
-                steep_slope_contact: false,
-                riding_platform: false,
-                uses_ice_motion: false,
-            };
-        }
-
-        return PlayerMotion {
-            controller_translation: Vec2::new(
-                horizontal_translation,
-                PLAYER_SPEED * time.delta_secs(),
-            ),
-            grounded_preview: false,
-            ice_slope_contact: false,
-            ice_ground_memory: false,
-            ice_airborne: current_level_id == 3,
-            steep_slope_contact: false,
-            riding_platform: false,
-            uses_ice_motion: false,
-        };
+    if state == &PlayerState::Jumping && !jump_timer.just_finished() {
+        return compute_jump_motion(ice_motion, intent, time.delta_secs(), movement_profile);
     }
 
     if ladder_state.touching_ladder && state == &PlayerState::Climbing {
-        ice_motion.horizontal_velocity = 0.0;
-        ice_motion.had_ground_contact = false;
-        let controller_translation = if intent.direction_x == 0.0 && intent.direction_y == 0.0 {
-            let direction = if ladder_state.climb_nudge_right {
-                0.1
-            } else {
-                -0.1
-            };
-            ladder_state.climb_nudge_right = !ladder_state.climb_nudge_right;
-            Vec2::new(direction * time.delta_secs(), 0.0)
-        } else {
-            Vec2::new(
-                intent.direction_x * PLAYER_SPEED * time.delta_secs(),
-                intent.direction_y * PLAYER_SPEED * time.delta_secs(),
-            )
-        };
-
-        return PlayerMotion {
-            controller_translation,
-            grounded_preview: false,
-            ice_slope_contact: false,
-            ice_ground_memory: false,
-            ice_airborne: false,
-            steep_slope_contact: false,
-            riding_platform: false,
-            uses_ice_motion: false,
-        };
+        return compute_climb_motion(ladder_state, ice_motion, intent, time.delta_secs());
     }
 
+    compute_floor_motion(
+        player_pos,
+        platform_carry,
+        ice_motion,
+        intent,
+        controller_output,
+        moving_platforms,
+        time,
+        movement_profile,
+    )
+}
+
+fn compute_jump_motion(
+    ice_motion: &mut PlayerIceMotion,
+    intent: PlayerIntent,
+    delta_secs: f32,
+    movement_profile: PlayerMovementProfile,
+) -> PlayerMotion {
+    let ice_airborne = movement_profile.uses_ice_motion();
+    let horizontal_translation = compute_jump_horizontal_translation(
+        ice_motion,
+        intent.direction_x,
+        delta_secs,
+        ice_airborne,
+    );
+    ice_motion.had_ground_contact = false;
+
+    let mut motion =
+        PlayerMotion::new(Vec2::new(horizontal_translation, PLAYER_SPEED * delta_secs));
+    if ice_airborne {
+        motion.contact = PlayerContact {
+            ground: PlayerGroundContact::IceAirborneMomentum,
+            ..PlayerContact::airborne()
+        };
+    }
+    motion
+}
+
+fn compute_climb_motion(
+    ladder_state: &mut PlayerLadderState,
+    ice_motion: &mut PlayerIceMotion,
+    intent: PlayerIntent,
+    delta_secs: f32,
+) -> PlayerMotion {
+    ice_motion.horizontal_velocity = 0.0;
+    ice_motion.had_ground_contact = false;
+
+    let controller_translation = if intent.direction_x == 0.0 && intent.direction_y == 0.0 {
+        let direction = if ladder_state.climb_nudge_right {
+            0.1
+        } else {
+            -0.1
+        };
+        ladder_state.climb_nudge_right = !ladder_state.climb_nudge_right;
+        Vec2::new(direction * delta_secs, 0.0)
+    } else {
+        Vec2::new(
+            intent.direction_x * PLAYER_SPEED * delta_secs,
+            intent.direction_y * PLAYER_SPEED * delta_secs,
+        )
+    };
+
+    PlayerMotion::new(controller_translation)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn compute_floor_motion(
+    player_pos: &mut Transform,
+    platform_carry: &mut PlayerPlatformCarry,
+    ice_motion: &mut PlayerIceMotion,
+    intent: PlayerIntent,
+    controller_output: Option<&KinematicCharacterControllerOutput>,
+    moving_platforms: &MovingPlatformQuery,
+    time: &Time,
+    movement_profile: PlayerMovementProfile,
+) -> PlayerMotion {
     let (riding_platform, platform_movement) = update_platform_carry(
         platform_carry,
         player_pos,
@@ -684,14 +810,24 @@ fn compute_player_motion(
     let grounded = controller_output.is_some_and(|output| output.grounded);
     let sliding_down_slope = controller_output.is_some_and(|output| output.is_sliding_down_slope);
     let steep_slope_contact =
-        controller_output.is_some_and(|output| has_steep_slope_contact(output, current_level_id));
-    let ice_motion_enabled = current_level_id == 3;
+        controller_output.is_some_and(|output| has_steep_slope_contact(output, movement_profile));
+    let ice_motion_enabled = movement_profile.uses_ice_motion();
     let ice_slope_contact = ice_motion_enabled && !grounded && sliding_down_slope;
     let ice_ground_memory = ice_motion_enabled && ice_motion.had_ground_contact && !grounded;
-    let has_ice_contact = grounded || ice_slope_contact || ice_ground_memory;
+    let ice_ground_contact = classify_ice_ground_contact(
+        ice_motion_enabled,
+        grounded,
+        ice_slope_contact,
+        ice_ground_memory,
+    );
+    let has_ice_contact = matches!(
+        ice_ground_contact,
+        Some(PlayerGroundContact::Grounded)
+            | Some(PlayerGroundContact::IceSlope)
+            | Some(PlayerGroundContact::IceGroundMemory)
+    );
     let has_airborne_ice_velocity =
         ice_motion_enabled && !has_ice_contact && ice_motion.horizontal_velocity != 0.0;
-    let grounded_preview = grounded || riding_platform;
 
     let vertical_translation =
         if riding_platform || on_moving_platform || !grounded || steep_slope_contact {
@@ -717,15 +853,46 @@ fn compute_player_motion(
     };
     ice_motion.had_ground_contact = grounded || ice_slope_contact;
 
+    let contact = PlayerContact::from_floor(grounded, riding_platform, steep_slope_contact)
+        .with_ice_ground(if has_airborne_ice_velocity {
+            PlayerGroundContact::IceAirborneMomentum
+        } else {
+            ice_ground_contact.unwrap_or(if grounded {
+                PlayerGroundContact::Grounded
+            } else {
+                PlayerGroundContact::Airborne
+            })
+        });
+
     PlayerMotion {
         controller_translation: Vec2::new(horizontal_translation, vertical_translation),
-        grounded_preview,
-        ice_slope_contact,
-        ice_ground_memory,
-        ice_airborne: has_airborne_ice_velocity,
-        steep_slope_contact,
-        riding_platform,
+        contact,
+        platform: PlayerPlatformMotion {
+            riding: riding_platform,
+            moving: on_moving_platform,
+        },
         uses_ice_motion: use_ice_motion,
+    }
+}
+
+fn classify_ice_ground_contact(
+    ice_motion_enabled: bool,
+    grounded: bool,
+    ice_slope_contact: bool,
+    ice_ground_memory: bool,
+) -> Option<PlayerGroundContact> {
+    if !ice_motion_enabled {
+        return None;
+    }
+
+    if ice_slope_contact {
+        Some(PlayerGroundContact::IceSlope)
+    } else if ice_ground_memory {
+        Some(PlayerGroundContact::IceGroundMemory)
+    } else if grounded {
+        Some(PlayerGroundContact::Grounded)
+    } else {
+        None
     }
 }
 
@@ -749,14 +916,12 @@ fn compute_jump_horizontal_translation(
 
 fn has_steep_slope_contact(
     output: &KinematicCharacterControllerOutput,
-    current_level_id: u8,
+    movement_profile: PlayerMovementProfile,
 ) -> bool {
-    let slide_min_angle_degrees = if current_level_id == 3 {
-        PLAYER_ICE_SLIDE_MIN_ANGLE_DEGREES
-    } else {
-        PLAYER_DEFAULT_SLIDE_MIN_ANGLE_DEGREES
-    };
-    let normal_x_threshold = slide_min_angle_degrees.to_radians().sin();
+    let normal_x_threshold = movement_profile
+        .slide_min_angle_degrees()
+        .to_radians()
+        .sin();
 
     output.is_sliding_down_slope
         && output.collisions.iter().any(|collision| {
@@ -816,7 +981,7 @@ fn compute_player_visual_state(
     match state {
         PlayerState::Hit => PlayerVisualState::Hit,
         PlayerState::Jumping => PlayerVisualState::Jump,
-        PlayerState::Falling if !motion.grounded_preview => PlayerVisualState::Fall,
+        PlayerState::Falling if !motion.grounded_preview() => PlayerVisualState::Fall,
         PlayerState::Climbing => {
             if intent.direction_y == 0.0 {
                 PlayerVisualState::ClimbIdle
@@ -848,7 +1013,7 @@ fn debug_player_motion(
 ) {
     if let Some(output) = player_controller_output {
         debug!(
-            "player motion: level={} pos={:?} state={:?} input=({}, {}) jump={} ice_velocity={} command={:?} uses_ice={} grounded_preview={} ice_slope_contact={} ice_ground_memory={} ice_airborne={} steep_slope_contact={} riding_platform={} rapier_desired={:?} rapier_effective={:?} rapier_grounded={} rapier_slope={} collisions={:?}",
+            "player motion: level={} pos={:?} state={:?} input=({}, {}) jump={} ice_velocity={} command={:?} contact={:?} uses_ice={} grounded_preview={} ice_slope_contact={} ice_ground_memory={} ice_airborne={} steep_slope_contact={} riding_platform={} moving_platform={} rapier_desired={:?} rapier_effective={:?} rapier_grounded={} rapier_slope={} collisions={:?}",
             current_level_id,
             player_pos.translation,
             state,
@@ -857,13 +1022,15 @@ fn debug_player_motion(
             intent.jump_requested,
             ice_motion.horizontal_velocity,
             motion.controller_translation,
+            motion.contact.ground,
             motion.uses_ice_motion,
-            motion.grounded_preview,
-            motion.ice_slope_contact,
-            motion.ice_ground_memory,
-            motion.ice_airborne,
-            motion.steep_slope_contact,
-            motion.riding_platform,
+            motion.grounded_preview(),
+            motion.contact.is_ice_slope(),
+            motion.contact.is_ice_ground_memory(),
+            motion.contact.is_ice_airborne(),
+            motion.contact.steep_slope_contact,
+            motion.riding_platform(),
+            motion.platform.moving,
             output.desired_translation,
             output.effective_translation,
             output.grounded,
@@ -872,7 +1039,7 @@ fn debug_player_motion(
         );
     } else {
         debug!(
-            "player motion: level={} pos={:?} state={:?} input=({}, {}) jump={} ice_velocity={} command={:?} uses_ice={} grounded_preview={} ice_slope_contact={} ice_ground_memory={} ice_airborne={} steep_slope_contact={} riding_platform={} rapier_output=None",
+            "player motion: level={} pos={:?} state={:?} input=({}, {}) jump={} ice_velocity={} command={:?} contact={:?} uses_ice={} grounded_preview={} ice_slope_contact={} ice_ground_memory={} ice_airborne={} steep_slope_contact={} riding_platform={} moving_platform={} rapier_output=None",
             current_level_id,
             player_pos.translation,
             state,
@@ -881,13 +1048,15 @@ fn debug_player_motion(
             intent.jump_requested,
             ice_motion.horizontal_velocity,
             motion.controller_translation,
+            motion.contact.ground,
             motion.uses_ice_motion,
-            motion.grounded_preview,
-            motion.ice_slope_contact,
-            motion.ice_ground_memory,
-            motion.ice_airborne,
-            motion.steep_slope_contact,
-            motion.riding_platform,
+            motion.grounded_preview(),
+            motion.contact.is_ice_slope(),
+            motion.contact.is_ice_ground_memory(),
+            motion.contact.is_ice_airborne(),
+            motion.contact.steep_slope_contact,
+            motion.riding_platform(),
+            motion.platform.moving,
         );
     }
 }
@@ -902,7 +1071,7 @@ fn sync_player_state(
         next_state.set(PlayerState::Falling);
     }
 
-    if motion.grounded_preview && state == &PlayerState::Falling {
+    if motion.grounded_preview() && state == &PlayerState::Falling {
         next_state.set(PlayerState::Idling);
     }
 }
