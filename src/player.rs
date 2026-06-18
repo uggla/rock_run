@@ -28,6 +28,9 @@ use crate::{
 };
 
 pub const PLAYER_SPEED: f32 = 500.0;
+const ICE_ACCELERATION: f32 = 550.0;
+const ICE_DECELERATION: f32 = 450.0;
+const ICE_TURN_DECELERATION: f32 = 700.0;
 const PLAYER_SCALE_FACTOR: f32 = 1.0;
 pub const PLAYER_WIDTH: f32 = 100.0;
 pub const PLAYER_HEIGHT: f32 = 75.0;
@@ -62,6 +65,11 @@ struct PlayerPlatformCarry {
 struct PlayerLadderState {
     touching_ladder: bool,
     climb_nudge_right: bool,
+}
+
+#[derive(Component, Default)]
+struct PlayerIceMotion {
+    horizontal_velocity: f32,
 }
 
 type MovingPlatformQuery<'w, 's> = Query<
@@ -121,6 +129,7 @@ struct PlayerMotion {
     controller_translation: Vec2,
     grounded_preview: bool,
     riding_platform: bool,
+    uses_ice_motion: bool,
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
@@ -291,6 +300,7 @@ fn spawn_player(
         Player,
         PlayerLadderState::default(),
         PlayerPlatformCarry::default(),
+        PlayerIceMotion::default(),
         PlayerAudio {
             jump_sound: rock_run_assets.jump_sound.clone(),
             hit_sound: rock_run_assets.hit_sound.clone(),
@@ -324,6 +334,7 @@ fn move_player(
             &mut JumpTimer,
             &mut PlayerLadderState,
             &mut PlayerPlatformCarry,
+            &mut PlayerIceMotion,
             &PlayerAudio,
         ),
         (With<Player>, Without<MovingPlatform>),
@@ -337,6 +348,7 @@ fn move_player(
     mut ladder_collision_stop: MessageReader<LadderCollisionStop>,
     restart_event: MessageReader<Restart>,
     mut game_event: MessageReader<StartGame>,
+    current_level: Res<CurrentLevel>,
 ) -> Result<()> {
     let (
         mut player_collider,
@@ -346,6 +358,7 @@ fn move_player(
         mut jump_timer,
         mut ladder_state,
         mut platform_carry,
+        mut ice_motion,
         player_audio,
     ) = player_query.single_mut()?;
 
@@ -361,17 +374,18 @@ fn move_player(
             &mut animation_query,
             &mut index_direction,
         );
+        ice_motion.horizontal_velocity = 0.0;
         player_controller.translation = Some(Vec2::new(0.0, PLAYER_SPEED * time.delta_secs()));
         return Ok(());
     }
 
     if !restart_event.is_empty() {
-        reset_player_runtime_state(&mut ladder_state, &mut platform_carry);
+        reset_player_runtime_state(&mut ladder_state, &mut platform_carry, &mut ice_motion);
     }
 
     if !game_event.is_empty() {
         game_event.clear();
-        reset_player_runtime_state(&mut ladder_state, &mut platform_carry);
+        reset_player_runtime_state(&mut ladder_state, &mut platform_carry, &mut ice_motion);
         next_state.set(PlayerState::Falling);
     }
 
@@ -401,13 +415,6 @@ fn move_player(
         next_state.set(PlayerState::Climbing);
     }
 
-    // Update facing direction and collider
-    update_player_direction(
-        intent.direction_x,
-        &mut animation_query,
-        &mut player_collider,
-    )?;
-
     let motion = compute_player_motion(
         state.get(),
         intent,
@@ -415,12 +422,21 @@ fn move_player(
         &mut jump_timer,
         &mut ladder_state,
         &mut platform_carry,
+        &mut ice_motion,
+        current_level.id,
         PlayerMotionContext {
             controller_output: player_controller_output,
             moving_platforms: &moving_platforms,
             time: &time,
         },
     );
+
+    update_player_direction(
+        intent.direction_x,
+        !motion.uses_ice_motion,
+        &mut animation_query,
+        &mut player_collider,
+    )?;
 
     sync_player_state(
         state.get(),
@@ -444,9 +460,11 @@ fn move_player(
 fn reset_player_runtime_state(
     ladder_state: &mut PlayerLadderState,
     platform_carry: &mut PlayerPlatformCarry,
+    ice_motion: &mut PlayerIceMotion,
 ) {
     *ladder_state = PlayerLadderState::default();
     *platform_carry = PlayerPlatformCarry::default();
+    *ice_motion = PlayerIceMotion::default();
 }
 
 fn update_ladder_state(
@@ -526,21 +544,26 @@ fn read_player_intent(
 
 fn update_player_direction(
     direction_x: f32,
+    update_collider: bool,
     animation_query: &mut Query<(&mut AnimationTimer, &mut Sprite)>,
     collider: &mut Collider,
 ) -> Result<()> {
     if direction_x < 0.0 {
         let (_, mut sprite) = animation_query.single_mut()?;
         sprite.flip_x = true;
-        *collider = Collider::capsule(
-            PLAYER_HITBOX.0 + PLAYER_HITBOX_TRANSLATION,
-            PLAYER_HITBOX.1 + PLAYER_HITBOX_TRANSLATION,
-            PLAYER_HITBOX.2,
-        );
+        if update_collider {
+            *collider = Collider::capsule(
+                PLAYER_HITBOX.0 + PLAYER_HITBOX_TRANSLATION,
+                PLAYER_HITBOX.1 + PLAYER_HITBOX_TRANSLATION,
+                PLAYER_HITBOX.2,
+            );
+        }
     } else if direction_x > 0.0 {
         let (_, mut sprite) = animation_query.single_mut()?;
         sprite.flip_x = false;
-        *collider = Collider::capsule(PLAYER_HITBOX.0, PLAYER_HITBOX.1, PLAYER_HITBOX.2);
+        if update_collider {
+            *collider = Collider::capsule(PLAYER_HITBOX.0, PLAYER_HITBOX.1, PLAYER_HITBOX.2);
+        }
     }
     Ok(())
 }
@@ -552,6 +575,8 @@ fn compute_player_motion(
     jump_timer: &mut JumpTimer,
     ladder_state: &mut PlayerLadderState,
     platform_carry: &mut PlayerPlatformCarry,
+    ice_motion: &mut PlayerIceMotion,
+    current_level_id: u8,
     context: PlayerMotionContext,
 ) -> PlayerMotion {
     let PlayerMotionContext {
@@ -561,11 +586,13 @@ fn compute_player_motion(
     } = context;
 
     if state == &PlayerState::Jumping {
+        ice_motion.horizontal_velocity = 0.0;
         if jump_timer.just_finished() {
             return PlayerMotion {
                 controller_translation: Vec2::ZERO,
                 grounded_preview: false,
                 riding_platform: false,
+                uses_ice_motion: false,
             };
         }
 
@@ -576,10 +603,12 @@ fn compute_player_motion(
             ),
             grounded_preview: false,
             riding_platform: false,
+            uses_ice_motion: false,
         };
     }
 
     if ladder_state.touching_ladder && state == &PlayerState::Climbing {
+        ice_motion.horizontal_velocity = 0.0;
         let controller_translation = if intent.direction_x == 0.0 && intent.direction_y == 0.0 {
             let direction = if ladder_state.climb_nudge_right {
                 0.1
@@ -599,6 +628,7 @@ fn compute_player_motion(
             controller_translation,
             grounded_preview: false,
             riding_platform: false,
+            uses_ice_motion: false,
         };
     }
 
@@ -624,16 +654,65 @@ fn compute_player_motion(
         0.0
     };
 
+    let use_ice_motion =
+        current_level_id == 3 && grounded && !riding_platform && !on_moving_platform;
     let horizontal_translation = if on_moving_platform {
+        ice_motion.horizontal_velocity = 0.0;
         0.0
     } else {
-        intent.direction_x * PLAYER_SPEED * time.delta_secs()
+        compute_horizontal_translation(
+            ice_motion,
+            intent.direction_x,
+            time.delta_secs(),
+            use_ice_motion,
+        )
     };
 
     PlayerMotion {
         controller_translation: Vec2::new(horizontal_translation, vertical_translation),
         grounded_preview,
         riding_platform,
+        uses_ice_motion: use_ice_motion,
+    }
+}
+
+fn compute_horizontal_translation(
+    ice_motion: &mut PlayerIceMotion,
+    direction_x: f32,
+    delta_secs: f32,
+    use_ice_motion: bool,
+) -> f32 {
+    if !use_ice_motion {
+        ice_motion.horizontal_velocity = 0.0;
+        return direction_x * PLAYER_SPEED * delta_secs;
+    }
+
+    ice_motion.horizontal_velocity =
+        update_ice_horizontal_velocity(ice_motion.horizontal_velocity, direction_x, delta_secs);
+    ice_motion.horizontal_velocity * delta_secs
+}
+
+fn update_ice_horizontal_velocity(current_velocity: f32, direction_x: f32, delta_secs: f32) -> f32 {
+    if direction_x == 0.0 {
+        return approach(current_velocity, 0.0, ICE_DECELERATION * delta_secs);
+    }
+
+    if current_velocity != 0.0 && current_velocity.signum() != direction_x.signum() {
+        return approach(current_velocity, 0.0, ICE_TURN_DECELERATION * delta_secs);
+    }
+
+    approach(
+        current_velocity,
+        direction_x * PLAYER_SPEED,
+        ICE_ACCELERATION * delta_secs,
+    )
+}
+
+fn approach(current: f32, target: f32, max_delta: f32) -> f32 {
+    if current < target {
+        (current + max_delta).min(target)
+    } else {
+        (current - max_delta).max(target)
     }
 }
 
@@ -950,5 +1029,81 @@ fn restart_level(
 fn despawn_player(mut commands: Commands, player: Query<Entity, With<Player>>) {
     if let Ok(player) = player.single() {
         commands.entity(player).despawn();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const EPSILON: f32 = 0.001;
+
+    fn assert_near(actual: f32, expected: f32) {
+        assert!(
+            (actual - expected).abs() <= EPSILON,
+            "expected {actual} to be close to {expected}"
+        );
+    }
+
+    #[test]
+    fn approach_moves_towards_higher_target_without_overshooting() {
+        assert_near(approach(0.0, 10.0, 3.0), 3.0);
+        assert_near(approach(8.0, 10.0, 3.0), 10.0);
+    }
+
+    #[test]
+    fn approach_moves_towards_lower_target_without_overshooting() {
+        assert_near(approach(10.0, 0.0, 3.0), 7.0);
+        assert_near(approach(2.0, 0.0, 3.0), 0.0);
+    }
+
+    #[test]
+    fn ice_velocity_accelerates_progressively() {
+        let velocity = update_ice_horizontal_velocity(0.0, 1.0, 0.1);
+
+        assert_near(velocity, 55.0);
+    }
+
+    #[test]
+    fn ice_velocity_decelerates_without_input() {
+        let velocity = update_ice_horizontal_velocity(200.0, 0.0, 0.1);
+
+        assert_near(velocity, 155.0);
+    }
+
+    #[test]
+    fn ice_velocity_turns_without_instant_direction_change() {
+        let velocity = update_ice_horizontal_velocity(200.0, -1.0, 0.1);
+
+        assert_near(velocity, 130.0);
+    }
+
+    #[test]
+    fn ice_velocity_clamps_to_player_speed() {
+        let velocity = update_ice_horizontal_velocity(480.0, 1.0, 0.1);
+
+        assert_near(velocity, PLAYER_SPEED);
+    }
+
+    #[test]
+    fn direct_horizontal_translation_ignores_stored_ice_velocity() {
+        let mut ice_motion = PlayerIceMotion {
+            horizontal_velocity: 200.0,
+        };
+        let translation = compute_horizontal_translation(&mut ice_motion, 1.0, 0.1, false);
+
+        assert_near(translation, PLAYER_SPEED * 0.1);
+        assert_near(ice_motion.horizontal_velocity, 0.0);
+    }
+
+    #[test]
+    fn ice_translation_marks_ice_motion_as_active() {
+        let mut ice_motion = PlayerIceMotion {
+            horizontal_velocity: 130.0,
+        };
+        let translation = compute_horizontal_translation(&mut ice_motion, -1.0, 0.1, true);
+
+        assert_near(translation, 6.0);
+        assert_near(ice_motion.horizontal_velocity, 60.0);
     }
 }
