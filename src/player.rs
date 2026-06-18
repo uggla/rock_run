@@ -33,7 +33,8 @@ const ICE_DECELERATION: f32 = 450.0;
 const ICE_TURN_DECELERATION: f32 = 700.0;
 const PLAYER_CONTROLLER_OFFSET: f32 = 1.0;
 const PLAYER_CONTROLLER_GROUND_SNAP: f32 = 8.0;
-const PLAYER_SLIDE_NORMAL_X_THRESHOLD: f32 = 0.35;
+const PLAYER_DEFAULT_SLIDE_MIN_ANGLE_DEGREES: f32 = 20.0;
+const PLAYER_ICE_SLIDE_MIN_ANGLE_DEGREES: f32 = 40.0;
 const PLAYER_SCALE_FACTOR: f32 = 1.0;
 pub const PLAYER_WIDTH: f32 = 100.0;
 pub const PLAYER_HEIGHT: f32 = 75.0;
@@ -673,7 +674,8 @@ fn compute_player_motion(
     let on_moving_platform = platform_movement != Vec2::ZERO;
     let grounded = controller_output.is_some_and(|output| output.grounded);
     let sliding_down_slope = controller_output.is_some_and(|output| output.is_sliding_down_slope);
-    let steep_slope_contact = controller_output.is_some_and(has_steep_slope_contact);
+    let steep_slope_contact =
+        controller_output.is_some_and(|output| has_steep_slope_contact(output, current_level_id));
     let ice_motion_enabled = current_level_id == 3;
     let ice_slope_contact = ice_motion_enabled && !grounded && sliding_down_slope;
     let ice_ground_memory = ice_motion_enabled && ice_motion.had_ground_contact && !grounded;
@@ -713,14 +715,24 @@ fn compute_player_motion(
     }
 }
 
-fn has_steep_slope_contact(output: &KinematicCharacterControllerOutput) -> bool {
+fn has_steep_slope_contact(
+    output: &KinematicCharacterControllerOutput,
+    current_level_id: u8,
+) -> bool {
+    let slide_min_angle_degrees = if current_level_id == 3 {
+        PLAYER_ICE_SLIDE_MIN_ANGLE_DEGREES
+    } else {
+        PLAYER_DEFAULT_SLIDE_MIN_ANGLE_DEGREES
+    };
+    let normal_x_threshold = slide_min_angle_degrees.to_radians().sin();
+
     output.is_sliding_down_slope
         && output.collisions.iter().any(|collision| {
             collision
                 .hit
                 .details
                 .as_ref()
-                .is_some_and(|details| details.normal1.x.abs() >= PLAYER_SLIDE_NORMAL_X_THRESHOLD)
+                .is_some_and(|details| details.normal1.x.abs() >= normal_x_threshold)
         })
 }
 
