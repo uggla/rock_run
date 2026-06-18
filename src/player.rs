@@ -135,6 +135,7 @@ struct PlayerMotion {
     grounded_preview: bool,
     ice_slope_contact: bool,
     ice_ground_memory: bool,
+    ice_airborne: bool,
     steep_slope_contact: bool,
     riding_platform: bool,
     uses_ice_motion: bool,
@@ -606,7 +607,12 @@ fn compute_player_motion(
     } = context;
 
     if state == &PlayerState::Jumping {
-        ice_motion.horizontal_velocity = 0.0;
+        let horizontal_translation = compute_jump_horizontal_translation(
+            ice_motion,
+            intent.direction_x,
+            time.delta_secs(),
+            current_level_id == 3,
+        );
         ice_motion.had_ground_contact = false;
         if jump_timer.just_finished() {
             return PlayerMotion {
@@ -614,6 +620,7 @@ fn compute_player_motion(
                 grounded_preview: false,
                 ice_slope_contact: false,
                 ice_ground_memory: false,
+                ice_airborne: false,
                 steep_slope_contact: false,
                 riding_platform: false,
                 uses_ice_motion: false,
@@ -622,12 +629,13 @@ fn compute_player_motion(
 
         return PlayerMotion {
             controller_translation: Vec2::new(
-                intent.direction_x * PLAYER_SPEED * time.delta_secs(),
+                horizontal_translation,
                 PLAYER_SPEED * time.delta_secs(),
             ),
             grounded_preview: false,
             ice_slope_contact: false,
             ice_ground_memory: false,
+            ice_airborne: current_level_id == 3,
             steep_slope_contact: false,
             riding_platform: false,
             uses_ice_motion: false,
@@ -657,6 +665,7 @@ fn compute_player_motion(
             grounded_preview: false,
             ice_slope_contact: false,
             ice_ground_memory: false,
+            ice_airborne: false,
             steep_slope_contact: false,
             riding_platform: false,
             uses_ice_motion: false,
@@ -680,6 +689,8 @@ fn compute_player_motion(
     let ice_slope_contact = ice_motion_enabled && !grounded && sliding_down_slope;
     let ice_ground_memory = ice_motion_enabled && ice_motion.had_ground_contact && !grounded;
     let has_ice_contact = grounded || ice_slope_contact || ice_ground_memory;
+    let has_airborne_ice_velocity =
+        ice_motion_enabled && !has_ice_contact && ice_motion.horizontal_velocity != 0.0;
     let grounded_preview = grounded || riding_platform;
 
     let vertical_translation =
@@ -694,6 +705,8 @@ fn compute_player_motion(
     let horizontal_translation = if on_moving_platform {
         ice_motion.horizontal_velocity = 0.0;
         0.0
+    } else if has_airborne_ice_velocity {
+        compute_jump_horizontal_translation(ice_motion, intent.direction_x, time.delta_secs(), true)
     } else {
         compute_horizontal_translation(
             ice_motion,
@@ -709,10 +722,29 @@ fn compute_player_motion(
         grounded_preview,
         ice_slope_contact,
         ice_ground_memory,
+        ice_airborne: has_airborne_ice_velocity,
         steep_slope_contact,
         riding_platform,
         uses_ice_motion: use_ice_motion,
     }
+}
+
+fn compute_jump_horizontal_translation(
+    ice_motion: &mut PlayerIceMotion,
+    direction_x: f32,
+    delta_secs: f32,
+    use_ice_motion: bool,
+) -> f32 {
+    if !use_ice_motion {
+        ice_motion.horizontal_velocity = 0.0;
+        return direction_x * PLAYER_SPEED * delta_secs;
+    }
+
+    if direction_x != 0.0 {
+        ice_motion.horizontal_velocity =
+            update_ice_horizontal_velocity(ice_motion.horizontal_velocity, direction_x, delta_secs);
+    }
+    ice_motion.horizontal_velocity * delta_secs
 }
 
 fn has_steep_slope_contact(
@@ -816,7 +848,7 @@ fn debug_player_motion(
 ) {
     if let Some(output) = player_controller_output {
         debug!(
-            "player motion: level={} pos={:?} state={:?} input=({}, {}) jump={} ice_velocity={} command={:?} uses_ice={} grounded_preview={} ice_slope_contact={} ice_ground_memory={} steep_slope_contact={} riding_platform={} rapier_desired={:?} rapier_effective={:?} rapier_grounded={} rapier_slope={} collisions={:?}",
+            "player motion: level={} pos={:?} state={:?} input=({}, {}) jump={} ice_velocity={} command={:?} uses_ice={} grounded_preview={} ice_slope_contact={} ice_ground_memory={} ice_airborne={} steep_slope_contact={} riding_platform={} rapier_desired={:?} rapier_effective={:?} rapier_grounded={} rapier_slope={} collisions={:?}",
             current_level_id,
             player_pos.translation,
             state,
@@ -829,6 +861,7 @@ fn debug_player_motion(
             motion.grounded_preview,
             motion.ice_slope_contact,
             motion.ice_ground_memory,
+            motion.ice_airborne,
             motion.steep_slope_contact,
             motion.riding_platform,
             output.desired_translation,
@@ -839,7 +872,7 @@ fn debug_player_motion(
         );
     } else {
         debug!(
-            "player motion: level={} pos={:?} state={:?} input=({}, {}) jump={} ice_velocity={} command={:?} uses_ice={} grounded_preview={} ice_slope_contact={} ice_ground_memory={} steep_slope_contact={} riding_platform={} rapier_output=None",
+            "player motion: level={} pos={:?} state={:?} input=({}, {}) jump={} ice_velocity={} command={:?} uses_ice={} grounded_preview={} ice_slope_contact={} ice_ground_memory={} ice_airborne={} steep_slope_contact={} riding_platform={} rapier_output=None",
             current_level_id,
             player_pos.translation,
             state,
@@ -852,6 +885,7 @@ fn debug_player_motion(
             motion.grounded_preview,
             motion.ice_slope_contact,
             motion.ice_ground_memory,
+            motion.ice_airborne,
             motion.steep_slope_contact,
             motion.riding_platform,
         );
@@ -1217,6 +1251,30 @@ mod tests {
             had_ground_contact: false,
         };
         let translation = compute_horizontal_translation(&mut ice_motion, -1.0, 0.1, true);
+
+        assert_near(translation, 6.0);
+        assert_near(ice_motion.horizontal_velocity, 60.0);
+    }
+
+    #[test]
+    fn ice_jump_preserves_horizontal_velocity_without_input() {
+        let mut ice_motion = PlayerIceMotion {
+            horizontal_velocity: 130.0,
+            had_ground_contact: false,
+        };
+        let translation = compute_jump_horizontal_translation(&mut ice_motion, 0.0, 0.1, true);
+
+        assert_near(translation, 13.0);
+        assert_near(ice_motion.horizontal_velocity, 130.0);
+    }
+
+    #[test]
+    fn ice_jump_allows_progressive_air_control() {
+        let mut ice_motion = PlayerIceMotion {
+            horizontal_velocity: 130.0,
+            had_ground_contact: false,
+        };
+        let translation = compute_jump_horizontal_translation(&mut ice_motion, -1.0, 0.1, true);
 
         assert_near(translation, 6.0);
         assert_near(ice_motion.horizontal_velocity, 60.0);
