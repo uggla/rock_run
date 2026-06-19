@@ -166,7 +166,7 @@ fn player_collisions_with_elements(
         for (rock, velocity) in rocks.iter().chain(rockgates.iter()) {
             if character_collision.entity == rock {
                 debug!("hit velocity: {:?}", velocity);
-                if (velocity.linvel.x.abs() > 175.0 || velocity.linvel.y.abs() > 20.0)
+                if (velocity.linear.x.abs() > 175.0 || velocity.linear.y.abs() > 20.0)
                     && !god_mode.0
                 {
                     hit.write(Hit);

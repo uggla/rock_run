@@ -12,7 +12,7 @@ bevy_asset_loader = { version = "0.26.0" }
 bevy_ecs_tilemap = { version = "0.18.1" }
 bevy_fluent = "0.14.0"
 bevy_pkv = "0.15.0"
-bevy_rapier2d = "0.33.0"
+bevy_rapier2d = "0.34.0"
 enum-iterator = "2.3.0"
 # Kept on 0.16.x because bevy_fluent 0.14.0 still depends on fluent 0.16.x.
 fluent = "0.16.1"
