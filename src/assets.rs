@@ -133,10 +133,12 @@ pub struct RockRunAssets {
     pub eruption_sound: Handle<AudioSource>,
 
     // Music
-    #[asset(path = "musics/theme_01.ogg")]
+    #[asset(path = "musics/level_01.ogg")]
     pub music_level01: Handle<AudioSource>,
-    #[asset(path = "musics/theme_07.ogg")]
+    #[asset(path = "musics/level_02.ogg")]
     pub music_level02: Handle<AudioSource>,
-    #[asset(path = "musics/theme_03.ogg")]
+    #[asset(path = "musics/level_03.ogg")]
     pub music_level03: Handle<AudioSource>,
+    #[asset(path = "musics/level_04.ogg")]
+    pub music_level04: Handle<AudioSource>,
 }

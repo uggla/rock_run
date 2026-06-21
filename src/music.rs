@@ -53,9 +53,20 @@ fn setup_music(
                 Music,
             ));
         }
-        4 => {
+        3 => {
             commands.spawn((
                 AudioPlayer::new(rock_run_assets.music_level03.clone()),
+                PlaybackSettings {
+                    mode: PlaybackMode::Loop,
+                    volume: Volume::Linear(0.45),
+                    ..default()
+                },
+                Music,
+            ));
+        }
+        4 => {
+            commands.spawn((
+                AudioPlayer::new(rock_run_assets.music_level04.clone()),
                 PlaybackSettings {
                     mode: PlaybackMode::Loop,
                     volume: Volume::Linear(0.3),
